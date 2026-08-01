@@ -45,7 +45,7 @@ docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \
 | API | http://localhost:8000/docs |
 | n8n | http://localhost:5678 |
 
-If host port `5678` is already in use (e.g. sibling n8n compose), set `N8N_PORT` in `.env` before `up`.
+If host port `5678` is already in use (e.g. sibling n8n compose), set `N8N_HOST_PORT` in `.env` before `up` (and match `WEBHOOK_URL`).
 
 Shared categorized JSON lives in `data/receipts/` (n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, n8n uses `API_BASE_URL=http://api:8000` (service DNS).
 

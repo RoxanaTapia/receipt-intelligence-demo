@@ -35,12 +35,13 @@ services:
     image: docker.n8n.io/n8nio/n8n:2.27.4
     restart: unless-stopped
     ports:
-      - "${N8N_PORT:-5678}:5678"
+      # Host publish port only — keep container listen port at 5678 (N8N_PORT below).
+      - "${N8N_HOST_PORT:-5678}:5678"
     environment:
       N8N_HOST: ${N8N_HOST:-localhost}
-      N8N_PORT: ${N8N_PORT:-5678}
+      N8N_PORT: "5678"
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
-      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:${N8N_HOST_PORT:-5678}/}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Berlin}
       N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
