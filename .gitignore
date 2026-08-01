@@ -1,0 +1,9 @@
+.env
+.env.local
+.env.*.local
+
+# Runtime receipt JSON (keep directory via .gitkeep)
+data/receipts/*
+!data/receipts/.gitkeep
+
+.DS_Store

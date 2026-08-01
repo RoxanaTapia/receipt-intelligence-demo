@@ -21,7 +21,7 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 
 | Term | Path |
 |------|------|
-| Compose / Caddy / scripts | `deploy/` (or root compose — match what #1 ships) |
+| Compose / Caddy / scripts | `deploy/` (`deploy/docker-compose.yml`) |
 | Env template | `.env.example` |
 | Operator deploy guide | `DEPLOYMENT.md` (owned by #2) |
 | Demo UX app | TBD by #3 (Streamlit **or** small FastAPI+templates) |
