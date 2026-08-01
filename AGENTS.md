@@ -54,7 +54,7 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 | `demo-ux-engineer` | Thin visitor UI + seed/smoke wiring to the API | Primary for #3, #5 |
 | `docs-writer` | README, `DEPLOYMENT.md`, `docs/` | `/document`; portfolio prose for #4 |
 | `verifier` | Quality checks and acceptance criteria before PR | `/verify` |
-| `software-engineering-professor` | Teaches issues and concepts | `/lecture-on-issue`; does not ship |
+| `software-engineering-professor` | Teaches issues; portable deploy/demo mental models | `/lecture-on-issue`; does not ship |
 
 **Intentionally omitted** (live in sibling repos): `n8n-engineer`, `fastapi-engineer`, `claude-prompt-engineer`.
 
