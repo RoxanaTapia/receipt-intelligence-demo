@@ -1,20 +1,62 @@
-# receipt-intelligence-demo
+# Receipt Intelligence Demo
 
-Hetzner demo stack + self-serve UX for Receipt Intelligence (n8n + API). **Delivery Module 7.**
+Self-serve portfolio demo for **Receipt Intelligence**: n8n categorizes receipts, the API answers spending questions, and a thin visitor UX lets people try the loop without opening the n8n editor.
 
-Product logic lives in the sibling repos; this umbrella owns Compose, Caddy/deploy docs, and the visitor demo UX.
+This umbrella owns **Compose + deploy glue + visitor UX**. Product logic stays in the sibling repos.
+
+| Link | Where |
+|------|--------|
+| 🚀 **Try the demo** | [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/) — public gate → invite or Login → `/app` |
+| 📌 **Deploy / VPS** | [DEPLOYMENT.md](DEPLOYMENT.md) — solo Caddy **or** shared host with AI Doc |
 
 | Repo | Role |
 |------|------|
-| [receipt-intelligence-n8n](https://github.com/RoxanaTapia/receipt-intelligence-n8n) | Ingest + categorization (writes receipts) |
-| [receipt-intelligence-api](https://github.com/RoxanaTapia/receipt-intelligence-api) | Analytics + Q&A (reads receipts) |
+| [receipt-intelligence-n8n](https://github.com/RoxanaTapia/receipt-intelligence-n8n) | Ingest + categorization (writes receipt JSON) |
+| [receipt-intelligence-api](https://github.com/RoxanaTapia/receipt-intelligence-api) | Analytics + Q&A (reads receipt JSON) |
 | **This repo** | Run them together + public demo path |
 
-## Agent workflow
+## Visitor path vs operator path
 
-Start with [`AGENTS.md`](AGENTS.md). Slash commands: `/lecture-on-issue`, `/ship-issue`, `/document`, `/verify`, `/ship-complete`.
+Same public hostname, two audiences:
 
-**Ship order:** [#1](https://github.com/RoxanaTapia/receipt-intelligence-demo/issues/1) Compose → [#2](https://github.com/RoxanaTapia/receipt-intelligence-demo/issues/2) Caddy + `DEPLOYMENT.md` → [#3](https://github.com/RoxanaTapia/receipt-intelligence-demo/issues/3) Demo UX → [#4](https://github.com/RoxanaTapia/receipt-intelligence-demo/issues/4) README polish.
+| Path | Who | How |
+|------|-----|-----|
+| **Visitor** | Portfolio guests | Open the [live demo](https://receipt-intelligence.roxanatapia.dev/) → invite or Login → **`/app`** (pick an example → spending → ask a question). Invites are for `/app` only. |
+| **Operator** | Maintainers | **`/n8n*`** — n8n UI (edge Basic Auth; n8n may also enforce its own credentials). Full VPS steps live in [DEPLOYMENT.md](DEPLOYMENT.md). |
+
+You do **not** need the n8n editor to try the visitor demo.
+
+## Architecture (portfolio / shared host)
+
+On the portfolio VPS, **AI Doc Caddy** owns TLS, the invite gate, and reverse proxy. Receipt containers join Docker network `edge`; n8n writes categorized JSON to a shared disk the API reads.
+
+```mermaid
+flowchart LR
+  browser[Browser]
+  edge[AI Doc Caddy<br/>TLS · gate · invites]
+  ux[Demo UX<br/>receipt-ux :8080]
+  api[API<br/>receipt-api :8000]
+  disk[(Shared receipts<br/>on edge)]
+  n8n[n8n<br/>receipt-n8n :5678]
+
+  browser --> edge
+  edge -->|/app| ux
+  ux --> api
+  api --> disk
+  n8n -->|writes| disk
+  edge -->|/n8n*| n8n
+```
+
+Solo VPS (this repo’s own Caddy) is documented in [DEPLOYMENT.md](DEPLOYMENT.md) — same app paths (`/app`, `/n8n*`), different edge owner.
+
+## Production / deploy
+
+| Mode | When | Start here |
+|------|------|------------|
+| **Shared host with AI Doc** | Portfolio VPS already runs AI Doc Caddy | [DEPLOYMENT.md — Shared host](DEPLOYMENT.md#-shared-host-with-ai-doc-caddy) |
+| **Solo Caddy** | Dedicated box for this demo only | [DEPLOYMENT.md — Solo Hetzner](DEPLOYMENT.md#-deploy-on-hetzner-solo-caddy) |
+
+Product workflow import and sample PDFs: [n8n integration runbook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md).
 
 ## Local compose smoke
 
@@ -60,6 +102,6 @@ If host port `5678` or `8080` is already in use, set `N8N_HOST_PORT` / `UX_PORT`
 
 Shared categorized JSON lives in `data/receipts/` (seed script + n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, n8n and the UX use `http://api:8000` (service DNS).
 
-**Public portfolio path:** invite/Login at `https://receipt-intelligence.roxanatapia.dev/` → visitor UX under `/app` (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+## Agent workflow
 
-VPS / HTTPS: [DEPLOYMENT.md](DEPLOYMENT.md). Product workflow import and sample PDFs: [n8n integration runbook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md).
+Start with [`AGENTS.md`](AGENTS.md). Slash commands: `/lecture-on-issue`, `/ship-issue`, `/document`, `/verify`, `/ship-complete`.
