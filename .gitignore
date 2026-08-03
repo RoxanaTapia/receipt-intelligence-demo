@@ -6,4 +6,8 @@
 data/receipts/*
 !data/receipts/.gitkeep
 
+# Caddy edge secrets / generated TLS (see deploy/generate-*.sh)
+deploy/caddy-basicauth.conf
+deploy/certs/
+
 .DS_Store
