@@ -1,0 +1,35 @@
+# Shared-host overlay — another process (e.g. AI Doc Caddy) owns 80/443.
+#
+# Create the network once on the VPS:
+#   docker network create edge
+#
+# From repo root:
+#   docker compose --env-file .env -p receipt-intelligence-demo \
+#     -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml up --build -d
+#
+# ⚠️ Do NOT also use deploy/docker-compose.caddy.yml on this host — port conflict.
+#
+# Stable aliases for the external reverse proxy (ai-doc Caddyfile):
+#   receipt-api:8000  ·  receipt-n8n:5678
+# See DEPLOYMENT.md § Shared host with AI Doc Caddy.
+
+services:
+  api:
+    ports: !override []
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - receipt-api
+
+  n8n:
+    ports: !override []
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - receipt-n8n
+
+networks:
+  edge:
+    external: true
