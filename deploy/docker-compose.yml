@@ -60,5 +60,27 @@ services:
       api:
         condition: service_healthy
 
+  # Thin visitor UX (FastAPI + templates). Seed data: ./deploy/seed-demo-data.sh
+  ux:
+    build:
+      context: ../demo
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${UX_PORT:-8080}:8080"
+    environment:
+      API_BASE_URL: ${UX_API_BASE_URL:-http://api:8000}
+      RECEIPT_DATA_PATH: /data/receipts
+      SEED_DIR: /app/seed
+      DEMO_START_DATE: ${DEMO_START_DATE:-2026-05-01}
+      DEMO_END_DATE: ${DEMO_END_DATE:-2026-05-31}
+      # Empty when Caddy (or ai-doc) strips /app via handle_path.
+      ROOT_PATH: ${UX_ROOT_PATH:-}
+    volumes:
+      - ../data/receipts:/data/receipts:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   n8n_data:

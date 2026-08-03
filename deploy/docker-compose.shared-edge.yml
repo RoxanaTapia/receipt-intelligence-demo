@@ -10,8 +10,8 @@
 # ⚠️ Do NOT also use deploy/docker-compose.caddy.yml on this host — port conflict.
 #
 # Stable aliases for the external reverse proxy (ai-doc Caddyfile):
-#   receipt-api:8000  ·  receipt-n8n:5678
-# See DEPLOYMENT.md § Shared host with AI Doc Caddy.
+#   receipt-api:8000  ·  receipt-n8n:5678  ·  receipt-ux:8080
+# Point /app* at receipt-ux (strip prefix). See DEPLOYMENT.md § Shared host.
 
 services:
   api:
@@ -29,6 +29,14 @@ services:
       edge:
         aliases:
           - receipt-n8n
+
+  ux:
+    ports: !override []
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - receipt-ux
 
 networks:
   edge:

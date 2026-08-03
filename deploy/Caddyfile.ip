@@ -16,6 +16,10 @@
 		reverse_proxy n8n:5678
 	}
 
+	handle_path /app* {
+		reverse_proxy ux:8080
+	}
+
 	handle {
 		reverse_proxy api:8000
 	}
