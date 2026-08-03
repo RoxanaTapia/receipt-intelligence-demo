@@ -10,7 +10,8 @@
       href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{{ public_url('/static/demo.css') }}" />
+    {# Inlined: avoids /app ↔ static proxy mismatches on the portfolio edge. #}
+    <style>{{ demo_css | safe }}</style>
   </head>
   <body>
     <main>{% block content %}{% endblock %}</main>
