@@ -32,7 +32,7 @@
       {% for item in examples %}
       <li>
         <a
-          href="?example={{ item.id }}"
+          href="{{ public_url('/') }}?example={{ item.id }}"
           class="{% if selected and selected.id == item.id %}active{% endif %}"
         >
           {{ item.label }}
@@ -102,7 +102,7 @@
 
     <section class="panel" style="margin-top: 1.25rem">
       <h2>Ask a question</h2>
-      <form class="ask-form" method="post" action="ask">
+      <form class="ask-form" method="post" action="{{ public_url('/ask') }}">
         {% if selected %}
         <input type="hidden" name="example" value="{{ selected.id }}" />
         {% endif %}

@@ -20,7 +20,17 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://api:8000")
 # Explicit seed window — analytics is corpus-wide; dates keep the demo stable.
 DEMO_START_DATE = os.getenv("DEMO_START_DATE", "2026-05-01")
 DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-05-31")
+# Public URL prefix as seen by the browser (e.g. "/app" behind Caddy handle_path).
+# Keep empty for local host publish on :8080.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
+
+
+def public_url(path: str = "/") -> str:
+    """Build a browser-facing path that keeps the /app prefix when configured."""
+    if not path.startswith("/"):
+        path = f"/{path}"
+    return f"{ROOT_PATH}{path}" if ROOT_PATH else path
+
 
 app = FastAPI(title="Receipt Intelligence Demo", root_path=ROOT_PATH)
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
@@ -31,6 +41,8 @@ api = ReceiptApiClient(API_BASE_URL)
 def _base_context(request: Request) -> dict:
     return {
         "request": request,
+        "root_path": ROOT_PATH,
+        "public_url": public_url,
         "demo_start": DEMO_START_DATE,
         "demo_end": DEMO_END_DATE,
     }
@@ -121,4 +133,4 @@ def ask(
 
 @app.get("/ask")
 def ask_get() -> RedirectResponse:
-    return RedirectResponse(url=f"{ROOT_PATH}/" if ROOT_PATH else "/", status_code=303)
+    return RedirectResponse(url=public_url("/"), status_code=303)
