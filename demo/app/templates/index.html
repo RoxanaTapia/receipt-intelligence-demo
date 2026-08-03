@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Receipt Intelligence — Demo{% endblock %}
+{% block content %}
+<p class="brand">Receipt Intelligence</p>
+<h1>Try the demo</h1>
+<p class="lede">
+  Pick an example receipt, review spending across the seeded set, and ask a budget question —
+  no n8n editor required.
+</p>
+
+{% if api_ok %}
+<p class="status ok">API connected</p>
+{% else %}
+<p class="status bad">API unavailable</p>
+{% if api_error %}
+<div class="banner err">{{ api_error }}</div>
+{% endif %}
+{% endif %}
+
+{% if not examples %}
+<div class="banner warn">
+  No example receipts found. Seed the shared volume with
+  <code>./deploy/seed-demo-data.sh</code>, then refresh.
+</div>
+{% endif %}
+
+<div class="layout">
+  <aside class="panel">
+    <h2>Examples</h2>
+    {% if examples %}
+    <ul class="example-list">
+      {% for item in examples %}
+      <li>
+        <a
+          href="?example={{ item.id }}"
+          class="{% if selected and selected.id == item.id %}active{% endif %}"
+        >
+          {{ item.label }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">No examples loaded.</p>
+    {% endif %}
+  </aside>
+
+  <div>
+    {% if selected %}
+    <section class="panel">
+      <h2>{{ selected.receipt.merchant }}</h2>
+      <p class="meta">
+        {{ selected.receipt.date }} · total
+        <span class="num">{{ '%.2f'|format(selected.receipt.total) }} EUR</span>
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th class="num">Qty</th>
+            <th class="num">EUR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in selected.receipt.line_items %}
+          <tr>
+            <td>{{ line.description }}</td>
+            <td>{{ line.category }}</td>
+            <td class="num">{{ line.quantity }}</td>
+            <td class="num">{{ '%.2f'|format(line.price) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    <section class="panel" style="margin-top: 1.25rem">
+      <h2>Spending context</h2>
+      <p class="meta">
+        Across demo receipts · {{ demo_start }} → {{ demo_end }}
+        {% if summary %}
+        · {{ summary.receipt_count }} receipts ·
+        <span class="num">{{ '%.2f'|format(summary.total_spend) }} EUR</span>
+        {% endif %}
+      </p>
+      {% if summary and summary.by_category %}
+      <div class="cats">
+        {% for row in summary.by_category %}
+        <div class="cat-row">
+          <span>{{ row.category }}</span>
+          <span class="num">{{ '%.2f'|format(row.total_spend) }} EUR · {{ row.percentage }}%</span>
+          <div class="cat-bar"><span style="width: {{ row.percentage }}%"></span></div>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif api_ok %}
+      <p class="meta">No spending in this window. Seed data may be missing from the API volume.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel" style="margin-top: 1.25rem">
+      <h2>Ask a question</h2>
+      <form class="ask-form" method="post" action="ask">
+        {% if selected %}
+        <input type="hidden" name="example" value="{{ selected.id }}" />
+        {% endif %}
+        <label for="question">Natural-language budget question</label>
+        <textarea
+          id="question"
+          name="question"
+          placeholder="How much did I spend on drinks in May 2026?"
+          required
+        >{{ question }}</textarea>
+        <button type="submit" {% if not api_ok %}disabled{% endif %}>Ask</button>
+      </form>
+      {% if qa_error %}
+      <div class="banner err" style="margin-top: 1rem">{{ qa_error }}</div>
+      {% endif %}
+      {% if answer and answer.answer %}
+      <div class="answer">
+        <p>{{ answer.answer }}</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<p class="note">
+  Live PDF upload is out of scope for this demo slice. Public path after invite:
+  <code>/app</code> on the portfolio host.
+</p>
+{% endblock %}

@@ -21,6 +21,9 @@ services:
   n8n:
     ports: !override []
 
+  ux:
+    ports: !override []
+
   caddy:
     image: caddy:2.9.1-alpine
     restart: unless-stopped
@@ -40,6 +43,8 @@ services:
       api:
         condition: service_healthy
       n8n:
+        condition: service_started
+      ux:
         condition: service_started
 
 volumes:

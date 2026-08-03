@@ -61,8 +61,9 @@ Disk: ~20 GB+ free for images and receipt JSON under `data/receipts/`.
 | **443** | Yes | HTTPS (Caddy) |
 | **8000** | No (VPS + Caddy) | API — Compose network only |
 | **5678** | No (VPS + Caddy) | n8n — Compose network only |
+| **8080** | No (VPS + Caddy) | Demo UX — Compose network only |
 
-Local smoke **without** Caddy still publishes API/n8n on the host (see [README](README.md)). The Caddy and shared-edge overlays strip those host publishes with `ports: !override []`.
+Local smoke **without** Caddy still publishes API / n8n / UX on the host (see [README](README.md)). The Caddy and shared-edge overlays strip those host publishes with `ports: !override []`.
 
 ---
 
@@ -97,9 +98,11 @@ WEBHOOK_URL=https://receipt-intelligence.roxanatapia.dev/n8n/
 
 Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset. Edge basic auth and TLS live in the **ai-doc** project.
 
-### 3. Start api + n8n on `edge` (no receipt Caddy)
+### 3. Seed demo receipts, then start on `edge` (no receipt Caddy)
 
 ```bash
+./deploy/seed-demo-data.sh
+
 docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml up --build -d
 
@@ -107,13 +110,23 @@ docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml ps
 ```
 
-Expect: `api` healthy · `n8n` Up · **no** `caddy` service · host does **not** publish 8000/5678.
+Expect: `api` healthy · `n8n` Up · `ux` Up · **no** `caddy` service · host does **not** publish 8000/5678/8080.
 
-Stable aliases on `edge` for the external proxy: `receipt-api:8000` · `receipt-n8n:5678`.
+Stable aliases on `edge` for the external proxy:
+
+| Alias | Port | Role |
+|-------|------|------|
+| `receipt-api` | 8000 | API (`/health`, `/analytics/*`, `/questions`) |
+| `receipt-n8n` | 5678 | n8n operator UI |
+| `receipt-ux` | 8080 | Visitor demo UX |
+
+⚠️ **AI Doc Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (same idea as this repo’s `handle_path /app*`). Until that upstream switch lands, `/app` may still hit the previous target — backends are ready on `edge` either way.
 
 ### 4. Verify (after AI Doc site block is live)
 
-End-to-end HTTPS is owned by ai-doc. After their Caddyfile includes this hostname:
+End-to-end HTTPS + invite gate are owned by ai-doc / roxanatapia-web. Public visitor path:
+
+`https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (demo UX).
 
 ```bash
 curl -sk -o /dev/null -w "%{http_code}\n" https://receipt-intelligence.roxanatapia.dev/health
@@ -122,6 +135,12 @@ curl -sk -o /dev/null -w "%{http_code}\n" https://receipt-intelligence.roxanatap
 curl -sk -u demo:YOUR_EDGE_PASSWORD \
   https://receipt-intelligence.roxanatapia.dev/health
 # {"status":"ok"}
+
+# After /app* → receipt-ux:
+curl -sk -u demo:YOUR_EDGE_PASSWORD \
+  -o /dev/null -w "%{http_code}\n" \
+  https://receipt-intelligence.roxanatapia.dev/app/
+# 200
 ```
 
 Until the site block lands, confirm backends from another container on `edge`:
@@ -129,6 +148,8 @@ Until the site block lands, confirm backends from another container on `edge`:
 ```bash
 docker run --rm --network edge curlimages/curl:8.5.0 \
   -sS http://receipt-api:8000/health
+docker run --rm --network edge curlimages/curl:8.5.0 \
+  -sS http://receipt-ux:8080/health
 ```
 
 ---
@@ -200,11 +221,13 @@ chmod +x deploy/generate-caddy-auth.sh deploy/generate-ip-tls.sh
 
 Writes `deploy/caddy-basicauth.conf` (gitignored). Re-run to rotate the password. Edge basic auth is separate from n8n’s own `N8N_BASIC_AUTH_*`.
 
-### 4. Start the stack with Caddy
+### 4. Seed demo data and start the stack with Caddy
 
 From the **repo root**:
 
 ```bash
+./deploy/seed-demo-data.sh
+
 docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.caddy.yml up --build -d
 
@@ -212,7 +235,7 @@ docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.caddy.yml ps
 ```
 
-Expect: `api` healthy · `n8n` Up · `caddy` Up. Host should **not** publish 8000/5678.
+Expect: `api` healthy · `n8n` Up · `ux` Up · `caddy` Up. Host should **not** publish 8000/5678/8080.
 
 Set `COMPOSE_PROJECT_NAME=receipt-intelligence-demo` in `.env` so you can omit `-p` later. Always pass `--env-file .env` when the first compose file lives under `deploy/`.
 
@@ -222,11 +245,18 @@ Set `COMPOSE_PROJECT_NAME=receipt-intelligence-demo` in `.env` so you can omit `
 # 401 without credentials, 200 with (API health via edge)
 curl -sk -o /dev/null -w "%{http_code}\n" https://YOUR_DOMAIN/health
 curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOMAIN/health
+
+# Visitor UX (path prefix stripped by Caddy → ux:8080)
+curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOMAIN/app/
 ```
 
-Open `https://YOUR_DOMAIN/docs` (API) or `https://YOUR_DOMAIN/n8n/` (n8n UI) and complete the browser basic-auth prompt.
+| Path | Surface |
+|------|---------|
+| `/app` | **Visitor demo UX** (pick example → spending → ask) |
+| `/health`, `/docs`, `/analytics/*`, `/questions` | API |
+| `/n8n/` | n8n operator UI |
 
-Until [issue #3](https://github.com/RoxanaTapia/receipt-intelligence-demo/issues/3), `/` proxies to the API. Demo UX will take the visitor surface later.
+Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
 
 ---
 

@@ -28,12 +28,22 @@ Prerequisites: Docker (Compose v2), and the API sibling cloned next to this repo
 
 ```bash
 cp .env.example .env
-# set N8N_BASIC_AUTH_PASSWORD (and ANTHROPIC_API_KEY if you will run workflows / Q&A)
+# set N8N_BASIC_AUTH_PASSWORD (and ANTHROPIC_API_KEY for Q&A / workflows)
+
+./deploy/seed-demo-data.sh
 
 docker compose --env-file .env -f deploy/docker-compose.yml up --build -d
 
 curl -s http://localhost:8000/health
 # {"status":"ok"}
+
+curl -s http://localhost:8080/health
+# {"status":"ok"}
+
+# One question against seeded receipts (needs ANTHROPIC_API_KEY)
+curl -s http://localhost:8000/questions \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"How much did I spend on drinks in May 2026?"}'
 
 # Optional: confirm n8n can reach the API on the Compose network
 docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \
@@ -42,11 +52,14 @@ docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \
 
 | Service | Host URL |
 |---------|----------|
+| **Demo UX** | http://localhost:8080/ |
 | API | http://localhost:8000/docs |
 | n8n | http://localhost:5678 |
 
-If host port `5678` is already in use (e.g. sibling n8n compose), set `N8N_HOST_PORT` in `.env` before `up` (and match `WEBHOOK_URL`).
+If host port `5678` or `8080` is already in use, set `N8N_HOST_PORT` / `UX_PORT` in `.env` before `up`.
 
-Shared categorized JSON lives in `data/receipts/` (n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, n8n uses `API_BASE_URL=http://api:8000` (service DNS).
+Shared categorized JSON lives in `data/receipts/` (seed script + n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, n8n and the UX use `http://api:8000` (service DNS).
 
-Product workflow import and sample PDFs: [n8n integration runbook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md).
+**Public portfolio path:** invite/Login at `https://receipt-intelligence.roxanatapia.dev/` → visitor UX under `/app` (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+
+VPS / HTTPS: [DEPLOYMENT.md](DEPLOYMENT.md). Product workflow import and sample PDFs: [n8n integration runbook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md).
