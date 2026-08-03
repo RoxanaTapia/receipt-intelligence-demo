@@ -1,0 +1,47 @@
+# HTTPS reverse proxy overlay — run from the **repo root**:
+#
+#   docker compose --env-file .env -p receipt-intelligence-demo \
+#     -f deploy/docker-compose.yml -f deploy/docker-compose.caddy.yml up --build -d
+#
+# Why these flags:
+# - `--env-file .env` loads SITE_ADDRESS / ACME_EMAIL / CADDYFILE from the repo-root .env
+#   (Compose does not auto-load root .env when the first -f file is under deploy/).
+# - `-p receipt-intelligence-demo` keeps volume names stable (avoid project name "deploy").
+# - Volume paths below are relative to this file's directory (deploy/).
+#   Do NOT use `--project-directory` at repo root with these relative paths, or
+#   Docker may create empty host directories named Caddyfile / caddy-basicauth.conf.
+#
+# App ports stay on the internal Compose network; only Caddy publishes 80/443.
+# Generate auth first: ./deploy/generate-caddy-auth.sh demo 'your-password'
+
+services:
+  api:
+    ports: !override []
+
+  n8n:
+    ports: !override []
+
+  caddy:
+    image: caddy:2.9.1-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ${CADDYFILE:-./Caddyfile}:/etc/caddy/Caddyfile:ro
+      - ./caddy-basicauth.conf:/etc/caddy/caddy-basicauth.conf:ro
+      - ./certs:/etc/caddy/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+
+volumes:
+  caddy_data:
+  caddy_config:

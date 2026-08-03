@@ -1,0 +1,17 @@
+# Domain mode: Let's Encrypt via SITE_ADDRESS (set in repo-root .env).
+# Generate auth: ./deploy/generate-caddy-auth.sh demo 'your-password'
+#
+# Visitor surface today: API at / (demo UX swaps in via issue #3).
+# Operator path: n8n under /n8n* — set N8N_PATH=/n8n and WEBHOOK_URL accordingly.
+
+{$SITE_ADDRESS} {
+	import /etc/caddy/caddy-basicauth.conf
+
+	handle /n8n* {
+		reverse_proxy n8n:5678
+	}
+
+	handle {
+		reverse_proxy api:8000
+	}
+}
