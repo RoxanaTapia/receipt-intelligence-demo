@@ -21,15 +21,21 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://api:8000")
 DEMO_START_DATE = os.getenv("DEMO_START_DATE", "2026-05-01")
 DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-05-31")
 # Public URL prefix as seen by the browser (e.g. "/app" behind Caddy handle_path).
-# Keep empty for local host publish on :8080.
+# Keep empty for local host publish on :8080. Shared-edge / solo Caddy set /app.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
+# Inlined so the demo stays styled even if /app/static/* is mis-proxied.
+DEMO_CSS = (APP_DIR / "static" / "demo.css").read_text(encoding="utf-8")
 
 
 def public_url(path: str = "/") -> str:
-    """Build a browser-facing path that keeps the /app prefix when configured."""
-    if not path.startswith("/"):
-        path = f"/{path}"
-    return f"{ROOT_PATH}{path}" if ROOT_PATH else path
+    """Browser-facing URL under ROOT_PATH, or path-relative when ROOT_PATH is empty."""
+    norm = path if path.startswith("/") else f"/{path}"
+    if ROOT_PATH:
+        return f"{ROOT_PATH}{norm}"
+    # Relative to the current directory URL (works when the page is /app/).
+    if norm == "/":
+        return "./"
+    return norm.lstrip("/")
 
 
 app = FastAPI(title="Receipt Intelligence Demo", root_path=ROOT_PATH)
@@ -43,6 +49,7 @@ def _base_context(request: Request) -> dict:
         "request": request,
         "root_path": ROOT_PATH,
         "public_url": public_url,
+        "demo_css": DEMO_CSS,
         "demo_start": DEMO_START_DATE,
         "demo_end": DEMO_END_DATE,
     }
