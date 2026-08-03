@@ -1,18 +1,29 @@
 # Deployment Guide
 
-Single-VM Hetzner path for the Receipt Intelligence demo umbrella: Docker Compose (n8n writer + API reader) behind Caddy (HTTPS + basic auth).
+Single-VM path for the Receipt Intelligence demo umbrella: Docker Compose (n8n writer + API reader) with HTTPS at the edge.
 
-Product logic stays in the sibling repos; this guide covers **firewall → `.env` → auth → up → verify**.
+Product logic stays in the sibling repos; this guide covers **firewall → `.env` → up → verify**.
+
+## Which path?
+
+| Path | When | Compose files | Who owns 80/443 |
+|------|------|---------------|-----------------|
+| **[Shared host with AI Doc](#-shared-host-with-ai-doc-caddy)** | Portfolio VPS already runs [ai-doc-to-chat](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline) Caddy | base + `docker-compose.shared-edge.yml` | **AI Doc Caddy** (do not start this repo’s Caddy) |
+| **[Solo VPS (own Caddy)](#-deploy-on-hetzner-solo-caddy)** | Dedicated box for this demo only | base + `docker-compose.caddy.yml` | **This repo’s Caddy** |
+
+Public hostname for the portfolio shared-host path: `https://receipt-intelligence.roxanatapia.dev`
 
 ```mermaid
 flowchart TD
   prep[Prepare VPS + firewall] --> env[Clone + configure .env]
-  env --> auth[Generate basic auth]
-  auth --> up[Compose + Caddy up]
-  up --> verify[Verify HTTPS + login]
+  env --> choose{Edge owner?}
+  choose -->|Shared host| edge[Join network edge · no receipt Caddy]
+  choose -->|Solo VPS| auth[Generate basic auth · start receipt Caddy]
+  edge --> verify[Verify via public hostname]
+  auth --> verify
 ```
 
-> **Takeaway:** On the VPS path, publish only **22 / 80 / 443**. App ports stay on the Compose network; Caddy is the public edge.
+> **Takeaway:** Publish only **22 / 80 / 443**. App ports stay off the public internet. On the AI Doc VPS, **never** run a second Caddy from this repo.
 
 ---
 
@@ -51,11 +62,78 @@ Disk: ~20 GB+ free for images and receipt JSON under `data/receipts/`.
 | **8000** | No (VPS + Caddy) | API — Compose network only |
 | **5678** | No (VPS + Caddy) | n8n — Compose network only |
 
-Local smoke **without** Caddy still publishes API/n8n on the host (see [README](README.md)). The Caddy overlay strips those host publishes with `ports: !override []`.
+Local smoke **without** Caddy still publishes API/n8n on the host (see [README](README.md)). The Caddy and shared-edge overlays strip those host publishes with `ports: !override []`.
 
 ---
 
-## 🚀 Deploy on Hetzner (happy path)
+## 🔗 Shared host with AI Doc Caddy
+
+Use this on the portfolio VPS where AI Doc already terminates TLS. Receipt containers join Docker network `edge`; AI Doc’s Caddy reverse-proxies the hostname (see [ai-doc #111](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/issues/111)).
+
+⚠️ **Do not** run `deploy/docker-compose.caddy.yml` on that host — it will fight AI Doc for ports 80/443.
+
+### 1. Network (once)
+
+```bash
+docker network create edge   # ignore error if it already exists
+```
+
+### 2. Clone and configure
+
+Same sibling layout as the solo path. In `.env` for **shared host**:
+
+```bash
+N8N_BASIC_AUTH_PASSWORD=change-me-strong
+ANTHROPIC_API_KEY=          # if you will run workflows / Q&A
+
+COMPOSE_PROJECT_NAME=receipt-intelligence-demo
+
+# Public URL behind AI Doc Caddy — not this repo’s SITE_ADDRESS
+N8N_HOST=receipt-intelligence.roxanatapia.dev
+N8N_PROTOCOL=https
+N8N_PATH=/n8n
+WEBHOOK_URL=https://receipt-intelligence.roxanatapia.dev/n8n/
+```
+
+Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset. Edge basic auth and TLS live in the **ai-doc** project.
+
+### 3. Start api + n8n on `edge` (no receipt Caddy)
+
+```bash
+docker compose --env-file .env -p receipt-intelligence-demo \
+  -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml up --build -d
+
+docker compose --env-file .env -p receipt-intelligence-demo \
+  -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml ps
+```
+
+Expect: `api` healthy · `n8n` Up · **no** `caddy` service · host does **not** publish 8000/5678.
+
+Stable aliases on `edge` for the external proxy: `receipt-api:8000` · `receipt-n8n:5678`.
+
+### 4. Verify (after AI Doc site block is live)
+
+End-to-end HTTPS is owned by ai-doc. After their Caddyfile includes this hostname:
+
+```bash
+curl -sk -o /dev/null -w "%{http_code}\n" https://receipt-intelligence.roxanatapia.dev/health
+# 401 without edge credentials
+
+curl -sk -u demo:YOUR_EDGE_PASSWORD \
+  https://receipt-intelligence.roxanatapia.dev/health
+# {"status":"ok"}
+```
+
+Until the site block lands, confirm backends from another container on `edge`:
+
+```bash
+docker run --rm --network edge curlimages/curl:8.5.0 \
+  -sS http://receipt-api:8000/health
+```
+
+---
+
+## 🚀 Deploy on Hetzner (solo Caddy)
 
 ### 1. Prepare the server
 
@@ -206,7 +284,9 @@ To exercise Caddy locally, use IP-interim with `127.0.0.1` (self-signed) and the
 | Browser TLS warning (domain mode) | DNS not pointing here / ACME failed | A/AAAA → this VM; `docker compose … logs caddy` |
 | 502 after login | Backend not ready | From stack: `exec` into a container and `wget -qO- http://api:8000/health` |
 | `caddy-basicauth.conf: is a directory` | Bad bind path / project-directory misuse | Run compose from repo root **without** `--project-directory`; regenerate auth file |
-| :8000 or :5678 reachable from the internet | Caddy overlay not applied | Confirm both `-f` files and `ports: !override []` |
+| :8000 or :5678 reachable from the internet | Caddy / shared-edge overlay not applied | Confirm the right `-f` overlay and `ports: !override []` |
+| `network edge declared as external but could not be found` | Network not created | `docker network create edge` |
+| Port 80/443 already allocated | Receipt Caddy started next to AI Doc | Stop receipt Caddy; use [shared-host](#-shared-host-with-ai-doc-caddy) overlay only |
 
 ---
 
@@ -217,4 +297,5 @@ To exercise Caddy locally, use IP-interim with `127.0.0.1` (self-signed) and the
 | [README.md](README.md) | Local compose smoke |
 | [AGENTS.md](AGENTS.md) | Ship order and agent workflow |
 | [n8n integration](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md) | Workflow import / sample PDFs |
-| [ai-doc deploy pattern](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) | Reference Compose + Caddy layout |
+| [ai-doc deploy pattern](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) | Shared-host Caddy owner on the portfolio VPS |
+| [ai-doc #111](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/issues/111) | Site block for `receipt-intelligence.roxanatapia.dev` |
