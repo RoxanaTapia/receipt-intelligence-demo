@@ -1,0 +1,27 @@
+{
+  "date": "2026-05-19",
+  "merchant": "REWE",
+  "total": 5.66,
+  "extracted_at": "2026-05-19T13:29:44.164Z",
+  "categorized_at": "2026-05-19T13:29:44.164Z",
+  "line_items": [
+    {
+      "category": "drinks",
+      "description": "APFELSAFT",
+      "price": 1.78,
+      "quantity": 2
+    },
+    {
+      "category": "other",
+      "description": "PFAND",
+      "price": 0.3,
+      "quantity": 2
+    },
+    {
+      "category": "food",
+      "description": "SW PUTE EI",
+      "price": 1.99,
+      "quantity": 1
+    }
+  ]
+}
