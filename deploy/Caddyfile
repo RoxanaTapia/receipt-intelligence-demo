@@ -14,7 +14,8 @@
 
 	redir /app /app/ 308
 
-	handle_path /app* {
+	# /app/* (not /app*) so strip leaves /static/..., /ask, etc.
+	handle_path /app/* {
 		reverse_proxy ux:8080
 	}
 
