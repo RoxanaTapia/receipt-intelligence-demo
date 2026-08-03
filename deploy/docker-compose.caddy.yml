@@ -23,6 +23,9 @@ services:
 
   ux:
     ports: !override []
+    environment:
+      # Browser-facing prefix; Caddy handle_path strips /app before proxying.
+      ROOT_PATH: ${UX_ROOT_PATH:-/app}
 
   caddy:
     image: caddy:2.9.1-alpine
