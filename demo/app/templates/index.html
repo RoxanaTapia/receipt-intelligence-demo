@@ -4,8 +4,8 @@
 <p class="brand">Receipt Intelligence</p>
 <h1>Try the demo</h1>
 <p class="lede">
-  Pick an example receipt, review spending across the seeded set, and ask a budget question —
-  no n8n editor required.
+  Download a sample receipt, upload it to run live ingest, review categories, and ask a budget
+  question — no n8n editor required.
 </p>
 
 {% if api_ok %}
@@ -24,9 +24,77 @@
 </div>
 {% endif %}
 
-<div class="layout">
+<section class="panel live-panel">
+  <h2>Live sample PDF</h2>
+  <p class="meta">
+    1 · Download the demo sample · 2 · Upload that same file · 3 · n8n ingests it · 4 · See categories below
+  </p>
+  {% if sample_ready %}
+  <p class="live-actions">
+    <a class="button secondary" href="{{ public_url('/sample.pdf') }}">Download {{ sample_filename }}</a>
+  </p>
+  {% else %}
+  <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
+  {% endif %}
+  <form
+    class="ask-form"
+    method="post"
+    action="{{ public_url('/ingest') }}"
+    enctype="multipart/form-data"
+  >
+    {% if selected %}
+    <input type="hidden" name="example" value="{{ selected.id }}" />
+    {% endif %}
+    <label for="pdf">Upload the demo sample PDF</label>
+    <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
+    <button type="submit">Run live ingest</button>
+  </form>
+  {% if live_error %}
+  <div class="banner err" style="margin-top: 1rem">{{ live_error }}</div>
+  {% endif %}
+  {% if ingest_ok and live_meta %}
+  <div class="banner ok" style="margin-top: 1rem">
+    Ingest complete
+    {% if live_meta.persistedFilename %}
+    · <code>{{ live_meta.persistedFilename }}</code>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% if live_receipt %}
+  <div style="margin-top: 1rem">
+    <h3 class="live-heading">{{ live_receipt.merchant }}</h3>
+    <p class="meta">
+      {{ live_receipt.date }} · total
+      <span class="num">{{ '%.2f'|format(live_receipt.total) }} EUR</span>
+      · live from ingest
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Category</th>
+          <th class="num">Qty</th>
+          <th class="num">EUR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in live_receipt.line_items %}
+        <tr>
+          <td>{{ line.description }}</td>
+          <td>{{ line.category }}</td>
+          <td class="num">{{ line.quantity }}</td>
+          <td class="num">{{ '%.2f'|format(line.price) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
+<div class="layout" style="margin-top: 1.25rem">
   <aside class="panel">
-    <h2>Examples</h2>
+    <h2>Seeded examples</h2>
     {% if examples %}
     <ul class="example-list">
       {% for item in examples %}
@@ -52,6 +120,7 @@
       <p class="meta">
         {{ selected.receipt.date }} · total
         <span class="num">{{ '%.2f'|format(selected.receipt.total) }} EUR</span>
+        · seeded
       </p>
       <table>
         <thead>
@@ -128,7 +197,8 @@
 </div>
 
 <p class="note">
-  Live PDF upload is out of scope for this demo slice. Public path after invite:
-  <code>/app</code> on the portfolio host.
+  Visitor path: download → upload → live ingest → answer under <code>/app</code>.
+  Operators import/activate the ingest workflow under <code>/n8n*</code>
+  (webhook must be <strong>Active</strong>). UX calls n8n on the Compose network only.
 </p>
 {% endblock %}
