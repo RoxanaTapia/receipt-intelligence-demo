@@ -21,10 +21,10 @@ Same public hostname, two audiences:
 
 | Path | Who | How |
 |------|-----|-----|
-| **Visitor** | Portfolio guests | Open the [live demo](https://receipt-intelligence.roxanatapia.dev/) → invite or Login → **`/app`** (pick an example → spending → ask a question). Invites are for `/app` only. |
-| **Operator** | Maintainers | **`/n8n*`** — n8n UI (edge Basic Auth; n8n may also enforce its own credentials). Full VPS steps live in [DEPLOYMENT.md](DEPLOYMENT.md). |
+| **Visitor** | Portfolio guests | Open the [live demo](https://receipt-intelligence.roxanatapia.dev/) → invite or Login → **`/app`**: download the sample PDF → upload it → see live categories → ask a question (seeded examples still available). Invites are for `/app` only. |
+| **Operator** | Maintainers | **`/n8n*`** — n8n UI (edge Basic Auth; n8n may also enforce its own credentials). Import/activate **Receipt — Ingest PDF** so `POST /webhook/receipt-demo-ingest` is live. Full VPS steps: [DEPLOYMENT.md](DEPLOYMENT.md). |
 
-You do **not** need the n8n editor to try the visitor demo.
+You do **not** need the n8n editor to try the visitor demo. The UX calls n8n on the Compose network only (not the browser).
 
 ## Architecture (portfolio / shared host)
 
@@ -41,6 +41,7 @@ flowchart LR
 
   browser --> edge
   edge -->|/app| ux
+  ux -->|webhook sample id| n8n
   ux --> api
   api --> disk
   n8n -->|writes| disk
@@ -100,7 +101,9 @@ docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \
 
 If host port `5678` or `8080` is already in use, set `N8N_HOST_PORT` / `UX_PORT` in `.env` before `up`.
 
-Shared categorized JSON lives in `data/receipts/` (seed script + n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, n8n and the UX use `http://api:8000` (service DNS).
+Shared categorized JSON lives in `data/receipts/` (seed script + n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, the UX uses `http://api:8000` and triggers live ingest at `N8N_INGEST_WEBHOOK_URL` (default `http://n8n:5678/webhook/receipt-demo-ingest`). Demo sample PDFs are vendored under `demo/samples/` and mounted into n8n at `/home/node/.n8n-files/samples`.
+
+Live PDF path needs the ingest workflow **Active** in n8n (see [n8n demo webhook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/n8n-setup.md#demo-sample-webhook)).
 
 ## Agent workflow
 

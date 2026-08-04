@@ -126,7 +126,7 @@ Stable aliases on `edge` for the external proxy:
 
 End-to-end HTTPS + invite gate are owned by ai-doc / roxanatapia-web. Public visitor path:
 
-`https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (demo UX).
+`https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow under `/n8n*`.
 
 ```bash
 curl -sk -o /dev/null -w "%{http_code}\n" https://receipt-intelligence.roxanatapia.dev/health
@@ -252,11 +252,13 @@ curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOM
 
 | Path | Surface |
 |------|---------|
-| `/app` | **Visitor demo UX** (pick example → spending → ask) |
+| `/app` | **Visitor demo UX** (download sample → upload → live ingest → spending → ask) |
 | `/health`, `/docs`, `/analytics/*`, `/questions` | API |
 | `/n8n/` | n8n operator UI |
 
 Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
+
+**Live sample PDF:** visitors download → upload under `/app`. The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network (`http://n8n:5678/webhook/receipt-demo-ingest` by default). Import and **Activate** the ingest workflow in `/n8n*` or the webhook returns 404. Sample PDFs are mounted from `demo/samples/` into n8n — see [n8n demo webhook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/n8n-setup.md#demo-sample-webhook).
 
 ---
 

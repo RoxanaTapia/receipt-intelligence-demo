@@ -51,7 +51,7 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 |------|----------------|-------|
 | `milestone-orchestrator` | Coordinates shipping, branches, commits | Only agent allowed to commit |
 | `deploy-engineer` | Compose, Caddy, volumes, networking, `.env.example`, Hetzner infra docs | Primary for #1, #2 |
-| `demo-ux-engineer` | Thin visitor UI + seed/smoke wiring to the API | Primary for #3, #5 |
+| `demo-ux-engineer` | Thin visitor UI + seed/smoke + live sample ingest wiring | Primary for #3, #5 |
 | `docs-writer` | README, `DEPLOYMENT.md`, `docs/` | `/document`; portfolio prose for #4 |
 | `verifier` | Quality checks and acceptance criteria before PR | `/verify` |
 | `software-engineering-professor` | Teaches issues; portable deploy/demo mental models | `/lecture-on-issue`; does not ship |
