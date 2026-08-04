@@ -56,6 +56,8 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ../data/receipts:/home/node/.n8n-files/receipts
+      # Allowlisted demo PDFs for webhook ingest (same bytes visitors download from UX).
+      - ../demo/samples:/home/node/.n8n-files/samples:ro
     depends_on:
       api:
         condition: service_healthy
@@ -72,15 +74,20 @@ services:
       API_BASE_URL: ${UX_API_BASE_URL:-http://api:8000}
       RECEIPT_DATA_PATH: /data/receipts
       SEED_DIR: /app/seed
+      SAMPLES_DIR: /app/samples
       DEMO_START_DATE: ${DEMO_START_DATE:-2026-05-01}
       DEMO_END_DATE: ${DEMO_END_DATE:-2026-05-31}
       # Empty when Caddy (or ai-doc) strips /app via handle_path.
       ROOT_PATH: ${UX_ROOT_PATH:-}
+      # Internal Compose DNS — not a public browser URL. Workflow must be Active.
+      N8N_INGEST_WEBHOOK_URL: ${N8N_INGEST_WEBHOOK_URL:-http://n8n:5678/webhook/receipt-demo-ingest}
     volumes:
       - ../data/receipts:/data/receipts:ro
     depends_on:
       api:
         condition: service_healthy
+      n8n:
+        condition: service_started
 
 volumes:
   n8n_data:
