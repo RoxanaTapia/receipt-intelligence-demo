@@ -66,7 +66,7 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 | #2 Caddy + `DEPLOYMENT.md` | `deploy-engineer` | `docs-writer` |
 | #3 Demo UX v1 + seed | `demo-ux-engineer` | `deploy-engineer` (Compose service) |
 | #4 README first paint | `docs-writer` | — |
-| #5 Live PDF via webhook | `demo-ux-engineer` | cross-repo n8n only if webhook missing |
+| #5 Live PDF (download → upload → ingest) | `demo-ux-engineer` | `deploy-engineer` (webhook URL / samples mount) |
 
 ## Workflow
 

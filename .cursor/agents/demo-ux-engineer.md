@@ -27,12 +27,12 @@ You are the **demo-ux-engineer** for `receipt-intelligence-demo`.
 
 ## Standards
 
-- **Demo done** = visitor can pick an example receipt, see spending context, ask a budget question — without opening the n8n editor
-- Call the API over Compose service DNS when running in stack; document local override if needed
-- Prefer thin UI: one job per screen, clear empty/error states when API is down
+- **Demo done (v1)** = visitor can pick an example receipt, see spending context, ask a budget question — without opening the n8n editor
+- **Demo done (v2 / #5)** = download sample → upload (validated) → live n8n ingest → categories / Q&A, still without the n8n canvas
+- Call the API (and n8n webhook) over Compose service DNS when running in stack; document local override if needed
+- Prefer thin UI: one job per screen, clear empty/error states when API/n8n is down
 - Follow `.cursor/rules/elegant-minimal-python.mdc` for Python UX code
-- Seed data must be public-safe (no real PII); align with n8n sample conventions when reusing fixtures
-- v2 (#5): webhook → n8n ingest is optional later — do not pull it into v1
+- Seed data and sample PDFs must be public-safe (no real PII); align with n8n sample conventions when reusing fixtures
 
 ## Workflow
 
