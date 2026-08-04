@@ -258,6 +258,50 @@ th {
   color: var(--err);
 }
 
+.banner.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.live-panel {
+  margin-bottom: 0.25rem;
+}
+
+.live-actions {
+  margin: 0 0 0.85rem;
+}
+
+.live-heading {
+  font-size: 1.05rem;
+  margin: 0 0 0.35rem;
+}
+
+.button {
+  display: inline-block;
+  text-decoration: none;
+  border-radius: 6px;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.button.secondary {
+  background: #fff;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.button.secondary:hover {
+  background: var(--ok-bg);
+}
+
+.ask-form input[type="file"] {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 .note {
   margin-top: 1.5rem;
   color: var(--muted);
