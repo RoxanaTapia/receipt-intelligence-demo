@@ -67,7 +67,7 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 | #3 Demo UX v1 + seed | `demo-ux-engineer` | `deploy-engineer` (Compose service) |
 | #4 README first paint | `docs-writer` | — |
 | #5 Live PDF (download → upload → ingest) | `demo-ux-engineer` | `deploy-engineer` (webhook URL / samples mount) |
-| #18 Harden live ingest /n8n access | `demo-ux-engineer` + `deploy-engineer` | ai-doc Caddy for `/n8n*` (linked PR) |
+| #18 Harden live ingest /n8n access | `demo-ux-engineer` + `deploy-engineer` | n8n subdomain + `N8N_PATH=/` (ai-doc Caddy) |
 
 ## Workflow
 

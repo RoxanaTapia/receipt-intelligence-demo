@@ -166,7 +166,7 @@ async def ingest(
             example=example or None,
             live_error=(
                 f"{exc} — Import alone is not enough: the ingest workflow must be "
-                "Active/Published in /n8n* (see DEPLOYMENT.md § Live sample PDF)."
+                "Active/Published in n8n (see DEPLOYMENT.md § Live sample PDF)."
             ),
         )
 

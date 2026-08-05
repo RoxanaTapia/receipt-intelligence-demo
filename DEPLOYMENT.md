@@ -89,11 +89,12 @@ ANTHROPIC_API_KEY=          # if you will run workflows / Q&A
 
 COMPOSE_PROJECT_NAME=receipt-intelligence-demo
 
-# Public URL behind AI Doc Caddy — not this repo’s SITE_ADDRESS
-N8N_HOST=receipt-intelligence.roxanatapia.dev
+# Public URL behind AI Doc Caddy — n8n on its own host (root path).
+# DNS: n8n.receipt-intelligence.roxanatapia.dev → same VPS as the demo host.
+N8N_HOST=n8n.receipt-intelligence.roxanatapia.dev
 N8N_PROTOCOL=https
-N8N_PATH=/n8n/
-WEBHOOK_URL=https://receipt-intelligence.roxanatapia.dev/n8n/
+N8N_PATH=
+WEBHOOK_URL=https://n8n.receipt-intelligence.roxanatapia.dev/
 N8N_BASIC_AUTH_ACTIVE=false
 ```
 
@@ -121,13 +122,13 @@ Stable aliases on `edge` for the external proxy:
 | `receipt-n8n` | 5678 | n8n operator UI |
 | `receipt-ux` | 8080 | Visitor demo UX |
 
-⚠️ **AI Doc Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). For `/n8n*`, use plain **`handle /n8n*`** (**do not** strip) with sibling `N8N_PATH=/n8n/` — stripping caused `/n8n/n8n/` login 404s.
+⚠️ **AI Doc Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). Serve n8n on **`n8n.receipt-intelligence.roxanatapia.dev`** at `/` (sibling `N8N_PATH=` empty). Path-prefix `/n8n*` on the demo host hits n8n’s known login redirect bug — prefer the subdomain.
 
 ### 4. Verify (after AI Doc site block is live)
 
 End-to-end HTTPS + invite gate are owned by ai-doc / roxanatapia-web. Public visitor path:
 
-`https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow under `/n8n*`.
+`https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow at `https://n8n.receipt-intelligence.roxanatapia.dev/` (edge Basic Auth).
 
 ```bash
 curl -sk -o /dev/null -w "%{http_code}\n" https://receipt-intelligence.roxanatapia.dev/health
@@ -204,11 +205,12 @@ COMPOSE_PROJECT_NAME=receipt-intelligence-demo
 SITE_ADDRESS=demo.example.com
 ACME_EMAIL=you@example.com
 
-# Public URLs for n8n behind Caddy at /n8n*
-N8N_HOST=demo.example.com
+# Public URLs for n8n — prefer a dedicated host at root (avoids n8n path bugs).
+# Path mode (N8N_PATH=/n8n/) still works for solo Caddy if you accept the login quirk.
+N8N_HOST=n8n.demo.example.com
 N8N_PROTOCOL=https
-N8N_PATH=/n8n/
-WEBHOOK_URL=https://demo.example.com/n8n/
+N8N_PATH=
+WEBHOOK_URL=https://n8n.demo.example.com/
 N8N_BASIC_AUTH_ACTIVE=false
 ```
 
@@ -256,7 +258,7 @@ curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOM
 |------|---------|
 | `/app` | **Visitor demo UX** (download sample → upload → live ingest → spending → ask) |
 | `/health`, `/docs`, `/analytics/*`, `/questions` | API |
-| `/n8n/` | n8n operator UI |
+| n8n host `/` (portfolio) or `/n8n/` (solo path mode) | n8n operator UI |
 
 Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
 
@@ -266,7 +268,7 @@ Visitors download → upload under `/app`. The UX calls `N8N_INGEST_WEBHOOK_URL`
 
 After any n8n volume reset:
 
-1. Open `/n8n*` (edge Basic Auth, then n8n **owner** login — keep `N8N_BASIC_AUTH_ACTIVE=false` so you are not challenged twice).
+1. Open the n8n host (portfolio: `https://n8n.receipt-intelligence.roxanatapia.dev/`; solo path mode: `/n8n*`). Edge Basic Auth, then n8n **owner** login — keep `N8N_BASIC_AUTH_ACTIVE=false` so you are not challenged twice.
 2. Import [`receipt-pdf-ingest.json`](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/workflows/receipt-pdf-ingest.json) if missing.
 3. Toggle the workflow **Active / Published** (import alone is not enough — inactive workflows do not register `/webhook/receipt-demo-ingest`).
 4. Smoke from the UX container:
@@ -300,7 +302,7 @@ CADDYFILE=./Caddyfile.ip
 # Optional: point n8n public URL at the IP (still path-prefixed)
 N8N_HOST=YOUR_VPS_IP
 N8N_PROTOCOL=https
-N8N_PATH=/n8n
+N8N_PATH=/n8n/
 WEBHOOK_URL=https://YOUR_VPS_IP/n8n/
 ```
 
