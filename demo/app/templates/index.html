@@ -24,10 +24,11 @@
 </div>
 {% endif %}
 
-<section class="panel live-panel">
+<section class="panel live-panel" id="live-ingest">
   <h2>Live sample PDF</h2>
   <p class="meta">
-    1 · Download the demo sample · 2 · Upload that same file · 3 · n8n ingests it · 4 · See categories below
+    1 · Download the demo sample · 2 · Upload that same file · 3 · n8n ingests it · 4 · See the
+    <strong>live result</strong> below (separate from seeded examples)
   </p>
   {% if sample_ready %}
   <p class="live-actions">
@@ -50,23 +51,34 @@
     <button type="submit">Run live ingest</button>
   </form>
   {% if live_error %}
-  <div class="banner err" style="margin-top: 1rem">{{ live_error }}</div>
+  <div class="banner err" style="margin-top: 1rem" role="alert">{{ live_error }}</div>
   {% endif %}
   {% if ingest_ok and live_meta %}
-  <div class="banner ok" style="margin-top: 1rem">
-    Ingest complete
+  <div class="banner ok" style="margin-top: 1rem" id="live-result" role="status">
+    <span class="live-badge">Live ingest</span>
+    Succeeded
     {% if live_meta.persistedFilename %}
-    · <code>{{ live_meta.persistedFilename }}</code>
+    · wrote <code>{{ live_meta.persistedFilename }}</code>
+    {% endif %}
+    {% if live_meta.merchant %}
+    · {{ live_meta.merchant }}
     {% endif %}
   </div>
+  <p class="meta">
+    Re-running the same sample may update the same file (content hash). The block below is from this
+    run — not the seeded list.
+  </p>
   {% endif %}
   {% if live_receipt %}
-  <div style="margin-top: 1rem">
-    <h3 class="live-heading">{{ live_receipt.merchant }}</h3>
+  <div class="live-result-panel" {% if not ingest_ok %}id="live-result"{% endif %}>
+    <h3 class="live-heading">
+      {{ live_receipt.merchant }}
+      <span class="live-badge">Live</span>
+    </h3>
     <p class="meta">
       {{ live_receipt.date }} · total
       <span class="num">{{ '%.2f'|format(live_receipt.total) }} EUR</span>
-      · live from ingest
+      · from this ingest run
     </p>
     <table>
       <thead>
@@ -95,6 +107,7 @@
 <div class="layout" style="margin-top: 1.25rem">
   <aside class="panel">
     <h2>Seeded examples</h2>
+    <p class="meta">Preloaded fixtures (not from the live button above).</p>
     {% if examples %}
     <ul class="example-list">
       {% for item in examples %}
@@ -197,8 +210,15 @@
 </div>
 
 <p class="note">
-  Visitor path: download → upload → live ingest → answer under <code>/app</code>.
-  Operators import/activate the ingest workflow under <code>/n8n*</code>
-  (webhook must be <strong>Active</strong>). UX calls n8n on the Compose network only.
+  Visitor path: download → upload → live ingest → answer under <code>/app</code>
+  (browser never talks to n8n). Operators: import <strong>and Active/Publish</strong>
+  <code>Receipt — Ingest PDF</code> under <code>/n8n*</code> or live ingest returns
+  “webhook not registered”. Keep <code>N8N_BASIC_AUTH_ACTIVE=false</code> so only edge Basic Auth
+  challenges once.
 </p>
+{% if ingest_ok %}
+<script>
+  document.getElementById("live-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+</script>
+{% endif %}
 {% endblock %}

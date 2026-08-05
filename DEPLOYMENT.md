@@ -92,8 +92,9 @@ COMPOSE_PROJECT_NAME=receipt-intelligence-demo
 # Public URL behind AI Doc Caddy — not this repo’s SITE_ADDRESS
 N8N_HOST=receipt-intelligence.roxanatapia.dev
 N8N_PROTOCOL=https
-N8N_PATH=/n8n
+N8N_PATH=/n8n/
 WEBHOOK_URL=https://receipt-intelligence.roxanatapia.dev/n8n/
+N8N_BASIC_AUTH_ACTIVE=false
 ```
 
 Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset. Edge basic auth and TLS live in the **ai-doc** project.
@@ -120,7 +121,7 @@ Stable aliases on `edge` for the external proxy:
 | `receipt-n8n` | 5678 | n8n operator UI |
 | `receipt-ux` | 8080 | Visitor demo UX |
 
-⚠️ **AI Doc Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (same idea as this repo’s `handle_path /app*`). Until that upstream switch lands, `/app` may still hit the previous target — backends are ready on `edge` either way.
+⚠️ **AI Doc Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). For `/n8n*`, use plain **`handle /n8n*`** (**do not** strip) with sibling `N8N_PATH=/n8n/` — stripping caused `/n8n/n8n/` login 404s.
 
 ### 4. Verify (after AI Doc site block is live)
 
@@ -206,8 +207,9 @@ ACME_EMAIL=you@example.com
 # Public URLs for n8n behind Caddy at /n8n*
 N8N_HOST=demo.example.com
 N8N_PROTOCOL=https
-N8N_PATH=/n8n
+N8N_PATH=/n8n/
 WEBHOOK_URL=https://demo.example.com/n8n/
+N8N_BASIC_AUTH_ACTIVE=false
 ```
 
 DNS: point `SITE_ADDRESS` A/AAAA at this VPS before the first Caddy up (ACME needs to reach :80/:443).
@@ -258,7 +260,28 @@ curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOM
 
 Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
 
-**Live sample PDF:** visitors download → upload under `/app`. The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network (`http://n8n:5678/webhook/receipt-demo-ingest` by default). Import and **Activate** the ingest workflow in `/n8n*` or the webhook returns 404. Sample PDFs are mounted from `demo/samples/` into n8n — see [n8n demo webhook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/n8n-setup.md#demo-sample-webhook).
+### Live sample PDF (operators)
+
+Visitors download → upload under `/app`. The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default) — the browser never reaches n8n.
+
+After any n8n volume reset:
+
+1. Open `/n8n*` (edge Basic Auth, then n8n **owner** login — keep `N8N_BASIC_AUTH_ACTIVE=false` so you are not challenged twice).
+2. Import [`receipt-pdf-ingest.json`](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/workflows/receipt-pdf-ingest.json) if missing.
+3. Toggle the workflow **Active / Published** (import alone is not enough — inactive workflows do not register `/webhook/receipt-demo-ingest`).
+4. Smoke from the UX container:
+
+```bash
+docker compose --env-file .env -p receipt-intelligence-demo \
+  -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml \
+  exec ux wget -qO- --post-data='{"sample":"03-small"}' \
+  --header='Content-Type: application/json' \
+  http://n8n:5678/webhook/receipt-demo-ingest
+```
+
+Expect JSON with `"ok": true` and `persistedFilename`. “Webhook not registered” means the workflow is not Active.
+
+Sample PDFs: `demo/samples/` mounted into n8n — [n8n demo webhook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/n8n-setup.md#demo-sample-webhook).
 
 ---
 

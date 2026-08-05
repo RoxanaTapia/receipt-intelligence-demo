@@ -22,7 +22,7 @@ Same public hostname, two audiences:
 | Path | Who | How |
 |------|-----|-----|
 | **Visitor** | Portfolio guests | Open the [live demo](https://receipt-intelligence.roxanatapia.dev/) → invite or Login → **`/app`**: download the sample PDF → upload it → see live categories → ask a question (seeded examples still available). Invites are for `/app` only. |
-| **Operator** | Maintainers | **`/n8n*`** — n8n UI (edge Basic Auth; n8n may also enforce its own credentials). Import/activate **Receipt — Ingest PDF** so `POST /webhook/receipt-demo-ingest` is live. Full VPS steps: [DEPLOYMENT.md](DEPLOYMENT.md). |
+| **Operator** | Maintainers | **`/n8n*`** — n8n UI (edge Basic Auth, then n8n **owner** login; keep `N8N_BASIC_AUTH_ACTIVE=false`). Import **and Active/Publish** **Receipt — Ingest PDF** or `/app` live ingest fails with “webhook not registered”. Full VPS steps: [DEPLOYMENT.md](DEPLOYMENT.md). |
 
 You do **not** need the n8n editor to try the visitor demo. The UX calls n8n on the Compose network only (not the browser).
 

@@ -165,8 +165,8 @@ async def ingest(
             request,
             example=example or None,
             live_error=(
-                f"{exc} — Is the ingest workflow Active? "
-                "Operators: import/activate in /n8n*."
+                f"{exc} — Import alone is not enough: the ingest workflow must be "
+                "Active/Published in /n8n* (see DEPLOYMENT.md § Live sample PDF)."
             ),
         )
 
