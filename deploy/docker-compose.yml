@@ -41,9 +41,13 @@ services:
       N8N_HOST: ${N8N_HOST:-localhost}
       N8N_PORT: "5678"
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
-      # Path prefix when n8n is behind a path proxy (leave empty for local or n8n subdomain at /).
+      # Path prefix when n8n is behind a path proxy. Use / (or empty) for subdomain-at-root.
       N8N_PATH: ${N8N_PATH:-}
       WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:${N8N_HOST_PORT:-5678}/}
+      # Public editor URL (trailing slash). Helps SPA asset/base path behind HTTPS proxies.
+      N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL:-}
+      # Required behind Caddy/any reverse proxy (trust X-Forwarded-*).
+      N8N_PROXY_HOPS: ${N8N_PROXY_HOPS:-1}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Berlin}
       N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}

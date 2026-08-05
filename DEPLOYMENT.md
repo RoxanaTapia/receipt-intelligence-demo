@@ -93,10 +93,14 @@ COMPOSE_PROJECT_NAME=receipt-intelligence-demo
 # DNS: n8n.receipt-intelligence.roxanatapia.dev → same VPS as the demo host.
 N8N_HOST=n8n.receipt-intelligence.roxanatapia.dev
 N8N_PROTOCOL=https
-N8N_PATH=
+N8N_PATH=/
 WEBHOOK_URL=https://n8n.receipt-intelligence.roxanatapia.dev/
+N8N_EDITOR_BASE_URL=https://n8n.receipt-intelligence.roxanatapia.dev/
+N8N_PROXY_HOPS=1
 N8N_BASIC_AUTH_ACTIVE=false
 ```
+
+Use `N8N_PATH=/` (not empty) on the subdomain so editor assets are absolute (`/assets/…`). Empty path makes relative `assets/…` URLs that 404-as-HTML on `/home/workflows` (blank page after login).
 
 Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset. Edge basic auth and TLS live in the **ai-doc** project.
 
