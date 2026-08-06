@@ -6,10 +6,10 @@ import hashlib
 from pathlib import Path
 
 # Primary visitor sample (must match n8n allowlist id → <id>.pdf on the samples mount).
-SAMPLE_ID = "03-small"
+SAMPLE_ID = "05-demo-basket"
 SAMPLE_FILENAME = f"{SAMPLE_ID}.pdf"
-# Vendored copy under demo/samples/ — keep in sync with n8n samples/receipts/03-small.pdf.
-SAMPLE_SHA256 = "42eebc8839e83b0b076642cd4dac0e79457da57d41cfba97f27ff076e57eb2f7"
+# Vendored copy under demo/samples/ — keep in sync with n8n samples/receipts/05-demo-basket.pdf.
+SAMPLE_SHA256 = "252d0b854bfe1fca304b1ed7b07c941a3d37bf415a652e06dc8d04e5551b19d3"
 
 
 def sample_pdf_path(samples_dir: Path) -> Path:
