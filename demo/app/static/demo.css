@@ -423,6 +423,30 @@ th {
   background: var(--ok-bg);
 }
 
+.live-result-panel > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.live-result-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.live-collapse-hint {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.live-panel-remove {
+  margin-top: 0.75rem;
+}
+
 .button {
   display: inline-block;
   text-decoration: none;
