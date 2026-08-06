@@ -394,7 +394,11 @@ def ask(
             demo_year = int(window_start[:4])
             routed_question = enrich_question_months(cleaned, year=demo_year)
             raw = api.ask(routed_question)
-            text = present_answer_text(str(raw.get("answer") or ""))
+            text = present_answer_text(
+                str(raw.get("answer") or ""),
+                window_start=window_start,
+                window_end=window_end,
+            )
             answer = {**raw, "answer": text} if text else raw
         except ApiError as exc:
             qa_error = str(exc)

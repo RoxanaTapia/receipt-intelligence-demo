@@ -23,10 +23,26 @@ def format_money(value: float | int | None) -> str:
     return f"{float(value):.2f} {DEMO_CURRENCY}"
 
 
-def present_answer_text(text: str) -> str:
-    """Rewrite API answer currency symbols into demo currency (DC)."""
+def present_answer_text(
+    text: str,
+    *,
+    window_start: str | None = None,
+    window_end: str | None = None,
+) -> str:
+    """Rewrite API answer currency symbols and soften awkward refusal copy."""
     out = _DOLLAR_AMOUNT.sub(rf"\1 {DEMO_CURRENCY}", text)
     out = _EURO_AMOUNT.sub(rf"\1 {DEMO_CURRENCY}", out)
+    lowered = out.lower()
+    if "couldn't map that" in lowered or "couldn't match that" in lowered:
+        span = ""
+        if window_start and window_end:
+            span = f" Demo receipts cover {window_start} → {window_end}."
+        return (
+            "I couldn't match that to a spending question for this demo."
+            f"{span} "
+            "Try a category (food, drinks, snacks…) in a month that has data — "
+            "for example, “How much did I spend on drinks in July?”"
+        )
     return out
 
 
