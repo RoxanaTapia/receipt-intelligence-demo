@@ -1,11 +1,11 @@
-"""Load visitor-facing example receipts from seed JSON on disk."""
+"""Load visitor-facing example receipts from seed JSON and live imports on disk."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,7 @@ class ExampleReceipt:
     label: str
     file_name: str
     receipt: dict[str, Any]
+    source: Literal["seed", "live"] = "seed"
 
 
 def load_examples(seed_dir: Path, data_dir: Path) -> list[ExampleReceipt]:
@@ -40,17 +41,71 @@ def load_examples(seed_dir: Path, data_dir: Path) -> list[ExampleReceipt]:
                 label=entry["label"],
                 file_name=file_name,
                 receipt=receipt,
+                source="seed",
             )
         )
     return examples
 
 
-def get_example(examples: list[ExampleReceipt], example_id: str | None) -> ExampleReceipt | None:
-    """Return the selected example, or the first one when id is missing/unknown."""
-    if not examples:
+def load_live_imports(seed_dir: Path, data_dir: Path) -> list[ExampleReceipt]:
+    """Receipts on the shared volume that are not in the seed manifest (live ingest)."""
+    seed_names = _manifest_file_names(seed_dir)
+    imports: list[ExampleReceipt] = []
+    if not data_dir.is_dir():
+        return imports
+
+    for path in sorted(data_dir.glob("*.json")):
+        if path.name in seed_names:
+            continue
+        try:
+            receipt = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(receipt, dict):
+            continue
+        merchant = str(receipt.get("merchant") or "Live receipt").strip() or "Live receipt"
+        date = str(receipt.get("date") or "").strip()
+        label = f"{merchant} — {date}" if date else merchant
+        imports.append(
+            ExampleReceipt(
+                id=f"live-{path.stem}",
+                label=label,
+                file_name=path.name,
+                receipt=receipt,
+                source="live",
+            )
+        )
+    return imports
+
+
+def get_example(
+    examples: list[ExampleReceipt],
+    example_id: str | None,
+    *,
+    live_imports: list[ExampleReceipt] | None = None,
+) -> ExampleReceipt | None:
+    """Return the selected seed or live receipt; default to the first seed."""
+    live_imports = live_imports or []
+    catalog = [*examples, *live_imports]
+    if not catalog:
         return None
     if example_id:
-        for example in examples:
+        for example in catalog:
             if example.id == example_id:
                 return example
-    return examples[0]
+    return examples[0] if examples else live_imports[0]
+
+
+def _manifest_file_names(seed_dir: Path) -> set[str]:
+    manifest_path = seed_dir / "examples.json"
+    if not manifest_path.is_file():
+        return set()
+    try:
+        raw = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    names: set[str] = set()
+    for entry in raw:
+        if isinstance(entry, dict) and entry.get("file"):
+            names.add(str(entry["file"]))
+    return names

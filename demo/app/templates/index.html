@@ -132,16 +132,41 @@
     {% else %}
     <p class="meta">No examples loaded.</p>
     {% endif %}
+
+    <h2 class="aside-subhead">Live imports</h2>
+    <p class="meta">From download → upload on this page (kept on the shared volume).</p>
+    {% if live_imports %}
+    <ul class="example-list">
+      {% for item in live_imports %}
+      <li>
+        <a
+          href="{{ public_url('/') }}?example={{ item.id }}"
+          class="{% if selected and selected.id == item.id %}active{% endif %}"
+        >
+          {{ item.label }}
+          <span class="live-badge">Live</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">None yet — run live ingest above.</p>
+    {% endif %}
   </aside>
 
   <div>
     {% if selected %}
     <section class="panel">
-      <h2>{{ selected.receipt.merchant }}</h2>
+      <h2 class="receipt-heading">
+        {{ selected.receipt.merchant }}
+        {% if selected.source == "live" %}
+        <span class="live-badge">Live</span>
+        {% endif %}
+      </h2>
       <p class="meta">
         {{ selected.receipt.date }} · total
         <span class="num">{{ money(selected.receipt.total) }}</span>
-        · seeded
+        · {% if selected.source == "live" %}live import{% else %}seeded{% endif %}
       </p>
       <table>
         <thead>

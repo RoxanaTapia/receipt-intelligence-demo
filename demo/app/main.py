@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import get_example, load_examples
+from app.examples import get_example, load_examples, load_live_imports
 from app.money import DEMO_CURRENCY, format_money
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
@@ -140,7 +140,8 @@ def _page(
     summary_before: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
-    selected = get_example(examples, example)
+    live_imports = load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
+    selected = get_example(examples, example, live_imports=live_imports)
     summary, api_error = _safe_summary()
     api_ok = summary is not None and api_error is None
     before_map = _category_share_map(summary_before)
@@ -164,6 +165,7 @@ def _page(
         {
             **_base_context(request),
             "examples": examples,
+            "live_imports": live_imports,
             "selected": selected,
             "summary": summary,
             "summary_before": summary_before,
@@ -238,11 +240,12 @@ async def ingest(
         )
 
     filename = str(meta["persistedFilename"])
+    live_example_id = f"live-{Path(filename).stem}"
     receipt = _load_persisted_receipt(filename)
     if receipt is None:
         return _page(
             request,
-            example=example or None,
+            example=live_example_id,
             live_meta=meta,
             live_error=(
                 f"Ingest reported {filename}, but the file is not visible on the "
@@ -254,7 +257,7 @@ async def ingest(
 
     return _page(
         request,
-        example=example or None,
+        example=live_example_id,
         live_receipt=receipt,
         live_meta=meta,
         ingest_ok=True,
@@ -269,47 +272,23 @@ def ask(
     example: str = Form(""),
 ) -> HTMLResponse:
     cleaned = question.strip()
-    examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
-    selected = get_example(examples, example or None)
-    summary = None
-    api_error = None
-    api_ok = False
     answer = None
     qa_error = None
 
-    try:
-        api.health()
-        api_ok = True
-        summary = api.summary(DEMO_START_DATE, DEMO_END_DATE)
-        if not cleaned:
-            qa_error = "Enter a budget question first."
-        else:
+    if not cleaned:
+        qa_error = "Enter a budget question first."
+    else:
+        try:
             answer = api.ask(cleaned)
-    except ApiError as exc:
-        if api_ok:
+        except ApiError as exc:
             qa_error = str(exc)
-        else:
-            api_error = str(exc)
 
-    return templates.TemplateResponse(
+    return _page(
         request,
-        "index.html",
-        {
-            **_base_context(request),
-            "examples": examples,
-            "selected": selected,
-            "summary": summary,
-            "api_ok": api_ok,
-            "api_error": api_error,
-            "answer": answer,
-            "question": cleaned,
-            "qa_error": qa_error,
-            "live_receipt": None,
-            "live_meta": None,
-            "live_error": None,
-            "ingest_ok": False,
-            "sample_ready": sample_pdf_path(SAMPLES_DIR).is_file(),
-        },
+        example=example or None,
+        question=cleaned,
+        answer=answer,
+        qa_error=qa_error,
     )
 
 
