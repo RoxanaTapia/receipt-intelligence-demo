@@ -1,0 +1,39 @@
+{
+  "date": "2026-07-20",
+  "merchant": "Harbor Home",
+  "total": 27.60,
+  "extracted_at": "2026-07-20T12:00:00Z",
+  "categorized_at": "2026-07-20T12:00:00Z",
+  "line_items": [
+    {
+      "description": "Kitchen sponge set",
+      "quantity": 1,
+      "price": 6.00,
+      "category": "household"
+    },
+    {
+      "description": "Glass cleaner",
+      "quantity": 1,
+      "price": 4.10,
+      "category": "household"
+    },
+    {
+      "description": "Pasta shells",
+      "quantity": 2,
+      "price": 3.20,
+      "category": "food"
+    },
+    {
+      "description": "Tomato sauce",
+      "quantity": 2,
+      "price": 5.40,
+      "category": "food"
+    },
+    {
+      "description": "Sparkling water",
+      "quantity": 1,
+      "price": 2.70,
+      "category": "drinks"
+    }
+  ]
+}
