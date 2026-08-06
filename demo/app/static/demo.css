@@ -115,7 +115,10 @@ h1 {
 }
 
 .example-list a {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
   text-decoration: none;
   color: var(--ink);
   border: 1px solid transparent;
@@ -189,7 +192,9 @@ th {
 .cat-bar > span {
   display: block;
   height: 100%;
+  width: var(--to, 0%);
   background: var(--accent);
+  border-radius: inherit;
 }
 
 .ask-form {
@@ -253,6 +258,17 @@ th {
   gap: 0.5rem;
 }
 
+.cats-animate .cat-bar > span {
+  width: var(--from, 0%);
+  animation: cat-grow 0.85s ease-out forwards;
+}
+
+@keyframes cat-grow {
+  to {
+    width: var(--to, 0%);
+  }
+}
+
 .answer {
   margin-top: 1rem;
   padding: 0.85rem 0.95rem;
@@ -291,6 +307,20 @@ th {
 
 .live-actions {
   margin: 0 0 0.85rem;
+}
+
+.aside-subhead {
+  font-size: 1.05rem;
+  margin: 1.35rem 0 0.35rem;
+}
+
+.receipt-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
 }
 
 .live-heading {

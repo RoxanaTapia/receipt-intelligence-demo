@@ -132,16 +132,41 @@
     {% else %}
     <p class="meta">No examples loaded.</p>
     {% endif %}
+
+    <h2 class="aside-subhead">Live imports</h2>
+    <p class="meta">From download → upload on this page (kept on the shared volume).</p>
+    {% if live_imports %}
+    <ul class="example-list">
+      {% for item in live_imports %}
+      <li>
+        <a
+          href="{{ public_url('/') }}?example={{ item.id }}"
+          class="{% if selected and selected.id == item.id %}active{% endif %}"
+        >
+          {{ item.label }}
+          <span class="live-badge">Live</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">None yet — run live ingest above.</p>
+    {% endif %}
   </aside>
 
   <div>
     {% if selected %}
     <section class="panel">
-      <h2>{{ selected.receipt.merchant }}</h2>
+      <h2 class="receipt-heading">
+        {{ selected.receipt.merchant }}
+        {% if selected.source == "live" %}
+        <span class="live-badge">Live</span>
+        {% endif %}
+      </h2>
       <p class="meta">
         {{ selected.receipt.date }} · total
         <span class="num">{{ money(selected.receipt.total) }}</span>
-        · seeded
+        · {% if selected.source == "live" %}live import{% else %}seeded{% endif %}
       </p>
       <table>
         <thead>
@@ -177,15 +202,33 @@
         <span class="live-badge">Updated</span>
         {% endif %}
       </h2>
-      {% if ingest_ok and live_receipt and summary %}
+      {% if ingest_ok and live_receipt and summary and spend_before is not none and spend_delta is not none %}
       <div class="banner ok" role="status">
-        Window total is now
-        <strong class="num">{{ money(summary.total_spend) }}</strong>
-        and includes live
+        {% if spend_delta > 0.009 %}
+        Window total moved
+        <strong class="num">{{ money(spend_before) }}</strong>
+        →
+        <strong class="num">{{ money(spend_after) }}</strong>
+        (+{{ money(spend_delta) }}) after live
+        <strong>{{ live_receipt.merchant }}</strong>.
+        {% else %}
+        Window total stayed
+        <strong class="num">{{ money(spend_after) }}</strong>
+        — this sample was already in the corpus (same content hash).
+        Seeded fixtures alone are about
+        <strong class="num">{{ money(seed_baseline) }}</strong>;
+        live
         <strong>{{ live_receipt.merchant }}</strong>
-        ({{ money(live_receipt.total) }}, {{ live_receipt.date }}).
-        Re-uploading the same sample usually does not change the total (same content hash).
+        adds
+        <strong class="num">{{ money(live_receipt.total) }}</strong>.
+        {% endif %}
       </div>
+      {% elif summary and seed_baseline and summary.total_spend is not none
+        and summary.total_spend > seed_baseline + 0.009 %}
+      <p class="meta">
+        Seeded fixtures ≈ {{ money(seed_baseline) }} · with live data
+        <span class="num">{{ money(summary.total_spend) }}</span>
+      </p>
       {% endif %}
       <p class="meta">
         Across demo receipts · {{ demo_start }} → {{ demo_end }}
@@ -196,12 +239,25 @@
         {% endif %}
       </p>
       {% if summary and summary.by_category %}
-      <div class="cats">
+      <div class="cats {% if ingest_ok and spend_delta is not none and spend_delta > 0.009 %}cats-animate{% endif %}">
         {% for row in summary.by_category %}
+        {% set prior = before_map.get(row.category, {}) %}
         <div class="cat-row">
           <span>{{ row.category }}</span>
-          <span class="num">{{ money(row.total_spend) }} · {{ row.percentage }}%</span>
-          <div class="cat-bar"><span style="width: {{ row.percentage }}%"></span></div>
+          <span class="num">
+            {% if ingest_ok and spend_delta is not none and spend_delta > 0.009 and prior %}
+            {{ money(prior.spend) }} → {{ money(row.total_spend) }}
+            · {{ prior.pct }}% → {{ row.percentage }}%
+            {% else %}
+            {{ money(row.total_spend) }} · {{ row.percentage }}%
+            {% endif %}
+          </span>
+          <div class="cat-bar">
+            <span
+              class="cat-fill"
+              style="--from: {{ prior.pct if prior else 0 }}%; --to: {{ row.percentage }}%"
+            ></span>
+          </div>
         </div>
         {% endfor %}
       </div>
