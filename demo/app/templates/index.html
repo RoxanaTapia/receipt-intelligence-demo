@@ -48,6 +48,8 @@
     {% if selected %}
     <input type="hidden" name="example" value="{{ selected.id }}" />
     {% endif %}
+    <input type="hidden" name="start" value="{{ window_start }}" />
+    <input type="hidden" name="end" value="{{ window_end }}" />
     <label for="pdf">Upload the demo sample PDF</label>
     <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
     <button type="submit" id="ingest-btn">
@@ -121,7 +123,7 @@
       {% for item in examples %}
       <li>
         <a
-          href="{{ public_url('/') }}?example={{ item.id }}"
+          href="{{ public_url('/') }}?example={{ item.id }}&amp;start={{ window_start }}&amp;end={{ window_end }}"
           class="{% if selected and selected.id == item.id %}active{% endif %}"
         >
           {{ item.label }}
@@ -132,26 +134,6 @@
     {% else %}
     <p class="meta">No examples loaded.</p>
     {% endif %}
-
-    <h2 class="aside-subhead">Live imports</h2>
-    <p class="meta">From download → upload on this page (kept on the shared volume).</p>
-    {% if live_imports %}
-    <ul class="example-list">
-      {% for item in live_imports %}
-      <li>
-        <a
-          href="{{ public_url('/') }}?example={{ item.id }}"
-          class="{% if selected and selected.id == item.id %}active{% endif %}"
-        >
-          {{ item.label }}
-          <span class="live-badge">Live</span>
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="meta">None yet — run live ingest above.</p>
-    {% endif %}
   </aside>
 
   <div>
@@ -159,9 +141,6 @@
     <section class="panel">
       <h2 class="receipt-heading">
         {{ selected.receipt.merchant }}
-        {% if selected.source == "live" %}
-        <span class="live-badge">Live</span>
-        {% endif %}
       </h2>
       <p class="meta">
         {{ selected.receipt.date }} · total
@@ -185,7 +164,7 @@
             <td class="num">{{ line.quantity }}</td>
             <td class="num">{{ money(line.price) }}</td>
           </tr>
-          {% endfor %}
+        {% endfor %}
         </tbody>
       </table>
     </section>
@@ -202,6 +181,41 @@
         <span class="live-badge">Updated</span>
         {% endif %}
       </h2>
+
+      <form class="window-form" method="get" action="{{ public_url('/') }}">
+        {% if selected %}
+        <input type="hidden" name="example" value="{{ selected.id }}" />
+        {% endif %}
+        <label for="window-start">From</label>
+        <input
+          id="window-start"
+          name="start"
+          type="date"
+          value="{{ window_start }}"
+          required
+        />
+        <label for="window-end">To</label>
+        <input
+          id="window-end"
+          name="end"
+          type="date"
+          value="{{ window_end }}"
+          required
+        />
+        <button type="submit">Apply filter</button>
+      </form>
+      <p class="meta">
+        Change the window to see category totals update. Default demo span is
+        {{ demo_start }} → {{ demo_end }}.
+      </p>
+
+      {% if live_outside_window %}
+      <div class="banner warn" role="status">
+        Live receipt date <strong>{{ live_receipt.date }}</strong> is outside this window —
+        widen the filter to include it in spending context.
+      </div>
+      {% endif %}
+
       {% if ingest_ok and live_receipt and summary and spend_before is not none and spend_delta is not none %}
       <div class="banner ok" role="status">
         {% if spend_delta > 0.009 %}
@@ -231,7 +245,7 @@
       </p>
       {% endif %}
       <p class="meta">
-        Across demo receipts · {{ demo_start }} → {{ demo_end }}
+        Across demo receipts · {{ window_start }} → {{ window_end }}
         · amounts in {{ demo_currency }} (demo currency)
         {% if summary %}
         ·
@@ -244,14 +258,7 @@
         {% set prior = before_map.get(row.category, {}) %}
         <div class="cat-row">
           <span>{{ row.category }}</span>
-          <span class="num">
-            {% if ingest_ok and spend_delta is not none and spend_delta > 0.009 and prior %}
-            {{ money(prior.spend) }} → {{ money(row.total_spend) }}
-            · {{ prior.pct }}% → {{ row.percentage }}%
-            {% else %}
-            {{ money(row.total_spend) }} · {{ row.percentage }}%
-            {% endif %}
-          </span>
+          <span class="num">{{ money(row.total_spend) }} · {{ row.percentage }}%</span>
           <div class="cat-bar">
             <span
               class="cat-fill"
@@ -262,7 +269,7 @@
         {% endfor %}
       </div>
       {% elif api_ok %}
-      <p class="meta">No spending in this window. Seed data may be missing from the API volume.</p>
+      <p class="meta">No spending in this window. Try widening the date filter or seeding data.</p>
       {% endif %}
     </section>
 
@@ -272,11 +279,13 @@
         {% if selected %}
         <input type="hidden" name="example" value="{{ selected.id }}" />
         {% endif %}
+        <input type="hidden" name="start" value="{{ window_start }}" />
+        <input type="hidden" name="end" value="{{ window_end }}" />
         <label for="question">Natural-language budget question</label>
         <textarea
           id="question"
           name="question"
-          placeholder="How much did I spend on drinks in July 2026?"
+          placeholder="How much did I spend on drinks in July?"
           required
         >{{ question }}</textarea>
         <button type="submit" {% if not api_ok %}disabled{% endif %}>Ask</button>
