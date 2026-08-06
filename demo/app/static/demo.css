@@ -309,9 +309,41 @@ th {
   margin: 0 0 0.85rem;
 }
 
-.aside-subhead {
-  font-size: 1.05rem;
-  margin: 1.35rem 0 0.35rem;
+.window-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.55rem 0.75rem;
+  margin: 0.65rem 0 0.35rem;
+}
+
+.window-form label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.window-form input[type="date"] {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+
+.window-form button {
+  border: 0;
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.window-form button:hover {
+  filter: brightness(1.06);
 }
 
 .receipt-heading {

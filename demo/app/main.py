@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.api_client import ApiError, ReceiptApiClient
 from app.examples import get_example, load_examples, load_live_imports
-from app.money import DEMO_CURRENCY, format_money
+from app.money import DEMO_CURRENCY, enrich_question_months, format_money, present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 
@@ -70,6 +71,20 @@ def _base_context(request: Request) -> dict[str, Any]:
     }
 
 
+def _parse_window(start: str | None, end: str | None) -> tuple[str, str]:
+    """Normalize visitor date filters; fall back to the default demo window."""
+    start_s = (start or DEMO_START_DATE).strip()
+    end_s = (end or DEMO_END_DATE).strip()
+    try:
+        start_d = date.fromisoformat(start_s)
+        end_d = date.fromisoformat(end_s)
+    except ValueError:
+        return DEMO_START_DATE, DEMO_END_DATE
+    if start_d > end_d:
+        start_d, end_d = end_d, start_d
+    return start_d.isoformat(), end_d.isoformat()
+
+
 def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
     """Read categorized JSON from the shared receipts volume."""
     path = RECEIPT_DATA_PATH / Path(filename).name
@@ -79,11 +94,11 @@ def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-def _safe_summary() -> tuple[dict[str, Any] | None, str | None]:
+def _safe_summary(start: str, end: str) -> tuple[dict[str, Any] | None, str | None]:
     """Fetch window summary; return (summary, error)."""
     try:
         api.health()
-        return api.summary(DEMO_START_DATE, DEMO_END_DATE), None
+        return api.summary(start, end), None
     except ApiError as exc:
         return None, str(exc)
 
@@ -107,8 +122,8 @@ def _category_share_map(summary: dict[str, Any] | None) -> dict[str, dict[str, f
     return out
 
 
-def _seed_baseline_spend() -> float:
-    """Sum line prices on seed fixtures inside the demo window (for UX contrast)."""
+def _seed_baseline_spend(start: str, end: str) -> float:
+    """Sum line prices on seed fixtures inside the selected window (for UX contrast)."""
     total = 0.0
     for path in sorted(SEED_DIR.glob("2026-*.json")):
         try:
@@ -117,13 +132,23 @@ def _seed_baseline_spend() -> float:
             continue
         if not isinstance(data, dict):
             continue
-        date = str(data.get("date") or "")
-        if date < DEMO_START_DATE or date > DEMO_END_DATE:
+        receipt_date = str(data.get("date") or "")
+        if receipt_date < start or receipt_date > end:
             continue
         for item in data.get("line_items") or []:
             if isinstance(item, dict):
                 total += float(item.get("price") or 0)
     return round(total, 2)
+
+
+def _outside_window(receipt: dict[str, Any] | None, start: str, end: str) -> bool:
+    """True when a live receipt date falls outside the spending filter."""
+    if not receipt:
+        return False
+    receipt_date = str(receipt.get("date") or "")
+    if not receipt_date:
+        return False
+    return receipt_date < start or receipt_date > end
 
 
 def _page(
@@ -138,11 +163,15 @@ def _page(
     live_error: str | None = None,
     ingest_ok: bool = False,
     summary_before: dict[str, Any] | None = None,
+    window_start: str | None = None,
+    window_end: str | None = None,
 ) -> HTMLResponse:
+    start, end = _parse_window(window_start, window_end)
     examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
+    # Resolve live ids after ingest / deep links without listing them in the sidebar.
     live_imports = load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
     selected = get_example(examples, example, live_imports=live_imports)
-    summary, api_error = _safe_summary()
+    summary, api_error = _safe_summary(start, end)
     api_ok = summary is not None and api_error is None
     before_map = _category_share_map(summary_before)
     spend_before = (
@@ -165,7 +194,6 @@ def _page(
         {
             **_base_context(request),
             "examples": examples,
-            "live_imports": live_imports,
             "selected": selected,
             "summary": summary,
             "summary_before": summary_before,
@@ -173,7 +201,10 @@ def _page(
             "spend_after": spend_after,
             "spend_delta": spend_delta,
             "before_map": before_map,
-            "seed_baseline": _seed_baseline_spend(),
+            "seed_baseline": _seed_baseline_spend(start, end),
+            "window_start": start,
+            "window_end": end,
+            "live_outside_window": _outside_window(live_receipt, start, end),
             "api_ok": api_ok,
             "api_error": api_error,
             "answer": answer,
@@ -207,8 +238,13 @@ def download_sample() -> FileResponse:
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, example: str | None = None) -> HTMLResponse:
-    return _page(request, example=example)
+def index(
+    request: Request,
+    example: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+) -> HTMLResponse:
+    return _page(request, example=example, window_start=start, window_end=end)
 
 
 @app.post("/ingest", response_class=HTMLResponse)
@@ -216,15 +252,24 @@ async def ingest(
     request: Request,
     pdf: UploadFile = File(...),
     example: str = Form(""),
+    start: str = Form(""),
+    end: str = Form(""),
 ) -> HTMLResponse:
     """Validate uploaded sample, trigger n8n webhook, show persisted categories."""
+    window_start, window_end = _parse_window(start or None, end or None)
     content = await pdf.read()
     reject = validate_demo_sample(pdf.filename, content)
     if reject:
-        return _page(request, example=example or None, live_error=reject)
+        return _page(
+            request,
+            example=example or None,
+            live_error=reject,
+            window_start=window_start,
+            window_end=window_end,
+        )
 
     # Snapshot spending before n8n writes so the UI can show before → after bars.
-    summary_before, _ = _safe_summary()
+    summary_before, _ = _safe_summary(window_start, window_end)
 
     try:
         meta = n8n.trigger_sample(SAMPLE_ID)
@@ -237,15 +282,16 @@ async def ingest(
                 "Active/Published in n8n (see DEPLOYMENT.md § Live sample PDF)."
             ),
             summary_before=summary_before,
+            window_start=window_start,
+            window_end=window_end,
         )
 
     filename = str(meta["persistedFilename"])
-    live_example_id = f"live-{Path(filename).stem}"
     receipt = _load_persisted_receipt(filename)
     if receipt is None:
         return _page(
             request,
-            example=live_example_id,
+            example=example or None,
             live_meta=meta,
             live_error=(
                 f"Ingest reported {filename}, but the file is not visible on the "
@@ -253,15 +299,20 @@ async def ingest(
             ),
             ingest_ok=True,
             summary_before=summary_before,
+            window_start=window_start,
+            window_end=window_end,
         )
 
+    # Keep the seeded example table as-is; live result lives in the top panel only.
     return _page(
         request,
-        example=live_example_id,
+        example=example or None,
         live_receipt=receipt,
         live_meta=meta,
         ingest_ok=True,
         summary_before=summary_before,
+        window_start=window_start,
+        window_end=window_end,
     )
 
 
@@ -270,7 +321,10 @@ def ask(
     request: Request,
     question: str = Form(...),
     example: str = Form(""),
+    start: str = Form(""),
+    end: str = Form(""),
 ) -> HTMLResponse:
+    window_start, window_end = _parse_window(start or None, end or None)
     cleaned = question.strip()
     answer = None
     qa_error = None
@@ -279,7 +333,11 @@ def ask(
         qa_error = "Enter a budget question first."
     else:
         try:
-            answer = api.ask(cleaned)
+            demo_year = int(window_start[:4])
+            routed_question = enrich_question_months(cleaned, year=demo_year)
+            raw = api.ask(routed_question)
+            text = present_answer_text(str(raw.get("answer") or ""))
+            answer = {**raw, "answer": text} if text else raw
         except ApiError as exc:
             qa_error = str(exc)
 
@@ -289,6 +347,8 @@ def ask(
         question=cleaned,
         answer=answer,
         qa_error=qa_error,
+        window_start=window_start,
+        window_end=window_end,
     )
 
 
