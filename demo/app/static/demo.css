@@ -231,6 +231,28 @@ th {
   filter: brightness(1.06);
 }
 
+.ask-form button:disabled {
+  cursor: wait;
+  opacity: 0.85;
+  filter: none;
+}
+
+.ingest-wait {
+  margin: 0.35rem 0 0;
+}
+
+.spending-fresh {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#spending-context h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .answer {
   margin-top: 1rem;
   padding: 0.85rem 0.95rem;

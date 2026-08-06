@@ -5,7 +5,8 @@
 <h1>Try the demo</h1>
 <p class="lede">
   Download a sample receipt, upload it to run live ingest, review categories, and ask a budget
-  question — no n8n editor required.
+  question. The backend is <strong>n8n</strong> (ingest &amp; categorization) and
+  <strong>FastAPI</strong> (analytics &amp; Q&amp;A).
 </p>
 
 {% if api_ok %}
@@ -39,6 +40,7 @@
   {% endif %}
   <form
     class="ask-form"
+    id="ingest-form"
     method="post"
     action="{{ public_url('/ingest') }}"
     enctype="multipart/form-data"
@@ -48,7 +50,13 @@
     {% endif %}
     <label for="pdf">Upload the demo sample PDF</label>
     <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
-    <button type="submit">Run live ingest</button>
+    <button type="submit" id="ingest-btn">
+      <span class="btn-idle">Run live ingest</span>
+      <span class="btn-busy" hidden>Ingesting… this can take a minute</span>
+    </button>
+    <p class="meta ingest-wait" id="ingest-wait" hidden>
+      Talking to n8n and waiting for categories — please keep this tab open.
+    </p>
   </form>
   {% if live_error %}
   <div class="banner err" style="margin-top: 1rem" role="alert">{{ live_error }}</div>
@@ -158,13 +166,32 @@
     </section>
     {% endif %}
 
-    <section class="panel" style="margin-top: 1.25rem">
-      <h2>Spending context</h2>
+    <section
+      class="panel {% if ingest_ok and summary %}spending-fresh{% endif %}"
+      style="margin-top: 1.25rem"
+      id="spending-context"
+    >
+      <h2>
+        Spending context
+        {% if ingest_ok and live_receipt %}
+        <span class="live-badge">Updated</span>
+        {% endif %}
+      </h2>
+      {% if ingest_ok and live_receipt and summary %}
+      <div class="banner ok" role="status">
+        Window total is now
+        <strong class="num">{{ money(summary.total_spend) }}</strong>
+        and includes live
+        <strong>{{ live_receipt.merchant }}</strong>
+        ({{ money(live_receipt.total) }}, {{ live_receipt.date }}).
+        Re-uploading the same sample usually does not change the total (same content hash).
+      </div>
+      {% endif %}
       <p class="meta">
         Across demo receipts · {{ demo_start }} → {{ demo_end }}
         · amounts in {{ demo_currency }} (demo currency)
         {% if summary %}
-        · {{ summary.receipt_count }} receipts ·
+        ·
         <span class="num">{{ money(summary.total_spend) }}</span>
         {% endif %}
       </p>
@@ -211,15 +238,29 @@
 </div>
 
 <p class="note">
-  Visitor path: download → upload → live ingest → answer under <code>/app</code>
-  (browser never talks to n8n). Operators: import <strong>and Active/Publish</strong>
-  <code>Receipt — Ingest PDF</code> in n8n (operator host) or live ingest returns
-  “webhook not registered”. Keep <code>N8N_BASIC_AUTH_ACTIVE=false</code> so only edge Basic Auth
-  challenges once.
+  Amounts use <strong>{{ demo_currency }}</strong> (demo currency), not real money.
+  Download the sample PDF, upload it for live ingest, then explore spending or ask a question.
 </p>
+<script>
+  (function () {
+    const form = document.getElementById("ingest-form");
+    const btn = document.getElementById("ingest-btn");
+    const wait = document.getElementById("ingest-wait");
+    if (form && btn) {
+      form.addEventListener("submit", function () {
+        btn.disabled = true;
+        const idle = btn.querySelector(".btn-idle");
+        const busy = btn.querySelector(".btn-busy");
+        if (idle) idle.hidden = true;
+        if (busy) busy.hidden = false;
+        if (wait) wait.hidden = false;
+      });
+    }
+  })();
+</script>
 {% if ingest_ok %}
 <script>
-  document.getElementById("live-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("spending-context")?.scrollIntoView({ behavior: "smooth", block: "start" });
 </script>
 {% endif %}
 {% endblock %}
