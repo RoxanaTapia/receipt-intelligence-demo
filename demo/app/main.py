@@ -7,6 +7,7 @@ import os
 from datetime import date
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
@@ -14,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import get_example, load_examples, load_live_imports
+from app.examples import delete_live_import, get_example, load_examples, load_live_imports
 from app.money import DEMO_CURRENCY, enrich_question_months, format_money, present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
@@ -151,6 +152,21 @@ def _outside_window(receipt: dict[str, Any] | None, start: str, end: str) -> boo
     return receipt_date < start or receipt_date > end
 
 
+def _home_redirect(
+    *,
+    start: str,
+    end: str,
+    example: str | None = None,
+) -> RedirectResponse:
+    """303 back to the demo page with window (and optional example) query params."""
+    params: dict[str, str] = {"start": start, "end": end}
+    if example:
+        params["example"] = example
+    base = public_url("/")
+    sep = "&" if "?" in base else "?"
+    return RedirectResponse(url=f"{base}{sep}{urlencode(params)}", status_code=303)
+
+
 def _page(
     request: Request,
     *,
@@ -168,7 +184,6 @@ def _page(
 ) -> HTMLResponse:
     start, end = _parse_window(window_start, window_end)
     examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
-    # Resolve live ids after ingest / deep links without listing them in the sidebar.
     live_imports = load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
     selected = get_example(examples, example, live_imports=live_imports)
     summary, api_error = _safe_summary(start, end)
@@ -188,12 +203,17 @@ def _page(
     if spend_before is not None and spend_after is not None:
         spend_delta = round(spend_after - spend_before, 2)
 
+    focus_receipt = live_receipt
+    if focus_receipt is None and selected is not None and selected.source == "live":
+        focus_receipt = selected.receipt
+
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             **_base_context(request),
             "examples": examples,
+            "live_imports": live_imports,
             "selected": selected,
             "summary": summary,
             "summary_before": summary_before,
@@ -204,7 +224,7 @@ def _page(
             "seed_baseline": _seed_baseline_spend(start, end),
             "window_start": start,
             "window_end": end,
-            "live_outside_window": _outside_window(live_receipt, start, end),
+            "live_outside_window": _outside_window(focus_receipt, start, end),
             "api_ok": api_ok,
             "api_error": api_error,
             "answer": answer,
@@ -287,11 +307,12 @@ async def ingest(
         )
 
     filename = str(meta["persistedFilename"])
+    live_example_id = f"live-{Path(filename).stem}"
     receipt = _load_persisted_receipt(filename)
     if receipt is None:
         return _page(
             request,
-            example=example or None,
+            example=live_example_id,
             live_meta=meta,
             live_error=(
                 f"Ingest reported {filename}, but the file is not visible on the "
@@ -303,10 +324,9 @@ async def ingest(
             window_end=window_end,
         )
 
-    # Keep the seeded example table as-is; live result lives in the top panel only.
     return _page(
         request,
-        example=example or None,
+        example=live_example_id,
         live_receipt=receipt,
         live_meta=meta,
         ingest_ok=True,
@@ -352,6 +372,29 @@ def ask(
     )
 
 
+@app.post("/live-import/delete", response_class=HTMLResponse)
+def remove_live_import(
+    request: Request,
+    example: str = Form(...),
+    start: str = Form(""),
+    end: str = Form(""),
+) -> HTMLResponse | RedirectResponse:
+    """Delete a live-ingest file so the visitor can run the sample again."""
+    window_start, window_end = _parse_window(start or None, end or None)
+    target = example.strip()
+    if not delete_live_import(SEED_DIR, RECEIPT_DATA_PATH, target):
+        return _page(
+            request,
+            example=target,
+            window_start=window_start,
+            window_end=window_end,
+            live_error="Could not remove that live import. It may already be gone.",
+        )
+    examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
+    fallback = examples[0].id if examples else None
+    return _home_redirect(start=window_start, end=window_end, example=fallback)
+
+
 @app.get("/ask")
 def ask_get() -> RedirectResponse:
     return RedirectResponse(url=public_url("/"), status_code=303)
@@ -359,4 +402,9 @@ def ask_get() -> RedirectResponse:
 
 @app.get("/ingest")
 def ingest_get() -> RedirectResponse:
+    return RedirectResponse(url=public_url("/"), status_code=303)
+
+
+@app.get("/live-import/delete")
+def remove_live_import_get() -> RedirectResponse:
     return RedirectResponse(url=public_url("/"), status_code=303)
