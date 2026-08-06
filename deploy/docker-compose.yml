@@ -88,7 +88,8 @@ services:
       # Internal Compose DNS — not a public browser URL. Workflow must be Active.
       N8N_INGEST_WEBHOOK_URL: ${N8N_INGEST_WEBHOOK_URL:-http://n8n:5678/webhook/receipt-demo-ingest}
     volumes:
-      - ../data/receipts:/data/receipts:ro
+      # RW so visitors can remove live imports and retry ingest (seeds are never deleted by UX).
+      - ../data/receipts:/data/receipts
     depends_on:
       api:
         condition: service_healthy

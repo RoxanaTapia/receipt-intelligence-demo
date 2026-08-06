@@ -309,6 +309,45 @@ th {
   margin: 0 0 0.85rem;
 }
 
+.aside-subhead {
+  font-size: 1.05rem;
+  margin: 1.35rem 0 0.35rem;
+}
+
+.live-import-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.5rem;
+  align-items: start;
+}
+
+.live-import-row > a {
+  min-width: 0;
+}
+
+.live-delete-form {
+  margin: 0;
+}
+
+.live-delete-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.15rem 0;
+}
+
+.live-delete-btn:hover {
+  color: var(--err);
+}
+
+.ask-wait {
+  margin: 0.35rem 0 0;
+}
+
 .window-form {
   display: flex;
   flex-wrap: wrap;

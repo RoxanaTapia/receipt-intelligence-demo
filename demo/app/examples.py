@@ -96,6 +96,25 @@ def get_example(
     return examples[0] if examples else live_imports[0]
 
 
+def delete_live_import(seed_dir: Path, data_dir: Path, example_id: str) -> bool:
+    """Remove a live-ingest JSON from the shared volume; never delete seed fixtures."""
+    if not example_id.startswith("live-"):
+        return False
+    stem = example_id.removeprefix("live-")
+    if not stem or "/" in stem or "\\" in stem or stem in {".", ".."}:
+        return False
+    path = data_dir / f"{stem}.json"
+    if not path.is_file():
+        return False
+    if path.name in _manifest_file_names(seed_dir):
+        return False
+    try:
+        path.unlink()
+    except OSError:
+        return False
+    return True
+
+
 def _manifest_file_names(seed_dir: Path) -> set[str]:
     manifest_path = seed_dir / "examples.json"
     if not manifest_path.is_file():

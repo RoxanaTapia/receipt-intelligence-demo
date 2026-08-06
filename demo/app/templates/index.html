@@ -134,6 +134,37 @@
     {% else %}
     <p class="meta">No examples loaded.</p>
     {% endif %}
+
+    <h2 class="aside-subhead">Live imports</h2>
+    <p class="meta">From download → upload on this page. Remove to try ingest again.</p>
+    {% if live_imports %}
+    <ul class="example-list">
+      {% for item in live_imports %}
+      <li class="live-import-row">
+        <a
+          href="{{ public_url('/') }}?example={{ item.id }}&amp;start={{ window_start }}&amp;end={{ window_end }}"
+          class="{% if selected and selected.id == item.id %}active{% endif %}"
+        >
+          {{ item.label }}
+          <span class="live-badge">Live</span>
+        </a>
+        <form
+          class="live-delete-form"
+          method="post"
+          action="{{ public_url('/live-import/delete') }}"
+          onsubmit="return confirm('Remove this live import so you can try ingest again?');"
+        >
+          <input type="hidden" name="example" value="{{ item.id }}" />
+          <input type="hidden" name="start" value="{{ window_start }}" />
+          <input type="hidden" name="end" value="{{ window_end }}" />
+          <button type="submit" class="live-delete-btn">Remove</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">None yet — run live ingest above.</p>
+    {% endif %}
   </aside>
 
   <div>
@@ -141,6 +172,9 @@
     <section class="panel">
       <h2 class="receipt-heading">
         {{ selected.receipt.merchant }}
+        {% if selected.source == "live" %}
+        <span class="live-badge">Live</span>
+        {% endif %}
       </h2>
       <p class="meta">
         {{ selected.receipt.date }} · total
@@ -211,8 +245,9 @@
 
       {% if live_outside_window %}
       <div class="banner warn" role="status">
-        Live receipt date <strong>{{ live_receipt.date }}</strong> is outside this window —
-        widen the filter to include it in spending context.
+        Live receipt date
+        <strong>{% if live_receipt %}{{ live_receipt.date }}{% else %}{{ selected.receipt.date }}{% endif %}</strong>
+        is outside this window — widen the filter to include it in spending context.
       </div>
       {% endif %}
 
@@ -275,7 +310,7 @@
 
     <section class="panel" style="margin-top: 1.25rem">
       <h2>Ask a question</h2>
-      <form class="ask-form" method="post" action="{{ public_url('/ask') }}">
+      <form class="ask-form" id="ask-form" method="post" action="{{ public_url('/ask') }}">
         {% if selected %}
         <input type="hidden" name="example" value="{{ selected.id }}" />
         {% endif %}
@@ -288,7 +323,13 @@
           placeholder="How much did I spend on drinks in July?"
           required
         >{{ question }}</textarea>
-        <button type="submit" {% if not api_ok %}disabled{% endif %}>Ask</button>
+        <button type="submit" id="ask-btn" {% if not api_ok %}disabled{% endif %}>
+          <span class="btn-idle">Ask</span>
+          <span class="btn-busy" hidden>Thinking…</span>
+        </button>
+        <p class="meta ask-wait" id="ask-wait" hidden>
+          Asking the API — this can take a few seconds.
+        </p>
       </form>
       {% if qa_error %}
       <div class="banner err" style="margin-top: 1rem">{{ qa_error }}</div>
@@ -308,10 +349,11 @@
 </p>
 <script>
   (function () {
-    const form = document.getElementById("ingest-form");
-    const btn = document.getElementById("ingest-btn");
-    const wait = document.getElementById("ingest-wait");
-    if (form && btn) {
+    function bindBusy(formId, btnId, waitId) {
+      const form = document.getElementById(formId);
+      const btn = document.getElementById(btnId);
+      const wait = document.getElementById(waitId);
+      if (!form || !btn) return;
       form.addEventListener("submit", function () {
         btn.disabled = true;
         const idle = btn.querySelector(".btn-idle");
@@ -321,6 +363,8 @@
         if (wait) wait.hidden = false;
       });
     }
+    bindBusy("ingest-form", "ingest-btn", "ingest-wait");
+    bindBusy("ask-form", "ask-btn", "ask-wait");
   })();
 </script>
 {% if ingest_ok %}
