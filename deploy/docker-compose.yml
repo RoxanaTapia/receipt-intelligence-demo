@@ -81,8 +81,8 @@ services:
       RECEIPT_DATA_PATH: /data/receipts
       SEED_DIR: /app/seed
       SAMPLES_DIR: /app/samples
-      DEMO_START_DATE: ${DEMO_START_DATE:-2026-05-01}
-      DEMO_END_DATE: ${DEMO_END_DATE:-2026-05-31}
+      DEMO_START_DATE: ${DEMO_START_DATE:-2026-07-01}
+      DEMO_END_DATE: ${DEMO_END_DATE:-2026-08-31}
       # Empty when Caddy (or ai-doc) strips /app via handle_path.
       ROOT_PATH: ${UX_ROOT_PATH:-}
       # Internal Compose DNS — not a public browser URL. Workflow must be Active.
