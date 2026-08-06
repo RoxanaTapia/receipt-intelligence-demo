@@ -1,0 +1,39 @@
+{
+  "date": "2026-08-01",
+  "merchant": "Green Basket",
+  "total": 18.90,
+  "extracted_at": "2026-08-01T12:00:00Z",
+  "categorized_at": "2026-08-01T12:00:00Z",
+  "line_items": [
+    {
+      "description": "Apples",
+      "quantity": 1,
+      "price": 3.20,
+      "category": "food"
+    },
+    {
+      "description": "Yogurt cups",
+      "quantity": 4,
+      "price": 5.60,
+      "category": "food"
+    },
+    {
+      "description": "Herbal tea",
+      "quantity": 1,
+      "price": 4.10,
+      "category": "drinks"
+    },
+    {
+      "description": "Granola bar pack",
+      "quantity": 1,
+      "price": 3.50,
+      "category": "snacks"
+    },
+    {
+      "description": "Paper towels",
+      "quantity": 1,
+      "price": 2.50,
+      "category": "household"
+    }
+  ]
+}

@@ -86,7 +86,7 @@ curl -s http://localhost:8080/health
 # One question against seeded receipts (needs ANTHROPIC_API_KEY)
 curl -s http://localhost:8000/questions \
   -H 'Content-Type: application/json' \
-  -d '{"question":"How much did I spend on drinks in May 2026?"}'
+  -d '{"question":"How much did I spend on drinks in July 2026?"}'
 
 # Optional: confirm n8n can reach the API on the Compose network
 docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \

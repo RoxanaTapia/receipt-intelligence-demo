@@ -1,0 +1,33 @@
+{
+  "date": "2026-07-12",
+  "merchant": "Lumen Pantry",
+  "total": 14.20,
+  "extracted_at": "2026-07-12T12:00:00Z",
+  "categorized_at": "2026-07-12T12:00:00Z",
+  "line_items": [
+    {
+      "description": "Oat milk",
+      "quantity": 1,
+      "price": 2.40,
+      "category": "drinks"
+    },
+    {
+      "description": "Sourdough loaf",
+      "quantity": 1,
+      "price": 3.80,
+      "category": "food"
+    },
+    {
+      "description": "Mixed nuts",
+      "quantity": 1,
+      "price": 4.50,
+      "category": "snacks"
+    },
+    {
+      "description": "Dish soap",
+      "quantity": 1,
+      "price": 3.50,
+      "category": "household"
+    }
+  ]
+}

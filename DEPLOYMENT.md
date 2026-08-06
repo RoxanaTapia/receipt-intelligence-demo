@@ -266,9 +266,13 @@ curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOM
 
 Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
 
+### Seed fixtures and demo currency
+
+`demo/seed/` holds **fictional** merchants/items (not real retailers). Amounts are **demo currency (DC)** — the UX labels them; they are not EUR/USD. Analytics window defaults: `DEMO_START_DATE=2026-07-01`, `DEMO_END_DATE=2026-08-31` (cover seed + live sample dates). See `demo/seed/README.md`.
+
 ### Live sample PDF (operators)
 
-Visitors download → upload under `/app`. The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default) — the browser never reaches n8n.
+Visitors download → upload under `/app` (primary sample id `05-demo-basket`). The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default) — the browser never reaches n8n.
 
 After any n8n volume reset:
 
@@ -280,7 +284,7 @@ After any n8n volume reset:
 ```bash
 docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml \
-  exec ux wget -qO- --post-data='{"sample":"03-small"}' \
+  exec ux wget -qO- --post-data='{"sample":"05-demo-basket"}' \
   --header='Content-Type: application/json' \
   http://n8n:5678/webhook/receipt-demo-ingest
 ```

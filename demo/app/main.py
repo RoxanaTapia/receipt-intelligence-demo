@@ -14,6 +14,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.api_client import ApiError, ReceiptApiClient
 from app.examples import get_example, load_examples
+from app.money import DEMO_CURRENCY, format_money
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 
@@ -26,9 +27,9 @@ N8N_INGEST_WEBHOOK_URL = os.getenv(
     "N8N_INGEST_WEBHOOK_URL",
     "http://n8n:5678/webhook/receipt-demo-ingest",
 )
-# Explicit seed window — analytics is corpus-wide; dates keep the demo stable.
-DEMO_START_DATE = os.getenv("DEMO_START_DATE", "2026-05-01")
-DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-05-31")
+# Explicit seed + live-sample window — analytics is corpus-wide; dates keep the demo stable.
+DEMO_START_DATE = os.getenv("DEMO_START_DATE", "2026-07-01")
+DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-08-31")
 # Public URL prefix as seen by the browser (e.g. "/app" behind Caddy handle_path).
 # Keep empty for local host publish on :8080. Shared-edge / solo Caddy set /app.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
@@ -62,6 +63,8 @@ def _base_context(request: Request) -> dict[str, Any]:
         "demo_css": DEMO_CSS,
         "demo_start": DEMO_START_DATE,
         "demo_end": DEMO_END_DATE,
+        "demo_currency": DEMO_CURRENCY,
+        "money": format_money,
         "sample_id": SAMPLE_ID,
         "sample_filename": SAMPLE_FILENAME,
     }

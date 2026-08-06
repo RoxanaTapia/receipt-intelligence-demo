@@ -1,17 +1,17 @@
 [
   {
-    "id": "aldi-2026-05-10",
-    "file": "2026-05-10_aldi_aaaaaaaa.json",
-    "label": "ALDI — 10 May 2026"
+    "id": "lumen-2026-07-12",
+    "file": "2026-07-12_lumen-pantry_aaaaaaaa.json",
+    "label": "Lumen Pantry — 12 Jul 2026"
   },
   {
-    "id": "rewe-2026-05-15",
-    "file": "2026-05-15_rewe_bbbbbbbb.json",
-    "label": "REWE — 15 May 2026"
+    "id": "harbor-2026-07-20",
+    "file": "2026-07-20_harbor-home_bbbbbbbb.json",
+    "label": "Harbor Home — 20 Jul 2026"
   },
   {
-    "id": "rewe-2026-05-19",
-    "file": "2026-05-19_rewe_cccccccc.json",
-    "label": "REWE — 19 May 2026"
+    "id": "green-2026-08-01",
+    "file": "2026-08-01_green-basket_cccccccc.json",
+    "label": "Green Basket — 1 Aug 2026"
   }
 ]
