@@ -189,7 +189,9 @@ th {
 .cat-bar > span {
   display: block;
   height: 100%;
+  width: var(--to, 0%);
   background: var(--accent);
+  border-radius: inherit;
 }
 
 .ask-form {
@@ -251,6 +253,17 @@ th {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+}
+
+.cats-animate .cat-bar > span {
+  width: var(--from, 0%);
+  animation: cat-grow 0.85s ease-out forwards;
+}
+
+@keyframes cat-grow {
+  to {
+    width: var(--to, 0%);
+  }
 }
 
 .answer {

@@ -79,6 +79,53 @@ def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+def _safe_summary() -> tuple[dict[str, Any] | None, str | None]:
+    """Fetch window summary; return (summary, error)."""
+    try:
+        api.health()
+        return api.summary(DEMO_START_DATE, DEMO_END_DATE), None
+    except ApiError as exc:
+        return None, str(exc)
+
+
+def _category_share_map(summary: dict[str, Any] | None) -> dict[str, dict[str, float]]:
+    """Map category → {spend, pct} from a summary payload."""
+    if not summary:
+        return {}
+    rows = summary.get("by_category") or []
+    out: dict[str, dict[str, float]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get("category") or "")
+        if not name:
+            continue
+        out[name] = {
+            "spend": float(row.get("total_spend") or 0),
+            "pct": float(row.get("percentage") or 0),
+        }
+    return out
+
+
+def _seed_baseline_spend() -> float:
+    """Sum line prices on seed fixtures inside the demo window (for UX contrast)."""
+    total = 0.0
+    for path in sorted(SEED_DIR.glob("2026-*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        date = str(data.get("date") or "")
+        if date < DEMO_START_DATE or date > DEMO_END_DATE:
+            continue
+        for item in data.get("line_items") or []:
+            if isinstance(item, dict):
+                total += float(item.get("price") or 0)
+    return round(total, 2)
+
+
 def _page(
     request: Request,
     *,
@@ -90,19 +137,26 @@ def _page(
     live_meta: dict[str, Any] | None = None,
     live_error: str | None = None,
     ingest_ok: bool = False,
+    summary_before: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
     selected = get_example(examples, example)
-    summary = None
-    api_error = None
-    api_ok = False
-
-    try:
-        api.health()
-        api_ok = True
-        summary = api.summary(DEMO_START_DATE, DEMO_END_DATE)
-    except ApiError as exc:
-        api_error = str(exc)
+    summary, api_error = _safe_summary()
+    api_ok = summary is not None and api_error is None
+    before_map = _category_share_map(summary_before)
+    spend_before = (
+        float(summary_before["total_spend"])
+        if summary_before and summary_before.get("total_spend") is not None
+        else None
+    )
+    spend_after = (
+        float(summary["total_spend"])
+        if summary and summary.get("total_spend") is not None
+        else None
+    )
+    spend_delta = None
+    if spend_before is not None and spend_after is not None:
+        spend_delta = round(spend_after - spend_before, 2)
 
     return templates.TemplateResponse(
         request,
@@ -112,6 +166,12 @@ def _page(
             "examples": examples,
             "selected": selected,
             "summary": summary,
+            "summary_before": summary_before,
+            "spend_before": spend_before,
+            "spend_after": spend_after,
+            "spend_delta": spend_delta,
+            "before_map": before_map,
+            "seed_baseline": _seed_baseline_spend(),
             "api_ok": api_ok,
             "api_error": api_error,
             "answer": answer,
@@ -161,6 +221,9 @@ async def ingest(
     if reject:
         return _page(request, example=example or None, live_error=reject)
 
+    # Snapshot spending before n8n writes so the UI can show before → after bars.
+    summary_before, _ = _safe_summary()
+
     try:
         meta = n8n.trigger_sample(SAMPLE_ID)
     except N8nIngestError as exc:
@@ -171,6 +234,7 @@ async def ingest(
                 f"{exc} — Import alone is not enough: the ingest workflow must be "
                 "Active/Published in n8n (see DEPLOYMENT.md § Live sample PDF)."
             ),
+            summary_before=summary_before,
         )
 
     filename = str(meta["persistedFilename"])
@@ -185,6 +249,7 @@ async def ingest(
                 "shared receipts volume yet. Refresh in a moment or check n8n."
             ),
             ingest_ok=True,
+            summary_before=summary_before,
         )
 
     return _page(
@@ -193,6 +258,7 @@ async def ingest(
         live_receipt=receipt,
         live_meta=meta,
         ingest_ok=True,
+        summary_before=summary_before,
     )
 
 
