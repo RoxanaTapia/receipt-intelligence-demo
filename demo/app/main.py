@@ -372,13 +372,13 @@ def ask(
     )
 
 
-@app.post("/live-import/delete", response_class=HTMLResponse)
+@app.post("/live-import/delete", response_model=None)
 def remove_live_import(
     request: Request,
     example: str = Form(...),
     start: str = Form(""),
     end: str = Form(""),
-) -> HTMLResponse | RedirectResponse:
+):
     """Delete a live-ingest file so the visitor can run the sample again."""
     window_start, window_end = _parse_window(start or None, end or None)
     target = example.strip()
