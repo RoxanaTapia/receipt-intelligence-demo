@@ -54,9 +54,18 @@ def load_live_imports(seed_dir: Path, data_dir: Path) -> list[ExampleReceipt]:
     if not data_dir.is_dir():
         return imports
 
-    for path in sorted(data_dir.glob("*.json")):
-        if path.name in seed_names:
-            continue
+    def _mtime(path: Path) -> float:
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    paths = sorted(
+        (path for path in data_dir.glob("*.json") if path.name not in seed_names),
+        key=_mtime,
+        reverse=True,
+    )
+    for path in paths:
         try:
             receipt = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):

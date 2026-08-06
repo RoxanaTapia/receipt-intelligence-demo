@@ -75,20 +75,31 @@
     {% endif %}
   </div>
   <p class="meta">
-    Re-running the same sample may update the same file (content hash). The block below is from this
-    run — not the seeded list.
+    Re-running the same sample may update the same file (content hash). The result below stays until
+    you remove it from Live imports.
   </p>
   {% endif %}
-  {% if live_receipt %}
-  <div class="live-result-panel" {% if not ingest_ok %}id="live-result"{% endif %}>
-    <h3 class="live-heading">
-      {{ live_receipt.merchant }}
-      <span class="live-badge">Live</span>
-    </h3>
+  {% if live_panel %}
+  <details
+    class="live-result-panel"
+    id="live-panel"
+    data-persist="live-panel-open"
+    {% if ingest_ok %}open{% endif %}
+  >
+    <summary class="live-heading">
+      <span>
+        {{ live_panel.merchant }}
+        <span class="live-badge">Live</span>
+      </span>
+      <span class="live-collapse-hint">Collapse / expand</span>
+    </summary>
     <p class="meta">
-      {{ live_receipt.date }} · total
-      <span class="num">{{ money(live_receipt.total) }}</span>
-      · from this ingest run
+      {{ live_panel.date }} · total
+      <span class="num">{{ money(live_panel.total) }}</span>
+      · live import
+      {% if live_panel_example %}
+      · <code>{{ live_panel_example.file_name }}</code>
+      {% endif %}
     </p>
     <table>
       <thead>
@@ -100,7 +111,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for line in live_receipt.line_items %}
+        {% for line in live_panel.line_items %}
         <tr>
           <td>{{ line.description }}</td>
           <td>{{ line.category }}</td>
@@ -110,7 +121,20 @@
         {% endfor %}
       </tbody>
     </table>
-  </div>
+    {% if live_panel_example %}
+    <form
+      class="live-delete-form live-panel-remove"
+      method="post"
+      action="{{ public_url('/live-import/delete') }}"
+      onsubmit="return confirm('Remove this live import so you can try ingest again?');"
+    >
+      <input type="hidden" name="example" value="{{ live_panel_example.id }}" />
+      <input type="hidden" name="start" value="{{ window_start }}" />
+      <input type="hidden" name="end" value="{{ window_end }}" />
+      <button type="submit" class="live-delete-btn">Remove live import</button>
+    </form>
+    {% endif %}
+  </details>
   {% endif %}
 </section>
 
@@ -243,10 +267,10 @@
         {{ demo_start }} → {{ demo_end }}.
       </p>
 
-      {% if live_outside_window %}
+      {% if live_outside_window and live_panel %}
       <div class="banner warn" role="status">
         Live receipt date
-        <strong>{% if live_receipt %}{{ live_receipt.date }}{% else %}{{ selected.receipt.date }}{% endif %}</strong>
+        <strong>{{ live_panel.date }}</strong>
         is outside this window — widen the filter to include it in spending context.
       </div>
       {% endif %}
@@ -327,6 +351,7 @@
           <span class="btn-idle">Ask</span>
           <span class="btn-busy" hidden>Thinking…</span>
         </button>
+        <p class="meta">Enter to ask · Shift+Enter for a new line</p>
         <p class="meta ask-wait" id="ask-wait" hidden>
           Asking the API — this can take a few seconds.
         </p>
@@ -365,6 +390,36 @@
     }
     bindBusy("ingest-form", "ingest-btn", "ingest-wait");
     bindBusy("ask-form", "ask-btn", "ask-wait");
+
+    const askForm = document.getElementById("ask-form");
+    const question = document.getElementById("question");
+    if (askForm && question) {
+      question.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" || event.shiftKey) return;
+        event.preventDefault();
+        if (typeof askForm.requestSubmit === "function") {
+          askForm.requestSubmit();
+        } else {
+          askForm.submit();
+        }
+      });
+    }
+
+    const panel = document.getElementById("live-panel");
+    if (panel) {
+      const key = panel.getAttribute("data-persist") || "live-panel-open";
+      const justIngested = {{ "true" if ingest_ok else "false" }};
+      if (!justIngested) {
+        const saved = sessionStorage.getItem(key);
+        panel.open = saved !== "0";
+      } else {
+        panel.open = true;
+        sessionStorage.setItem(key, "1");
+      }
+      panel.addEventListener("toggle", function () {
+        sessionStorage.setItem(key, panel.open ? "1" : "0");
+      });
+    }
   })();
 </script>
 {% if ingest_ok %}

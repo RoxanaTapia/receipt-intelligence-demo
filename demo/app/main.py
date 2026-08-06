@@ -15,7 +15,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import delete_live_import, get_example, load_examples, load_live_imports
+from app.examples import (
+    ExampleReceipt,
+    delete_live_import,
+    get_example,
+    load_examples,
+    load_live_imports,
+)
 from app.money import DEMO_CURRENCY, enrich_question_months, format_money, present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
@@ -152,6 +158,36 @@ def _outside_window(receipt: dict[str, Any] | None, start: str, end: str) -> boo
     return receipt_date < start or receipt_date > end
 
 
+def _resolve_live_panel(
+    live_receipt: dict[str, Any] | None,
+    selected: ExampleReceipt | None,
+    live_imports: list[ExampleReceipt],
+) -> tuple[dict[str, Any] | None, ExampleReceipt | None]:
+    """Pick the live panel receipt — stays until Remove clears live imports."""
+    if live_receipt is not None:
+        merchant = str(live_receipt.get("merchant") or "")
+        receipt_date = str(live_receipt.get("date") or "")
+        match = next(
+            (
+                item
+                for item in live_imports
+                if str(item.receipt.get("merchant") or "") == merchant
+                and str(item.receipt.get("date") or "") == receipt_date
+            ),
+            None,
+        )
+        if match is None and selected is not None and selected.source == "live":
+            match = selected
+        if match is None and live_imports:
+            match = live_imports[0]
+        return live_receipt, match
+    if selected is not None and selected.source == "live":
+        return selected.receipt, selected
+    if live_imports:
+        return live_imports[0].receipt, live_imports[0]
+    return None, None
+
+
 def _home_redirect(
     *,
     start: str,
@@ -203,9 +239,9 @@ def _page(
     if spend_before is not None and spend_after is not None:
         spend_delta = round(spend_after - spend_before, 2)
 
-    focus_receipt = live_receipt
-    if focus_receipt is None and selected is not None and selected.source == "live":
-        focus_receipt = selected.receipt
+    panel_receipt, panel_example = _resolve_live_panel(
+        live_receipt, selected, live_imports
+    )
 
     return templates.TemplateResponse(
         request,
@@ -224,13 +260,15 @@ def _page(
             "seed_baseline": _seed_baseline_spend(start, end),
             "window_start": start,
             "window_end": end,
-            "live_outside_window": _outside_window(focus_receipt, start, end),
+            "live_outside_window": _outside_window(panel_receipt, start, end),
             "api_ok": api_ok,
             "api_error": api_error,
             "answer": answer,
             "question": question,
             "qa_error": qa_error,
             "live_receipt": live_receipt,
+            "live_panel": panel_receipt,
+            "live_panel_example": panel_example,
             "live_meta": live_meta,
             "live_error": live_error,
             "ingest_ok": ingest_ok,
@@ -356,7 +394,11 @@ def ask(
             demo_year = int(window_start[:4])
             routed_question = enrich_question_months(cleaned, year=demo_year)
             raw = api.ask(routed_question)
-            text = present_answer_text(str(raw.get("answer") or ""))
+            text = present_answer_text(
+                str(raw.get("answer") or ""),
+                window_start=window_start,
+                window_end=window_end,
+            )
             answer = {**raw, "answer": text} if text else raw
         except ApiError as exc:
             qa_error = str(exc)
