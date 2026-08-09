@@ -1,54 +1,51 @@
 # Receipt Intelligence Demo
 
-Self-serve portfolio demo for **Receipt Intelligence**: n8n categorizes receipts, the API answers spending questions, and a thin visitor UX lets people try the loop without opening the n8n editor.
+Self-serve portfolio pilot for **Smart Receipt Insights**: upload a receipt PDF, get categories automatically, and ask spend questions in plain English — **Receipt → n8n → Answers** — without opening the n8n editor.
 
-This umbrella owns **Compose + deploy glue + visitor UX**. Product logic stays in the sibling repos.
+This repo is the **delivery umbrella**: Docker Compose, HTTPS deploy glue, and the thin visitor UX. Categorization and Q&A product logic live in companion modules (not required to try the live demo).
 
 | Link | Where |
 |------|--------|
 | 🚀 **Try the demo** | [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/) — public gate → invite or Login → `/app` |
 | 📌 **Deploy / VPS** | [DEPLOYMENT.md](DEPLOYMENT.md) — solo Caddy **or** shared host with AI Doc |
 
-| Repo | Role |
-|------|------|
-| [receipt-intelligence-n8n](https://github.com/RoxanaTapia/receipt-intelligence-n8n) | Ingest + categorization (writes receipt JSON) |
-| [receipt-intelligence-api](https://github.com/RoxanaTapia/receipt-intelligence-api) | Analytics + Q&A (reads receipt JSON) |
-| **This repo** | Run them together + public demo path |
+## What visitors see
 
-## Visitor path vs operator path
+1. Open the [live demo](https://receipt-intelligence.roxanatapia.dev/)
+2. Sign in (invite or Login) and go to **`/app`**
+3. Download the sample PDF → upload it → see live categories → ask a question
 
-Same public hostname, two audiences:
+Seeded examples stay available if you skip the live upload. Invites unlock `/app` only — you never need the n8n UI as a guest.
 
-| Path | Who | How |
-|------|-----|-----|
-| **Visitor** | Portfolio guests | Open the [live demo](https://receipt-intelligence.roxanatapia.dev/) → invite or Login → **`/app`**: download the sample PDF → upload it → see live categories → ask a question (seeded examples still available). Invites are for `/app` only. |
-| **Operator** | Maintainers | **`n8n.receipt-intelligence.roxanatapia.dev`** — n8n UI at `/` (edge Basic Auth, then n8n **owner** login; keep `N8N_BASIC_AUTH_ACTIVE=false`). Import **and Active/Publish** **Receipt — Ingest PDF** or `/app` live ingest fails with “webhook not registered”. Full VPS steps: [DEPLOYMENT.md](DEPLOYMENT.md). |
+## Architecture
 
-You do **not** need the n8n editor to try the visitor demo. The UX calls n8n on the Compose network only (not the browser).
-
-## Architecture (portfolio / shared host)
-
-On the portfolio VPS, **AI Doc Caddy** owns TLS, the invite gate, and reverse proxy. Receipt containers join Docker network `edge`; n8n writes categorized JSON to a shared disk the API reads.
+On the portfolio VPS, an edge reverse proxy owns TLS and the invite gate. Receipt services join a shared Docker network: n8n writes categorized JSON to a shared volume; the API reads it for analytics and Q&A; the demo UX calls both on the private network (the browser never talks to n8n).
 
 ```mermaid
 flowchart LR
   browser[Browser]
-  edge[AI Doc Caddy<br/>TLS · gate · invites]
-  ux[Demo UX<br/>receipt-ux :8080]
-  api[API<br/>receipt-api :8000]
-  disk[(Shared receipts<br/>on edge)]
-  n8n[n8n<br/>receipt-n8n :5678]
+  edge[Edge proxy<br/>TLS · gate · invites]
+  ux[Demo UX]
+  api[API]
+  disk[(Shared receipts)]
+  n8n[n8n]
 
   browser --> edge
   edge -->|/app| ux
-  ux -->|webhook sample id| n8n
+  ux -->|ingest webhook| n8n
   ux --> api
   api --> disk
   n8n -->|writes| disk
-  edge -->|n8n subdomain /| n8n
 ```
 
-Solo VPS (this repo’s own Caddy) is documented in [DEPLOYMENT.md](DEPLOYMENT.md) — visitor `/app`, n8n often under `/n8n*`; portfolio uses a dedicated n8n host.
+| Piece | Role |
+|-------|------|
+| **Demo UX** (this repo, `demo/`) | Visitor UI — sample download, upload, categories, questions |
+| **n8n** | Ingest + categorization (writes receipt JSON) |
+| **API** | Analytics + natural-language Q&A (reads receipt JSON) |
+| **Compose / Caddy** (this repo, `deploy/`) | Run them together on one VPS |
+
+Companion n8n and API source repos are private for now; this public repo shows how the pilot is wired and deployed. Full operator steps (including workflow import) live in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Production / deploy
 
@@ -57,16 +54,14 @@ Solo VPS (this repo’s own Caddy) is documented in [DEPLOYMENT.md](DEPLOYMENT.m
 | **Shared host with AI Doc** | Portfolio VPS already runs AI Doc Caddy | [DEPLOYMENT.md — Shared host](DEPLOYMENT.md#-shared-host-with-ai-doc-caddy) |
 | **Solo Caddy** | Dedicated box for this demo only | [DEPLOYMENT.md — Solo Hetzner](DEPLOYMENT.md#-deploy-on-hetzner-solo-caddy) |
 
-Product workflow import and sample PDFs: [n8n integration runbook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md).
-
 ## Local compose smoke
 
-Prerequisites: Docker (Compose v2), and the API sibling cloned next to this repo:
+Prerequisites: Docker (Compose v2). The API image builds from a companion API checkout next to this repo (default path below). That companion is private — use the [live demo](https://receipt-intelligence.roxanatapia.dev/) if you only want to try the product.
 
 ```text
 <parent>/
-├── receipt-intelligence-api
-└── receipt-intelligence-demo   # this repo
+├── receipt-intelligence-api   # companion (private)
+└── receipt-intelligence-demo  # this repo
 ```
 
 ```bash
@@ -87,10 +82,6 @@ curl -s http://localhost:8080/health
 curl -s http://localhost:8000/questions \
   -H 'Content-Type: application/json' \
   -d '{"question":"How much did I spend on drinks in July 2026?"}'
-
-# Optional: confirm n8n can reach the API on the Compose network
-docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \
-  wget -qO- http://api:8000/health
 ```
 
 | Service | Host URL |
@@ -101,10 +92,10 @@ docker compose --env-file .env -f deploy/docker-compose.yml exec n8n \
 
 If host port `5678` or `8080` is already in use, set `N8N_HOST_PORT` / `UX_PORT` in `.env` before `up`.
 
-Shared categorized JSON lives in `data/receipts/` (seed script + n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, the UX uses `http://api:8000` and triggers live ingest at `N8N_INGEST_WEBHOOK_URL` (default `http://n8n:5678/webhook/receipt-demo-ingest`). Demo sample PDFs are vendored under `demo/samples/` and mounted into n8n at `/home/node/.n8n-files/samples`.
+Shared categorized JSON lives in `data/receipts/` (seed script + n8n writes; API reads via `RECEIPT_DATA_PATH=/data/receipts`). On the Compose network, the UX uses `http://api:8000` and triggers live ingest at `N8N_INGEST_WEBHOOK_URL` (default `http://n8n:5678/webhook/receipt-demo-ingest`). Demo sample PDFs are under `demo/samples/`.
 
-Live PDF path needs the ingest workflow **Active** in n8n (see [n8n demo webhook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/n8n-setup.md#demo-sample-webhook)).
+Live PDF ingest needs the ingest workflow **Active** in n8n — see [DEPLOYMENT.md — Live sample PDF](DEPLOYMENT.md#live-sample-pdf-operators).
 
-## Agent workflow
+## Maintainers
 
-Start with [`AGENTS.md`](AGENTS.md). Slash commands: `/lecture-on-issue`, `/ship-issue`, `/document`, `/verify`, `/ship-complete`.
+Ship workflow, agent roster, and issue map: [`AGENTS.md`](AGENTS.md).
