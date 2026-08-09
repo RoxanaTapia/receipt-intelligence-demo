@@ -4,10 +4,7 @@ Self-serve portfolio pilot for **Smart Receipt Insights**: upload a receipt PDF,
 
 This repo is the **delivery umbrella**: Docker Compose, HTTPS deploy glue, and the thin visitor UX. Categorization and Q&A product logic live in companion modules (not required to try the live demo).
 
-| Link | Where |
-|------|--------|
-| 🚀 **Try the demo** | [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/) — public gate → invite or Login → `/app` |
-| 📌 **Deploy / VPS** | [DEPLOYMENT.md](DEPLOYMENT.md) — solo Caddy **or** shared host with AI Doc |
+🚀 **Try the demo:** [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/) — public gate → invite or Login → `/app`
 
 ## What visitors see
 
@@ -45,14 +42,7 @@ flowchart LR
 | **API** | Analytics + natural-language Q&A (reads receipt JSON) |
 | **Compose / Caddy** (this repo, `deploy/`) | Run them together on one VPS |
 
-Companion n8n and API source repos are private for now; this public repo shows how the pilot is wired and deployed. Full operator steps (including workflow import) live in [DEPLOYMENT.md](DEPLOYMENT.md).
-
-## Production / deploy
-
-| Mode | When | Start here |
-|------|------|------------|
-| **Shared host with AI Doc** | Portfolio VPS already runs AI Doc Caddy | [DEPLOYMENT.md — Shared host](DEPLOYMENT.md#-shared-host-with-ai-doc-caddy) |
-| **Solo Caddy** | Dedicated box for this demo only | [DEPLOYMENT.md — Solo Hetzner](DEPLOYMENT.md#-deploy-on-hetzner-solo-caddy) |
+Companion n8n and API source repos are private for now; this public repo shows how the pilot is wired and deployed. Operator deploy steps (including workflow import) live in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Local compose smoke
 
