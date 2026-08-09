@@ -4,15 +4,15 @@ Self-serve portfolio pilot for **Smart Receipt Insights**: upload a receipt PDF,
 
 This repo is the **delivery umbrella**: Docker Compose, HTTPS deploy glue, and the thin visitor UX. Categorization and Q&A product logic live in companion modules (not required to try the live demo).
 
-🚀 **Try the demo:** [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/) — request an invite, receive a code, redeem it, then open `/app`
+🚀 **Try the demo:** [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/) — request an invite, receive a code, redeem it
 
 ## What visitors see
 
 1. Open the [live demo](https://receipt-intelligence.roxanatapia.dev/)
 2. Request an invite → receive a code → redeem it
-3. Continue to **`/app`**: download the sample PDF → upload it → see live categories → ask a question
+3. Download the sample PDF → upload it → see live categories → ask a question
 
-Seeded examples stay available if you skip the live upload. An invite unlocks `/app` only — you never need the n8n UI as a guest.
+Seeded examples stay available if you skip the live upload. An invite unlocks the demo only — you never need the n8n UI as a guest.
 
 ## Architecture
 
