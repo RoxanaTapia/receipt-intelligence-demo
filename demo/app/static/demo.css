@@ -38,13 +38,34 @@ main {
   padding: 2rem 0 3rem;
 }
 
+.top-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.35rem;
+}
+
 .brand {
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
-  margin: 0 0 0.35rem;
+  margin: 0;
   font-weight: 700;
+}
+
+.exit-demo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.exit-demo:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 h1 {
