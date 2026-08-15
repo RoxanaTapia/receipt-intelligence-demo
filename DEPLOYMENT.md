@@ -8,7 +8,7 @@ Product logic stays in the sibling repos; this guide covers **firewall → `.env
 
 | Path | When | Compose files | Who owns 80/443 |
 |------|------|---------------|-----------------|
-| **[Shared host with AI Doc](#-shared-host-with-ai-doc-caddy)** | Portfolio VPS already runs [ai-doc-to-chat](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline) Caddy | base + `docker-compose.shared-edge.yml` | **AI Doc Caddy** (do not start this repo’s Caddy) |
+| **[Shared host with AI Doc](#-shared-host-with-ai-doc-caddy)** | Portfolio VPS already runs [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) Caddy | base + `docker-compose.shared-edge.yml` | **Shared edge Caddy** (do not start this repo’s Caddy) |
 | **[Solo VPS (own Caddy)](#-deploy-on-hetzner-solo-caddy)** | Dedicated box for this demo only | base + `docker-compose.caddy.yml` | **This repo’s Caddy** |
 
 Public hostname for the portfolio shared-host path: `https://receipt-intelligence.roxanatapia.dev`
@@ -23,7 +23,7 @@ flowchart TD
   auth --> verify
 ```
 
-> **Takeaway:** Publish only **22 / 80 / 443**. App ports stay off the public internet. On the AI Doc VPS, **never** run a second Caddy from this repo.
+> **Takeaway:** Publish only **22 / 80 / 443**. App ports stay off the public internet. On the portfolio VPS, **never** run a second Caddy from this repo.
 
 ---
 
@@ -69,9 +69,9 @@ Local smoke **without** Caddy still publishes API / n8n / UX on the host (see [R
 
 ## 🔗 Shared host with AI Doc Caddy
 
-Use this on the portfolio VPS where AI Doc already terminates TLS. Receipt containers join Docker network `edge`; AI Doc’s Caddy reverse-proxies the hostname (see [ai-doc #111](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/issues/111)).
+Use this on the portfolio VPS where [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) terminates TLS. Receipt containers join Docker network `edge`; that Caddy reverse-proxies the hostname. Keep using the existing ai-doc `.env` for edge keys (do not rename them). Cutover: [edge CUTOVER.md](https://github.com/RoxanaTapia/roxanatapia-edge/blob/main/CUTOVER.md).
 
-⚠️ **Do not** run `deploy/docker-compose.caddy.yml` on that host — it will fight AI Doc for ports 80/443.
+⚠️ **Do not** run `deploy/docker-compose.caddy.yml` on that host — it will fight the shared edge for ports 80/443.
 
 ### 1. Network (once)
 
@@ -102,7 +102,7 @@ N8N_BASIC_AUTH_ACTIVE=false
 
 Use `N8N_PATH=/` (not empty) on the subdomain so editor assets are absolute (`/assets/…`). Empty path makes relative `assets/…` URLs that 404-as-HTML on `/home/workflows` (blank page after login).
 
-Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset. Edge basic auth and TLS live in the **ai-doc** project.
+Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset in **this** repo's `.env`. Edge basic auth and TLS live in **roxanatapia-edge**, reading `/root/ai-doc-to-chat-pipeline/.env`.
 
 ### 3. Seed demo receipts, then start on `edge` (no receipt Caddy)
 
@@ -126,7 +126,7 @@ Stable aliases on `edge` for the external proxy:
 | `receipt-n8n` | 5678 | n8n operator UI |
 | `receipt-ux` | 8080 | Visitor demo UX |
 
-⚠️ **AI Doc Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). Serve n8n on **`n8n.receipt-intelligence.roxanatapia.dev`** at `/` (sibling `N8N_PATH=` empty). Path-prefix `/n8n*` on the demo host hits n8n’s known login redirect bug — prefer the subdomain.
+⚠️ **Shared edge Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). Serve n8n on **`n8n.receipt-intelligence.roxanatapia.dev`** at `/` (sibling `N8N_PATH=` empty). Path-prefix `/n8n*` on the demo host hits n8n’s known login redirect bug — prefer the subdomain.
 
 ### 4. Verify (after AI Doc site block is live)
 
