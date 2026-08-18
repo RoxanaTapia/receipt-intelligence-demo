@@ -1,8 +1,10 @@
 # Deployment Guide
 
-Single-VM path for the Receipt Intelligence demo umbrella: Docker Compose (n8n writer + API reader) with HTTPS at the edge.
+## Background
 
-Product logic stays in the sibling repos; this guide covers **firewall → `.env` → up → verify**.
+For operators standing up the Receipt Intelligence demo on a single VM: Docker Compose (n8n writer + API reader) with HTTPS at the edge.
+
+Product overview: [README](README.md). This guide covers **firewall → `.env` → up → verify**. Companion n8n and API source stay private; this repo is the public packaging.
 
 ## Which path?
 

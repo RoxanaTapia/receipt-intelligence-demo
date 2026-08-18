@@ -23,6 +23,18 @@ Apply when writing or editing markdown documentation in this repository.
 - Use **Mermaid** for processes, architecture, or deploy flows when it genuinely helps
 - Skip diagrams for simple content
 
+## Public README (portfolio)
+
+The root README is the client-facing first paint. Match the AI Doc README shape:
+
+- Product name and tagline, then a **Takeaway**
+- Try the live demo (invite path), not clone/compose smoke
+- How the product works (pipeline + technique table), not VPS/Caddy internals
+- What it does well / Known limits
+- Stack + walkthrough on request
+
+Operator steps stay in `DEPLOYMENT.md`. Agent workflow stays in `AGENTS.md`. Do not link private companion repos (n8n, API) — they 404 for visitors.
+
 ## Links and paths
 
 - Use relative links within the repo
