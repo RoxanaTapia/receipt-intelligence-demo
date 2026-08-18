@@ -25,8 +25,9 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 | Env template | `.env.example` |
 | Operator deploy guide | `DEPLOYMENT.md` (owned by #2) |
 | Demo UX app | `demo/` (FastAPI + Jinja templates) |
-| Seed / smoke | `demo/seed/`, `deploy/seed-demo-data.sh`, [DEPLOYMENT.md](DEPLOYMENT.md) + [README](README.md) local smoke |
-| Portfolio README polish | #4 |
+| Docs map | [`docs/README.md`](docs/README.md) |
+| Seed / smoke | `demo/seed/`, `deploy/seed-demo-data.sh`, [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Public README | [`README.md`](README.md) — product first paint (portfolio) |
 | Upstream API Dockerfile | [api #25](https://github.com/RoxanaTapia/receipt-intelligence-api/issues/25) ✅ |
 | Integration contract (read-only) | [n8n integration.md](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md) |
 | Reference deploy pattern | [ai-doc-to-chat `deploy/`](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) |
