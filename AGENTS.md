@@ -26,6 +26,7 @@ Agents use generic language; this table maps terms to **this repo**. Paths appea
 | Operator deploy guide | `DEPLOYMENT.md` (owned by #2) |
 | Demo UX app | `demo/` (FastAPI + Jinja templates) |
 | Docs map | [`docs/README.md`](docs/README.md) |
+| Architecture | [`docs/product/architecture.md`](docs/product/architecture.md) |
 | Seed / smoke | `demo/seed/`, `deploy/seed-demo-data.sh`, [DEPLOYMENT.md](DEPLOYMENT.md) |
 | Public README | [`README.md`](README.md) — product first paint (portfolio) |
 | Upstream API Dockerfile | [api #25](https://github.com/RoxanaTapia/receipt-intelligence-api/issues/25) ✅ |

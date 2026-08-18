@@ -19,6 +19,7 @@ This page is the map of the repository. The [root README](../README.md) is the p
 ├── deploy/            Docker, Compose, Caddy overlays
 ├── .cursor/           Agent roles, rules, slash commands
 └── docs/              You are here
+      product/         Architecture (what runs on the VM)
 ```
 
 | Path | Open it for |
@@ -29,6 +30,7 @@ This page is the map of the repository. The [root README](../README.md) is the p
 | [`demo/seed/`](../demo/seed/) | Fictional example receipts for the seeded path |
 | [`demo/samples/`](../demo/samples/) | Allowlisted PDF the visitor downloads and uploads |
 | [`deploy/`](../deploy/) | Compose stack. Shared portfolio Caddy: [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) |
+| [`docs/product/architecture.md`](product/architecture.md) | What runs on the VM |
 | [`DEPLOYMENT.md`](../DEPLOYMENT.md) | Firewall, `.env`, shared-host vs solo Caddy |
 
 ---
@@ -41,33 +43,7 @@ Two layers: the running services, then the steps that turn a PDF into a spend an
 
 The browser never talks to n8n. Caddy terminates HTTPS and the invite gate. The demo UX calls n8n and the API on the private Docker network. n8n writes categorized JSON to a shared volume; the API reads that same folder.
 
-```mermaid
-flowchart LR
-  Browser --> Caddy
-  Caddy --> UX[Demo UX]
-  UX --> n8n
-  UX --> API
-  n8n --> Disk[(Shared receipts)]
-  API --> Disk
-```
-
-```mermaid
-sequenceDiagram
-  participant U as Browser
-  participant X as Demo UX
-  participant N as n8n
-  participant A as API
-
-  U->>X: Download sample PDF, upload it
-  X->>N: Ingest webhook (allowlisted sample)
-  N->>N: Extract, categorize, validate
-  N->>N: Persist JSON on shared volume
-  U->>X: Ask a spend question
-  X->>A: Question
-  A->>A: Route, aggregate, narrate
-  A-->>X: Answer from those totals
-  X-->>U: Categories, spending context, answer
-```
+Deploy picture and sequence: [product/architecture.md](product/architecture.md).
 
 ### Pipeline
 

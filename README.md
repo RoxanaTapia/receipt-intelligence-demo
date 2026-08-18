@@ -26,12 +26,25 @@ The public pilot is a shared demo with fictional merchants and demo currency (DC
 Each step exists to keep the answer inside receipts that were actually ingested.
 
 ```mermaid
-flowchart LR
-  A[PDF] --> B[Extract]
-  B --> C[Categorize]
-  C --> D[Persist JSON]
-  D --> E[Analytics]
-  E --> F[Spend answer]
+%%{init: {"flowchart": {"useMaxWidth": true, "nodeSpacing": 16, "rankSpacing": 24, "padding": 6}}}%%
+flowchart TB
+    PDF(["PDF"])
+
+    subgraph n8nBox["n8n"]
+        direction LR
+        Extract["Extract"] --> Cat["Categorize"] --> Persist["Persist"]
+    end
+
+    subgraph apiBox["API"]
+        direction LR
+        Analytics["Analytics"] --> Answer["Answer"]
+    end
+
+    PDF --> n8nBox --> apiBox
+
+    classDef default fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+    classDef header fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+    class PDF header
 ```
 
 | Step | Technique | Why? |
@@ -44,7 +57,7 @@ flowchart LR
 | **Analytics** | FastAPI aggregates by date and category | Totals stay deterministic. The model does not do the math. |
 | **Answer** | Claude routes the question, then narrates those totals | The model explains numbers it was given. |
 
-The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deploy/). Map: [docs/README.md](docs/README.md).
+The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deploy/). Map: [docs/README.md](docs/README.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md).
 
 ---
 
