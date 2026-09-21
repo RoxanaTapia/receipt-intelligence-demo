@@ -265,8 +265,79 @@ th {
   filter: none;
 }
 
-.ingest-wait {
-  margin: 0.35rem 0 0;
+.ingest-steps {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.ingest-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.step-body {
+  display: grid;
+  gap: 0.5rem;
+  flex: 1;
+  padding-top: 0.1rem; /* align label with step-num cap height */
+}
+
+.step-label {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.ingest-steps input[type="file"] {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.3rem 0.3rem 0;
+  background: #fff;
+  cursor: pointer;
+  width: 100%;
+}
+
+.ingest-steps input[type="file"]::file-selector-button {
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 5px 0 0 5px;
+  padding: 0.35rem 0.85rem;
+  margin-right: 0.65rem;
+  background: #fff;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ingest-steps input[type="file"]::file-selector-button:hover {
+  background: var(--ok-bg);
+}
+
+.ingest-steps button[type="submit"] {
+  border: 0;
+  border-radius: 6px;
+  padding: 0.65rem 1.1rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ingest-steps button[type="submit"]:hover {
+  filter: brightness(1.06);
+}
+
+.ingest-steps button[type="submit"]:disabled {
+  cursor: wait;
+  opacity: 0.85;
+  filter: none;
 }
 
 .spending-fresh {
@@ -488,36 +559,6 @@ th {
 
 .button.secondary:hover {
   background: var(--ok-bg);
-}
-
-.ask-form input[type="file"] {
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.3rem 0.3rem 0.3rem 0;
-  background: #fff;
-  cursor: pointer;
-  width: 100%;
-}
-
-.ask-form input[type="file"]::file-selector-button {
-  border: 0;
-  border-right: 1px solid var(--line);
-  border-radius: 5px 0 0 5px;
-  padding: 0.35rem 0.85rem;
-  margin-right: 0.65rem;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.ask-form input[type="file"]::file-selector-button:hover {
-  filter: brightness(1.06);
 }
 
 .note {
