@@ -30,20 +30,8 @@
 
 <section class="panel live-panel" id="live-ingest">
   <h2>Live ingest</h2>
-  <ol class="steps">
-    <li>Download the sample PDF</li>
-    <li>Upload it below</li>
-    <li>See it categorized live</li>
-  </ol>
-  {% if sample_ready %}
-  <p class="live-actions">
-    <a class="button secondary" href="{{ public_url('/sample.pdf') }}">Download {{ sample_filename }}</a>
-  </p>
-  {% else %}
-  <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
-  {% endif %}
   <form
-    class="ask-form"
+    class="ingest-steps"
     id="ingest-form"
     method="post"
     action="{{ public_url('/ingest') }}"
@@ -54,15 +42,39 @@
     {% endif %}
     <input type="hidden" name="start" value="{{ window_start }}" />
     <input type="hidden" name="end" value="{{ window_end }}" />
-    <label for="pdf">Choose PDF</label>
-    <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
-    <button type="submit" id="ingest-btn">
-      <span class="btn-idle">Run live ingest</span>
-      <span class="btn-busy" hidden>Ingesting… this can take a minute</span>
-    </button>
-    <p class="meta ingest-wait" id="ingest-wait" hidden>
-      Processing — keep this tab open.
-    </p>
+
+    <div class="ingest-step">
+      <span class="step-num">1</span>
+      <div class="step-body">
+        <span class="step-label">Download the sample PDF</span>
+        {% if sample_ready %}
+        <a class="button secondary" href="{{ public_url('/sample.pdf') }}">Download {{ sample_filename }}</a>
+        {% else %}
+        <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ingest-step">
+      <span class="step-num">2</span>
+      <div class="step-body">
+        <span class="step-label">Upload the file you just downloaded</span>
+        <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
+      </div>
+    </div>
+
+    <div class="ingest-step">
+      <span class="step-num">3</span>
+      <div class="step-body">
+        <button type="submit" id="ingest-btn">
+          <span class="btn-idle">Run live ingest</span>
+          <span class="btn-busy" hidden>Ingesting… this can take a minute</span>
+        </button>
+        <p class="meta ingest-wait" id="ingest-wait" hidden>
+          Processing — keep this tab open.
+        </p>
+      </div>
+    </div>
   </form>
   {% if live_error %}
   <div class="banner err" style="margin-top: 1rem" role="alert">{{ live_error }}</div>
