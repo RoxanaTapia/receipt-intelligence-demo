@@ -79,7 +79,9 @@ h1 {
 .lede {
   color: var(--muted);
   max-width: 38rem;
-  margin: 0 0 1.75rem;
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 .status {
@@ -117,9 +119,9 @@ h1 {
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 1rem 1.1rem;
+  border: 1px solid #d4dde4;
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
 }
 
 .panel h2 {
@@ -498,4 +500,39 @@ th {
   margin-top: 1.5rem;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+/* Numbered steps in live-ingest */
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.steps li::before {
+  content: counter(step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
