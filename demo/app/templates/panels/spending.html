@@ -1,0 +1,100 @@
+    <section
+      class="panel {% if ingest_ok and summary %}spending-fresh{% endif %}"
+      style="margin-top: 1.25rem"
+      id="spending-context"
+    >
+      <h2>
+        Spending context
+        {% if ingest_ok and live_receipt %}
+        <span class="live-badge">Updated</span>
+        {% endif %}
+      </h2>
+
+      <form class="window-form" method="get" action="{{ public_url('/') }}">
+        {% if selected %}
+        <input type="hidden" name="example" value="{{ selected.id }}" />
+        {% endif %}
+        <label for="window-start">From</label>
+        <input
+          id="window-start"
+          name="start"
+          type="date"
+          value="{{ window_start }}"
+          required
+        />
+        <label for="window-end">To</label>
+        <input
+          id="window-end"
+          name="end"
+          type="date"
+          value="{{ window_end }}"
+          required
+        />
+        <button type="submit">Apply filter</button>
+      </form>
+      <p class="meta">Default span: {{ demo_start }} → {{ demo_end }}.</p>
+
+      {% if live_outside_window and live_panel %}
+      <div class="banner warn" role="status">
+        Live receipt date
+        <strong>{{ live_panel.date }}</strong>
+        is outside this window — widen the filter to include it in spending context.
+      </div>
+      {% endif %}
+
+      {% if ingest_ok and live_receipt and summary and spend_before is not none and spend_delta is not none %}
+      <div class="banner ok" role="status">
+        {% if spend_delta > 0.009 %}
+        Window total moved
+        <strong class="num">{{ money(spend_before) }}</strong>
+        →
+        <strong class="num">{{ money(spend_after) }}</strong>
+        (+{{ money(spend_delta) }}) after live
+        <strong>{{ live_receipt.merchant }}</strong>.
+        {% else %}
+        Window total stayed
+        <strong class="num">{{ money(spend_after) }}</strong>
+        — this sample was already in the corpus (same content hash).
+        Seeded fixtures alone are about
+        <strong class="num">{{ money(seed_baseline) }}</strong>;
+        live
+        <strong>{{ live_receipt.merchant }}</strong>
+        adds
+        <strong class="num">{{ money(live_receipt.total) }}</strong>.
+        {% endif %}
+      </div>
+      {% elif summary and seed_baseline and summary.total_spend is not none
+        and summary.total_spend > seed_baseline + 0.009 %}
+      <p class="meta">
+        Seeded fixtures ≈ {{ money(seed_baseline) }} · with live data
+        <span class="num">{{ money(summary.total_spend) }}</span>
+      </p>
+      {% endif %}
+      <p class="meta">
+        Across demo receipts · {{ window_start }} → {{ window_end }}
+        · amounts in {{ demo_currency }} (demo currency)
+        {% if summary %}
+        ·
+        <span class="num">{{ money(summary.total_spend) }}</span>
+        {% endif %}
+      </p>
+      {% if summary and summary.by_category %}
+      <div class="cats {% if ingest_ok and spend_delta is not none and spend_delta > 0.009 %}cats-animate{% endif %}">
+        {% for row in summary.by_category %}
+        {% set prior = before_map.get(row.category, {}) %}
+        <div class="cat-row">
+          <span>{{ row.category }}</span>
+          <span class="num">{{ money(row.total_spend) }} · {{ row.percentage }}%</span>
+          <div class="cat-bar">
+            <span
+              class="cat-fill"
+              style="--from: {{ prior.pct if prior else 0 }}%; --to: {{ row.percentage }}%"
+            ></span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif api_ok %}
+      <p class="meta">No spending in this window. Try widening the date filter or seeding data.</p>
+      {% endif %}
+    </section>
