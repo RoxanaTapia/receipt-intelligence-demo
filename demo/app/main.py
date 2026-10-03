@@ -25,6 +25,7 @@ from app.examples import (
 from app.money import DEMO_CURRENCY, enrich_question_months, format_money, present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
+from app.spending import _spending_contrast
 
 APP_DIR = Path(__file__).resolve().parent
 SEED_DIR = Path(os.getenv("SEED_DIR", str(APP_DIR.parent / "seed")))
@@ -110,54 +111,6 @@ def _safe_summary(start: str, end: str) -> tuple[dict[str, Any] | None, str | No
         return None, str(exc)
 
 
-def _category_share_map(summary: dict[str, Any] | None) -> dict[str, dict[str, float]]:
-    """Map category → {spend, pct} from a summary payload."""
-    if not summary:
-        return {}
-    rows = summary.get("by_category") or []
-    out: dict[str, dict[str, float]] = {}
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        name = str(row.get("category") or "")
-        if not name:
-            continue
-        out[name] = {
-            "spend": float(row.get("total_spend") or 0),
-            "pct": float(row.get("percentage") or 0),
-        }
-    return out
-
-
-def _seed_baseline_spend(start: str, end: str) -> float:
-    """Sum line prices on seed fixtures inside the selected window (for UX contrast)."""
-    total = 0.0
-    for path in sorted(SEED_DIR.glob("2026-*.json")):
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if not isinstance(data, dict):
-            continue
-        receipt_date = str(data.get("date") or "")
-        if receipt_date < start or receipt_date > end:
-            continue
-        for item in data.get("line_items") or []:
-            if isinstance(item, dict):
-                total += float(item.get("price") or 0)
-    return round(total, 2)
-
-
-def _outside_window(receipt: dict[str, Any] | None, start: str, end: str) -> bool:
-    """True when a live receipt date falls outside the spending filter."""
-    if not receipt:
-        return False
-    receipt_date = str(receipt.get("date") or "")
-    if not receipt_date:
-        return False
-    return receipt_date < start or receipt_date > end
-
-
 def _resolve_live_panel(
     live_receipt: dict[str, Any] | None,
     selected: ExampleReceipt | None,
@@ -224,23 +177,16 @@ def _page(
     selected = get_example(examples, example, live_imports=live_imports)
     summary, api_error = _safe_summary(start, end)
     api_ok = summary is not None and api_error is None
-    before_map = _category_share_map(summary_before)
-    spend_before = (
-        float(summary_before["total_spend"])
-        if summary_before and summary_before.get("total_spend") is not None
-        else None
-    )
-    spend_after = (
-        float(summary["total_spend"])
-        if summary and summary.get("total_spend") is not None
-        else None
-    )
-    spend_delta = None
-    if spend_before is not None and spend_after is not None:
-        spend_delta = round(spend_after - spend_before, 2)
-
     panel_receipt, panel_example = _resolve_live_panel(
         live_receipt, selected, live_imports
+    )
+    contrast = _spending_contrast(
+        summary=summary,
+        summary_before=summary_before,
+        start=start,
+        end=end,
+        panel_receipt=panel_receipt,
+        seed_dir=SEED_DIR,
     )
 
     return templates.TemplateResponse(
@@ -253,14 +199,9 @@ def _page(
             "selected": selected,
             "summary": summary,
             "summary_before": summary_before,
-            "spend_before": spend_before,
-            "spend_after": spend_after,
-            "spend_delta": spend_delta,
-            "before_map": before_map,
-            "seed_baseline": _seed_baseline_spend(start, end),
+            **contrast,
             "window_start": start,
             "window_end": end,
-            "live_outside_window": _outside_window(panel_receipt, start, end),
             "api_ok": api_ok,
             "api_error": api_error,
             "answer": answer,
