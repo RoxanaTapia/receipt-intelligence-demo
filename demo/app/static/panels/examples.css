@@ -1,0 +1,72 @@
+.example-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.example-list a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.55rem 0.65rem;
+}
+
+.example-list a:hover {
+  background: #e7eef2;
+}
+
+.example-list a.active {
+  border-color: var(--accent);
+  background: var(--ok-bg);
+}
+/* segment */
+.aside-subhead {
+  font-size: 1.05rem;
+  margin: 1.35rem 0 0.35rem;
+}
+
+.live-import-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.5rem;
+  align-items: start;
+}
+
+.live-import-row > a {
+  min-width: 0;
+}
+
+.live-delete-form {
+  margin: 0;
+}
+
+.live-delete-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.15rem 0;
+}
+
+.live-delete-btn:hover {
+  color: var(--err);
+}
+/* segment */
+.receipt-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+}

@@ -36,7 +36,46 @@ DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-08-31")
 # Keep empty for local host publish on :8080. Shared-edge / solo Caddy set /app.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
 # Inlined so the demo stays styled even if /app/static/* is mis-proxied.
-DEMO_CSS = (APP_DIR / "static" / "demo.css").read_text(encoding="utf-8")
+# Segments are joined in the original rule order so nothing in the sheet shifts.
+_CSS_SEGMENT = "\n/* segment */\n"
+_CSS_ORDER = (
+    "shared",
+    "examples",
+    "shared",
+    "spending",
+    "ask",
+    "live",
+    "spending",
+    "ask",
+    "shared",
+    "live",
+    "examples",
+    "ask",
+    "spending",
+    "examples",
+    "live",
+    "shared",
+    "live",
+    "shared",
+    "live",
+)
+
+
+def _load_demo_css() -> str:
+    folder = APP_DIR / "static" / "panels"
+    parts = {
+        name: (folder / f"{name}.css").read_text(encoding="utf-8").split(_CSS_SEGMENT)
+        for name in ("shared", "examples", "spending", "ask", "live")
+    }
+    cursor = {name: 0 for name in parts}
+    chunks = []
+    for name in _CSS_ORDER:
+        chunks.append(parts[name][cursor[name]])
+        cursor[name] += 1
+    return "\n\n".join(chunks)
+
+
+DEMO_CSS = _load_demo_css()
 
 
 def public_url(path: str = "/") -> str:

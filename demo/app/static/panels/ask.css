@@ -1,0 +1,59 @@
+.ask-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.ask-form label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.ask-form textarea {
+  width: 100%;
+  min-height: 5rem;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+
+.ask-form button {
+  justify-self: start;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.65rem 1.1rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ask-form button:hover {
+  filter: brightness(1.06);
+}
+
+.ask-form button:disabled {
+  cursor: wait;
+  opacity: 0.85;
+  filter: none;
+}
+/* segment */
+.answer {
+  margin-top: 1rem;
+  padding: 0.85rem 0.95rem;
+  border-left: 3px solid var(--accent);
+  background: var(--ok-bg);
+}
+
+.answer p {
+  margin: 0;
+}
+/* segment */
+.ask-wait {
+  margin: 0.35rem 0 0;
+}
