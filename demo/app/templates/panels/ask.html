@@ -1,0 +1,31 @@
+    <section class="panel" style="margin-top: 1.25rem">
+      <h2>Ask a question</h2>
+      <form class="ask-form" id="ask-form" method="post" action="{{ public_url('/ask') }}">
+        {% if selected %}
+        <input type="hidden" name="example" value="{{ selected.id }}" />
+        {% endif %}
+        <input type="hidden" name="start" value="{{ window_start }}" />
+        <input type="hidden" name="end" value="{{ window_end }}" />
+        <label for="question">Ask in plain English</label>
+        <textarea
+          id="question"
+          name="question"
+          placeholder="How much did I spend on drinks in July?"
+          required
+        >{{ question }}</textarea>
+        <button type="submit" id="ask-btn" {% if not api_ok %}disabled{% endif %}>
+          <span class="btn-idle">Ask</span>
+          <span class="btn-busy" hidden>Thinking…</span>
+        </button>
+        <p class="meta">Enter to ask · Shift+Enter for new line</p>
+        <p class="meta ask-wait" id="ask-wait" hidden>Thinking…</p>
+      </form>
+      {% if qa_error %}
+      <div class="banner err" style="margin-top: 1rem">{{ qa_error }}</div>
+      {% endif %}
+      {% if answer and answer.answer %}
+      <div class="answer">
+        <p>{{ answer.answer }}</p>
+      </div>
+      {% endif %}
+    </section>

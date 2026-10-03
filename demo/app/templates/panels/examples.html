@@ -1,0 +1,51 @@
+  <aside class="panel">
+    <h2>Examples</h2>
+    <p class="meta">Preloaded receipts — click to explore.</p>
+    {% if examples %}
+    <ul class="example-list">
+      {% for item in examples %}
+      <li>
+        <a
+          href="{{ public_url('/') }}?example={{ item.id }}&amp;start={{ window_start }}&amp;end={{ window_end }}"
+          class="{% if selected and selected.id == item.id %}active{% endif %}"
+        >
+          {{ item.label }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">No examples loaded.</p>
+    {% endif %}
+
+    <h2 class="aside-subhead">Live imports</h2>
+    <p class="meta">Your uploaded receipts.</p>
+    {% if live_imports %}
+    <ul class="example-list">
+      {% for item in live_imports %}
+      <li class="live-import-row">
+        <a
+          href="{{ public_url('/') }}?example={{ item.id }}&amp;start={{ window_start }}&amp;end={{ window_end }}"
+          class="{% if selected and selected.id == item.id %}active{% endif %}"
+        >
+          {{ item.label }}
+          <span class="live-badge">Live</span>
+        </a>
+        <form
+          class="live-delete-form"
+          method="post"
+          action="{{ public_url('/live-import/delete') }}"
+          onsubmit="return confirm('Remove this live import so you can try ingest again?');"
+        >
+          <input type="hidden" name="example" value="{{ item.id }}" />
+          <input type="hidden" name="start" value="{{ window_start }}" />
+          <input type="hidden" name="end" value="{{ window_end }}" />
+          <button type="submit" class="live-delete-btn">Remove</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">None yet — run live ingest above.</p>
+    {% endif %}
+  </aside>
