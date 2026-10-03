@@ -16,12 +16,12 @@ from fastapi.templating import Jinja2Templates
 
 from app.api_client import ApiError, ReceiptApiClient
 from app.examples import (
-    ExampleReceipt,
     delete_live_import,
     get_example,
     load_examples,
     load_live_imports,
 )
+from app.live_panel import _resolve_live_panel
 from app.money import DEMO_CURRENCY, enrich_question_months, format_money, present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
@@ -109,36 +109,6 @@ def _safe_summary(start: str, end: str) -> tuple[dict[str, Any] | None, str | No
         return api.summary(start, end), None
     except ApiError as exc:
         return None, str(exc)
-
-
-def _resolve_live_panel(
-    live_receipt: dict[str, Any] | None,
-    selected: ExampleReceipt | None,
-    live_imports: list[ExampleReceipt],
-) -> tuple[dict[str, Any] | None, ExampleReceipt | None]:
-    """Pick the live panel receipt — stays until Remove clears live imports."""
-    if live_receipt is not None:
-        merchant = str(live_receipt.get("merchant") or "")
-        receipt_date = str(live_receipt.get("date") or "")
-        match = next(
-            (
-                item
-                for item in live_imports
-                if str(item.receipt.get("merchant") or "") == merchant
-                and str(item.receipt.get("date") or "") == receipt_date
-            ),
-            None,
-        )
-        if match is None and selected is not None and selected.source == "live":
-            match = selected
-        if match is None and live_imports:
-            match = live_imports[0]
-        return live_receipt, match
-    if selected is not None and selected.source == "live":
-        return selected.receipt, selected
-    if live_imports:
-        return live_imports[0].receipt, live_imports[0]
-    return None, None
 
 
 def _home_redirect(
