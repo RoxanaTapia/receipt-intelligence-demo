@@ -1,0 +1,88 @@
+.cats {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.75rem 0 0;
+}
+
+.cat-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.cat-bar {
+  grid-column: 1 / -1;
+  height: 6px;
+  background: #d7e1e6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cat-bar > span {
+  display: block;
+  height: 100%;
+  width: var(--to, 0%);
+  background: var(--accent);
+  border-radius: inherit;
+}
+/* segment */
+.spending-fresh {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#spending-context h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cats-animate .cat-bar > span {
+  width: var(--from, 0%);
+  animation: cat-grow 0.85s ease-out forwards;
+}
+
+@keyframes cat-grow {
+  to {
+    width: var(--to, 0%);
+  }
+}
+/* segment */
+.window-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.55rem 0.75rem;
+  margin: 0.65rem 0 0.35rem;
+}
+
+.window-form label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.window-form input[type="date"] {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+
+.window-form button {
+  border: 0;
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.window-form button:hover {
+  filter: brightness(1.06);
+}
