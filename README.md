@@ -12,6 +12,8 @@ A visitor tries the loop without opening n8n: download a sample receipt, watch i
 
 🟢 **Live** · <a href="https://receipt-intelligence.roxanatapia.dev/" target="_blank" rel="noopener noreferrer"><strong>receipt-intelligence.roxanatapia.dev</strong></a>
 
+▶ **[Watch the 58-second demo](https://youtu.be/q03q0kfvTfQ)**
+
 - Request an invite on the gate, then redeem the code
 - Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear
 - Seeded examples stay available if you skip the live upload
