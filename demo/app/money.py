@@ -9,11 +9,6 @@ DEMO_CURRENCY = "DC"
 
 _DOLLAR_AMOUNT = re.compile(r"\$(\d+(?:\.\d{1,2})?)")
 _EURO_AMOUNT = re.compile(r"€\s*(\d+(?:\.\d{1,2})?)")
-_MONTH_NAME = re.compile(
-    r"\b(January|February|March|April|May|June|July|August|September|"
-    r"October|November|December)\b",
-    re.IGNORECASE,
-)
 
 
 def format_money(value: float | int | None) -> str:
@@ -33,23 +28,22 @@ def present_answer_text(
     out = _DOLLAR_AMOUNT.sub(rf"\1 {DEMO_CURRENCY}", text)
     out = _EURO_AMOUNT.sub(rf"\1 {DEMO_CURRENCY}", out)
     lowered = out.lower()
+    span = ""
+    if window_start and window_end:
+        span = f" Demo receipts cover {window_start} → {window_end}."
     if "couldn't map that" in lowered or "couldn't match that" in lowered:
-        span = ""
-        if window_start and window_end:
-            span = f" Demo receipts cover {window_start} → {window_end}."
         return (
             "I couldn't match that to a spending question for this demo."
             f"{span} "
-            "Try a category (food, drinks, snacks…) in a month that has data — "
-            "for example, “How much did I spend on drinks in July?”"
+            "Try a suggested question, or a category (food, drinks, snacks…) "
+            "in a month that has data — for example, "
+            "“How much did I spend on drinks in July?”"
+        )
+    if "no recorded spending" in lowered or "no spending recorded" in lowered:
+        return (
+            "I didn't find spending for that period."
+            f"{span} "
+            "Try a suggested question, or name a category and a month in that "
+            "window — for example, “How much did I spend on drinks in July?”"
         )
     return out
-
-
-def enrich_question_months(question: str, *, year: int) -> str:
-    """Attach a year to the first bare month name so routing hits the demo corpus."""
-    if re.search(r"\b20\d{2}\b", question):
-        return question
-    if not _MONTH_NAME.search(question):
-        return question
-    return _MONTH_NAME.sub(lambda match: f"{match.group(0)} {year}", question, count=1)

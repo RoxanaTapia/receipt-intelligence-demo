@@ -35,7 +35,7 @@
           class="live-delete-form"
           method="post"
           action="{{ public_url('/live-import/delete') }}"
-          onsubmit="return confirm('Remove this live import so you can try ingest again?');"
+          onsubmit="return confirm('Remove this live import so you can extract the sample again?');"
         >
           <input type="hidden" name="example" value="{{ item.id }}" />
           <input type="hidden" name="start" value="{{ window_start }}" />
@@ -46,6 +46,6 @@
       {% endfor %}
     </ul>
     {% else %}
-    <p class="meta">None yet — run live ingest above.</p>
+    <p class="meta">None yet — extract a receipt above.</p>
     {% endif %}
   </aside>

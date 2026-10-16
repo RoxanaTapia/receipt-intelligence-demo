@@ -11,3 +11,8 @@ deploy/caddy-basicauth.conf
 deploy/certs/
 
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/

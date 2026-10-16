@@ -15,9 +15,10 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api_client import ApiError, ReceiptApiClient
 from app.examples import delete_live_import, load_examples
-from app.money import enrich_question_months, present_answer_text
+from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.page import _page
+from app.questions import prepare_question
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 
 APP_DIR = Path(__file__).resolve().parent
@@ -170,6 +171,62 @@ def index(
     return _page(request, example=example, window_start=start, window_end=end)
 
 
+def _extract_sample_page(
+    request: Request,
+    *,
+    example: str | None,
+    window_start: str,
+    window_end: str,
+) -> HTMLResponse:
+    """Trigger allowlisted n8n ingest and render the visitor page."""
+    # Snapshot spending before n8n writes so the UI can show before → after bars.
+    summary_before, _ = _safe_summary(window_start, window_end)
+
+    try:
+        meta = n8n.trigger_sample(SAMPLE_ID)
+    except N8nIngestError as exc:
+        return _page(
+            request,
+            example=example,
+            live_error=(
+                f"{exc} — Import alone is not enough: the ingest workflow must be "
+                "Active/Published in n8n (see DEPLOYMENT.md § Live sample PDF)."
+            ),
+            summary_before=summary_before,
+            window_start=window_start,
+            window_end=window_end,
+        )
+
+    filename = str(meta["persistedFilename"])
+    receipt = _load_persisted_receipt(filename)
+    if receipt is None:
+        return _page(
+            request,
+            example=example,
+            live_meta=meta,
+            live_error=(
+                f"Ingest reported {filename}, but the file is not visible on the "
+                "shared receipts volume yet. Refresh in a moment or check n8n."
+            ),
+            ingest_ok=True,
+            summary_before=summary_before,
+            window_start=window_start,
+            window_end=window_end,
+        )
+
+    # Keep the seed example in the main pane — the live panel shows this receipt.
+    return _page(
+        request,
+        example=example,
+        live_receipt=receipt,
+        live_meta=meta,
+        ingest_ok=True,
+        summary_before=summary_before,
+        window_start=window_start,
+        window_end=window_end,
+    )
+
+
 @app.post("/ingest", response_class=HTMLResponse)
 async def ingest(
     request: Request,
@@ -190,50 +247,26 @@ async def ingest(
             window_start=window_start,
             window_end=window_end,
         )
-
-    # Snapshot spending before n8n writes so the UI can show before → after bars.
-    summary_before, _ = _safe_summary(window_start, window_end)
-
-    try:
-        meta = n8n.trigger_sample(SAMPLE_ID)
-    except N8nIngestError as exc:
-        return _page(
-            request,
-            example=example or None,
-            live_error=(
-                f"{exc} — Import alone is not enough: the ingest workflow must be "
-                "Active/Published in n8n (see DEPLOYMENT.md § Live sample PDF)."
-            ),
-            summary_before=summary_before,
-            window_start=window_start,
-            window_end=window_end,
-        )
-
-    filename = str(meta["persistedFilename"])
-    live_example_id = f"live-{Path(filename).stem}"
-    receipt = _load_persisted_receipt(filename)
-    if receipt is None:
-        return _page(
-            request,
-            example=live_example_id,
-            live_meta=meta,
-            live_error=(
-                f"Ingest reported {filename}, but the file is not visible on the "
-                "shared receipts volume yet. Refresh in a moment or check n8n."
-            ),
-            ingest_ok=True,
-            summary_before=summary_before,
-            window_start=window_start,
-            window_end=window_end,
-        )
-
-    return _page(
+    return _extract_sample_page(
         request,
-        example=live_example_id,
-        live_receipt=receipt,
-        live_meta=meta,
-        ingest_ok=True,
-        summary_before=summary_before,
+        example=example or None,
+        window_start=window_start,
+        window_end=window_end,
+    )
+
+
+@app.post("/ingest-sample", response_class=HTMLResponse)
+def ingest_sample(
+    request: Request,
+    example: str = Form(""),
+    start: str = Form(""),
+    end: str = Form(""),
+) -> HTMLResponse:
+    """One-click extract of the vendored allowlisted sample (no upload)."""
+    window_start, window_end = _parse_window(start or None, end or None)
+    return _extract_sample_page(
+        request,
+        example=example or None,
         window_start=window_start,
         window_end=window_end,
     )
@@ -256,9 +289,16 @@ def ask(
         qa_error = "Enter a budget question first."
     else:
         try:
-            demo_year = int(window_start[:4])
-            routed_question = enrich_question_months(cleaned, year=demo_year)
-            raw = api.ask(routed_question)
+            routed_question = prepare_question(
+                cleaned,
+                window_start=window_start,
+                window_end=window_end,
+            )
+            raw = api.ask(
+                routed_question,
+                start_date=window_start,
+                end_date=window_end,
+            )
             text = present_answer_text(
                 str(raw.get("answer") or ""),
                 window_start=window_start,
@@ -309,6 +349,11 @@ def ask_get() -> RedirectResponse:
 
 @app.get("/ingest")
 def ingest_get() -> RedirectResponse:
+    return RedirectResponse(url=public_url("/"), status_code=303)
+
+
+@app.get("/ingest-sample")
+def ingest_sample_get() -> RedirectResponse:
     return RedirectResponse(url=public_url("/"), status_code=303)
 
 

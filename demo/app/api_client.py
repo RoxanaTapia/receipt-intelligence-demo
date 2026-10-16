@@ -31,8 +31,30 @@ class ReceiptApiClient:
             params={"start_date": start_date, "end_date": end_date},
         )
 
-    def ask(self, question: str) -> dict[str, Any]:
-        return self._post("/questions", json_body={"question": question})
+    def ask(
+        self,
+        question: str,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        """POST a question; include the visible window when the API accepts it.
+
+        ``POST /questions`` historically takes only ``question``. Extra date
+        fields are ignored by most Pydantic models and rejected (422) by
+        ``extra='forbid'``. On 422 we retry with the question alone so the
+        demo still answers; the window also goes in the question text.
+        """
+        body: dict[str, Any] = {"question": question}
+        if start_date and end_date:
+            body["start_date"] = start_date
+            body["end_date"] = end_date
+            try:
+                return self._post("/questions", json_body=body)
+            except ApiError as exc:
+                if exc.status_code == 422:
+                    return self._post("/questions", json_body={"question": question})
+                raise
+        return self._post("/questions", json_body=body)
 
     def _get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         try:

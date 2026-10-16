@@ -49,18 +49,14 @@
         <strong class="num">{{ money(spend_before) }}</strong>
         →
         <strong class="num">{{ money(spend_after) }}</strong>
-        (+{{ money(spend_delta) }}) after live
+        (+{{ money(spend_delta) }}) after
         <strong>{{ live_receipt.merchant }}</strong>.
         {% else %}
-        Window total stayed
+        This sample is already in the demo, so totals did not change —
         <strong class="num">{{ money(spend_after) }}</strong>
-        — this sample was already in the corpus (same content hash).
-        Seeded fixtures alone are about
-        <strong class="num">{{ money(seed_baseline) }}</strong>;
-        live
-        <strong>{{ live_receipt.merchant }}</strong>
-        adds
-        <strong class="num">{{ money(live_receipt.total) }}</strong>.
+        already includes
+        <strong>{{ live_receipt.merchant }}</strong>.
+        Remove the live import if you want to extract it again and watch spending update.
         {% endif %}
       </div>
       {% elif summary and seed_baseline and summary.total_spend is not none
@@ -72,11 +68,14 @@
       {% endif %}
       <p class="meta">
         Across demo receipts · {{ window_start }} → {{ window_end }}
-        · amounts in {{ demo_currency }} (demo currency)
         {% if summary %}
         ·
         <span class="num">{{ money(summary.total_spend) }}</span>
         {% endif %}
+      </p>
+      <p class="meta">
+        <abbr title="Demo currency — fictional amounts, not euros or dollars">DC</abbr>
+        = demo currency (not real money).
       </p>
       {% if summary and summary.by_category %}
       <div class="cats {% if ingest_ok and spend_delta is not none and spend_delta > 0.009 %}cats-animate{% endif %}">

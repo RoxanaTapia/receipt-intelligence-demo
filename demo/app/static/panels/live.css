@@ -72,6 +72,40 @@
   opacity: 0.85;
   filter: none;
 }
+
+.sample-one-click {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  margin: 0 0 0.85rem;
+}
+
+.sample-one-click button[type="submit"] {
+  border: 0;
+  border-radius: 6px;
+  padding: 0.65rem 1.1rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.sample-one-click button[type="submit"]:hover {
+  filter: brightness(1.06);
+}
+
+.sample-one-click button[type="submit"]:disabled {
+  cursor: wait;
+  opacity: 0.85;
+  filter: none;
+}
+
+.ingest-or {
+  margin: 0.25rem 0 0.85rem;
+  font-weight: 600;
+}
 /* segment */
 .live-panel {
   margin-bottom: 0.25rem;
