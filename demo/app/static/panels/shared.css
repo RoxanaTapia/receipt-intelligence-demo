@@ -220,3 +220,8 @@ th {
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+#live-ingest,
+#ask-answer {
+  scroll-margin-top: 1rem;
+}

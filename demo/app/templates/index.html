@@ -36,18 +36,19 @@
 {#- Keep the original line break. #}
 
   <div>
-    {% if selected %}
+    {% if selected and selected.source != "live" %}
     <section class="panel">
       <h2 class="receipt-heading">
         {{ selected.receipt.merchant }}
-        {% if selected.source == "live" %}
-        <span class="live-badge">Live</span>
-        {% endif %}
       </h2>
       <p class="meta">
         {{ selected.receipt.date }} · total
         <span class="num">{{ money(selected.receipt.total) }}</span>
-        · {% if selected.source == "live" %}live import{% else %}seeded{% endif %}
+        · seeded
+      </p>
+      <p class="meta">
+        <abbr title="Demo currency — fictional amounts, not euros or dollars">DC</abbr>
+        = demo currency (not real money).
       </p>
       <table>
         <thead>
@@ -55,7 +56,7 @@
             <th>Item</th>
             <th>Category</th>
             <th class="num">Qty</th>
-            <th class="num">{{ demo_currency }}</th>
+            <th class="num"><abbr title="Demo currency">{{ demo_currency }}</abbr></th>
           </tr>
         </thead>
         <tbody>
@@ -80,44 +81,107 @@
   </div>
 </div>
 
-<p class="note">Amounts shown in <strong>{{ demo_currency }}</strong> — demo data, not real money.</p>
+<p class="note">
+  Amounts shown in <strong>{{ demo_currency }}</strong>
+  (<abbr title="Demo currency — fictional amounts, not euros or dollars">demo currency</abbr>)
+  — not real money.
+</p>
 <script>
   (function () {
+    function currentScrollTarget() {
+      return document.querySelector("main")?.getAttribute("data-scroll") || "";
+    }
+
+    function setBusy(btn, wait, busy) {
+      if (btn) {
+        btn.disabled = busy;
+        const idleEl = btn.querySelector(".btn-idle");
+        const busyEl = btn.querySelector(".btn-busy");
+        if (idleEl) idleEl.hidden = busy;
+        if (busyEl) busyEl.hidden = !busy;
+      }
+      if (wait) wait.hidden = !busy;
+    }
+
     function bindBusy(formId, btnId, waitId) {
       const form = document.getElementById(formId);
       const btn = document.getElementById(btnId);
       const wait = document.getElementById(waitId);
       if (!form || !btn) return;
       form.addEventListener("submit", function () {
-        btn.disabled = true;
-        const idle = btn.querySelector(".btn-idle");
-        const busy = btn.querySelector(".btn-busy");
-        if (idle) idle.hidden = true;
-        if (busy) busy.hidden = false;
-        if (wait) wait.hidden = false;
+        setBusy(btn, wait, true);
       });
     }
-    bindBusy("ingest-form", "ingest-btn", "ingest-wait");
-    bindBusy("ask-form", "ask-btn", "ask-wait");
 
-    const askForm = document.getElementById("ask-form");
-    const question = document.getElementById("question");
-    if (askForm && question) {
-      question.addEventListener("keydown", function (event) {
-        if (event.key !== "Enter" || event.shiftKey) return;
+    async function interceptForm(formId, btnId, waitId) {
+      const form = document.getElementById(formId);
+      if (!form || form.dataset.ajax === "1") return;
+      form.dataset.ajax = "1";
+      form.addEventListener("submit", async function (event) {
+        if (form.dataset.native === "1") return;
         event.preventDefault();
-        if (typeof askForm.requestSubmit === "function") {
-          askForm.requestSubmit();
-        } else {
-          askForm.submit();
+        const btn = document.getElementById(btnId);
+        const wait = document.getElementById(waitId);
+        setBusy(btn, wait, true);
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "X-Requested-With": "fetch" },
+          });
+          const html = await response.text();
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const nextMain = doc.querySelector("main");
+          const currentMain = document.querySelector("main");
+          if (!nextMain || !currentMain) {
+            form.dataset.native = "1";
+            form.submit();
+            return;
+          }
+          currentMain.replaceWith(nextMain);
+          window.initDemo();
+        } catch (err) {
+          setBusy(btn, wait, false);
+          form.dataset.native = "1";
+          form.submit();
         }
       });
     }
 
-    const panel = document.getElementById("live-panel");
-    if (panel) {
+    function bindAskShortcuts() {
+      const askForm = document.getElementById("ask-form");
+      const question = document.getElementById("question");
+      if (askForm && question) {
+        question.addEventListener("keydown", function (event) {
+          if (event.key !== "Enter" || event.shiftKey) return;
+          event.preventDefault();
+          if (typeof askForm.requestSubmit === "function") {
+            askForm.requestSubmit();
+          } else {
+            askForm.submit();
+          }
+        });
+      }
+      document.querySelectorAll(".ask-chip").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          if (chip.disabled) return;
+          const text = chip.getAttribute("data-question") || "";
+          if (question) question.value = text;
+          if (!askForm) return;
+          if (typeof askForm.requestSubmit === "function") {
+            askForm.requestSubmit();
+          } else {
+            askForm.submit();
+          }
+        });
+      });
+    }
+
+    function bindLivePanel() {
+      const panel = document.getElementById("live-panel");
+      if (!panel) return;
       const key = panel.getAttribute("data-persist") || "live-panel-open";
-      const justIngested = {{ "true" if ingest_ok else "false" }};
+      const justIngested = currentScrollTarget() === "live-ingest";
       if (!justIngested) {
         const saved = sessionStorage.getItem(key);
         panel.open = saved !== "0";
@@ -129,11 +193,29 @@
         sessionStorage.setItem(key, panel.open ? "1" : "0");
       });
     }
+
+    function scrollToResult() {
+      const target = currentScrollTarget();
+      if (!target) return;
+      document.getElementById(target)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+
+    window.initDemo = function initDemo() {
+      bindBusy("ingest-form", "ingest-btn", "ingest-wait");
+      bindBusy("ask-form", "ask-btn", "ask-wait");
+      bindBusy("sample-form", "sample-btn", "sample-wait");
+      interceptForm("ingest-form", "ingest-btn", "ingest-wait");
+      interceptForm("ask-form", "ask-btn", "ask-wait");
+      interceptForm("sample-form", "sample-btn", "sample-wait");
+      bindAskShortcuts();
+      bindLivePanel();
+      scrollToResult();
+    };
+
+    window.initDemo();
   })();
 </script>
-{% if ingest_ok %}
-<script>
-  document.getElementById("spending-context")?.scrollIntoView({ behavior: "smooth", block: "start" });
-</script>
-{% endif %}
 {% endblock %}

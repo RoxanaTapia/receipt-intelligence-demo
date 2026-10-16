@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from app.examples import get_example, load_examples, load_live_imports
 from app.live_panel import _resolve_live_panel
 from app.money import DEMO_CURRENCY, format_money
+from app.questions import SUGGESTED_QUESTIONS
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path
 from app.spending import _spending_contrast
 
@@ -40,6 +41,7 @@ def _base_context(request: Request) -> dict[str, Any]:
         "money": format_money,
         "sample_id": SAMPLE_ID,
         "sample_filename": SAMPLE_FILENAME,
+        "suggested_questions": SUGGESTED_QUESTIONS,
     }
 
 
@@ -83,6 +85,12 @@ def _page(
         panel_receipt=panel_receipt,
         seed_dir=SEED_DIR,
     )
+    if ingest_ok:
+        scroll_target = "live-ingest"
+    elif answer or qa_error:
+        scroll_target = "ask-answer"
+    else:
+        scroll_target = ""
 
     return templates.TemplateResponse(
         request,
@@ -109,5 +117,6 @@ def _page(
             "live_error": live_error,
             "ingest_ok": ingest_ok,
             "sample_ready": sample_pdf_path(SAMPLES_DIR).is_file(),
+            "scroll_target": scroll_target,
         },
     )
