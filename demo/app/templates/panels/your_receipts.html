@@ -4,13 +4,16 @@
         <ul class="receipts-list">
           {% for row in your_receipts %}
           <li{% if row.just_added %} class="is-added"{% endif %}>
-            <span class="receipts-merchant">{{ row.merchant }}</span>
-            {% if row.date_label %}
-            <span class="receipts-date">{{ row.date_label }}</span>
-            {% endif %}
-            {% if row.just_added %}
-            <span class="just-added">Just added</span>
-            {% endif %}
+            <span class="receipts-copy">
+              <span class="receipts-merchant">{{ row.merchant }}</span>
+              {% if row.date_label %}
+              <span class="receipts-date">· {{ row.date_label }}</span>
+              {% endif %}
+              {% if row.just_added %}
+              <span class="just-added">Just added</span>
+              {% endif %}
+            </span>
+            <span class="receipts-total">{{ row.total_label }}</span>
           </li>
           {% endfor %}
         </ul>

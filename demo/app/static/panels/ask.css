@@ -47,7 +47,8 @@
 
 .answer-a {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -118,15 +119,23 @@
 
 .receipts-list li {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px 10px;
+  justify-content: space-between;
+  gap: 8px 12px;
   padding: 6px 10px;
   border-radius: 8px;
 }
 
 .receipts-list li.is-added {
   background: #f3f4f8;
+}
+
+.receipts-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  min-width: 0;
 }
 
 .receipts-merchant {
@@ -136,6 +145,13 @@
 .receipts-date {
   color: var(--muted);
   font-size: 14px;
+}
+
+.receipts-total {
+  margin-left: auto;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .just-added {

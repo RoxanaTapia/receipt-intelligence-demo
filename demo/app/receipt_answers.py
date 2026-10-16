@@ -100,10 +100,13 @@ def answer_visible_question(
 
 def _list_row(receipt: dict[str, Any], *, just_added: bool) -> dict[str, Any]:
     raw_date = str(receipt.get("date") or "").strip()
+    total = _receipt_total(receipt)
     return {
         "merchant": merchant_name(receipt),
         "date": raw_date,
         "date_label": short_date(raw_date) if raw_date else "",
+        "total": total,
+        "total_label": format_money(total),
         "just_added": just_added,
     }
 

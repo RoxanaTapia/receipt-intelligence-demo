@@ -13,7 +13,7 @@
           placeholder="How much did I spend per category?"
           required
         >{{ question }}</textarea>
-        <button type="submit" id="ask-btn" class="btn-secondary" {% if not your_receipts and not api_ok %}disabled{% endif %}>
+        <button type="submit" id="ask-btn" class="{% if live_panel %}btn{% else %}btn-secondary{% endif %}" {% if not your_receipts and not api_ok %}disabled{% endif %}>
           <span class="btn-idle">Ask</span>
           <span class="btn-busy" hidden>Thinking…</span>
         </button>

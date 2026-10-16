@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.examples import get_example, session_catalog
-from app.live_panel import _resolve_live_panel
+from app.live_panel import _resolve_live_panel, format_read_summary, line_item_count
 from app.money import DEMO_CURRENCY, format_money
 from app.questions import SUGGESTED_QUESTIONS
 from app.receipt_answers import receipt_list_rows
@@ -64,6 +64,7 @@ def _page(
     live_meta: dict[str, Any] | None = None,
     live_error: str | None = None,
     ingest_ok: bool = False,
+    ingest_elapsed: float | None = None,
     summary_before: dict[str, Any] | None = None,
     window_start: str | None = None,
     window_end: str | None = None,
@@ -108,6 +109,16 @@ def _page(
         flow_step = 1
 
     source = answer_source or ""
+    elapsed = ingest_elapsed
+    if elapsed is None:
+        raw = request.cookies.get("demo_read_s")
+        try:
+            elapsed = float(raw) if raw is not None else None
+        except ValueError:
+            elapsed = None
+    read_summary = ""
+    if panel_receipt:
+        read_summary = format_read_summary(line_item_count(panel_receipt), elapsed)
 
     response = templates.TemplateResponse(
         request,
@@ -136,10 +147,20 @@ def _page(
             "live_meta": live_meta,
             "live_error": live_error,
             "ingest_ok": ingest_ok,
+            "read_summary": read_summary,
             "sample_ready": sample_pdf_path(SAMPLES_DIR).is_file(),
             "scroll_target": scroll_target,
             "flow_step": flow_step,
         },
     )
     apply_session_cookies(response, sid, owned)
+    if ingest_elapsed is not None:
+        response.set_cookie(
+            "demo_read_s",
+            f"{ingest_elapsed:.3f}",
+            max_age=60 * 60 * 12,
+            httponly=True,
+            samesite="lax",
+            path="/",
+        )
     return response

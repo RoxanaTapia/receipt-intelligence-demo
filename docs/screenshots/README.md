@@ -15,6 +15,6 @@
 | [storyboard_5_drinks_august_1920x1080.png](storyboard_5_drinks_august_1920x1080.png) | 5 · Drinks in August |
 | [sample_supermarket_receipt_pdf.png](sample_supermarket_receipt_pdf.png) | Green Basket Market sample PDF |
 | [ask_before_owner_qa.png](ask_before_owner_qa.png) | Owner QA before — DC, corpus-only answer, Ask below the answer |
-| [ask_after_extracted.png](ask_after_extracted.png) | After — `$` totals, Your receipts + Just added |
+| [ask_after_extracted.png](ask_after_extracted.png) | After — `$` totals, Corner Bakery + Just added |
 | [ask_after_snacks_august.png](ask_after_snacks_august.png) | After — snacks in August across the visible list |
 | [ask_after_this_receipt.png](ask_after_this_receipt.png) | After — snacks on this receipt |

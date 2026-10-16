@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -170,6 +171,7 @@ def _extract_sample_page(
     """Trigger allowlisted n8n ingest and render the visitor page."""
     # Snapshot spending before n8n writes so the UI can show before → after bars.
     summary_before, _ = _safe_summary(window_start, window_end)
+    started = time.monotonic()
 
     try:
         meta = n8n.trigger_sample(SAMPLE_ID)
@@ -184,10 +186,12 @@ def _extract_sample_page(
             summary_before=summary_before,
             window_start=window_start,
             window_end=window_end,
+            ingest_elapsed=time.monotonic() - started,
         )
 
     filename = str(meta["persistedFilename"])
     receipt = _load_persisted_receipt(filename)
+    elapsed = time.monotonic() - started
     if receipt is None:
         return _page(
             request,
@@ -201,6 +205,7 @@ def _extract_sample_page(
             summary_before=summary_before,
             window_start=window_start,
             window_end=window_end,
+            ingest_elapsed=elapsed,
         )
 
     # Keep the seed example in the main pane — the live panel shows this receipt.
@@ -213,6 +218,7 @@ def _extract_sample_page(
         summary_before=summary_before,
         window_start=window_start,
         window_end=window_end,
+        ingest_elapsed=elapsed,
     )
 
 

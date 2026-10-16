@@ -41,8 +41,14 @@ def test_home_shows_seed_receipts_and_drops_dc(client) -> None:
     assert "Your receipts" in html
     assert "Lumen Pantry" in html
     assert "Harbor Home" in html
-    assert "Green Basket" in html
+    assert "Corner Bakery" in html
+    assert "$18.90" in html
+    assert "$14.20" in html
+    assert "$21.40" in html
     assert "Just added" not in html
+    assert 'id="ask-btn" class="btn-secondary"' in html
+    assert "Use sample receipt" in html
+    assert "Sample added" not in html
     assert "DC demo data" not in html
     assert " DC" not in html
     assert "Examples and spending window" not in html
@@ -95,7 +101,7 @@ def test_ask_moves_the_step_indicator_to_step_three(client) -> None:
     assert "is-current" not in steps[2]
 
 
-def test_ask_drinks_in_august_uses_seed_green_basket(client, fake_api) -> None:
+def test_ask_drinks_in_august_uses_seed_corner_bakery(client, fake_api) -> None:
     response = client.post(
         "/ask",
         data={
@@ -106,7 +112,7 @@ def test_ask_drinks_in_august_uses_seed_green_basket(client, fake_api) -> None:
     )
     assert fake_api.questions == []
     html = response.text
-    assert "$4.10 on drinks in August (Green Basket)." in html
+    assert "$4.10 on drinks in August (Corner Bakery)." in html
     assert "Across your 3 receipts" in html
     assert "4.10 DC" not in html
 
@@ -120,8 +126,11 @@ def test_ingest_sample_one_click(client, fake_n8n, sample_id) -> None:
     assert fake_n8n.calls == [sample_id]
     html = response.text
     assert MERCHANT in html
-    assert "Extracted" in html
-    assert "Use sample receipt" in html
+    assert "Extracted" not in html
+    assert "✓ 10 items read in 0s" in html
+    assert "Sample added ✓" in html
+    assert 'id="ask-btn" class="btn"' in html
+    assert 'id="sample-btn" class="btn-secondary"' in html
     assert "Reading your receipt…" in html
     assert "already in the corpus" not in html
     assert 'data-scroll="live-ingest"' in html
@@ -172,6 +181,9 @@ def test_demo_css_includes_new_rules() -> None:
     assert "#live-ingest" in DEMO_CSS
     assert "min-height: 168px" in DEMO_CSS
     assert ".reading-label" in DEMO_CSS
+    assert "font-size: 20px" in DEMO_CSS
+    assert "font-weight: 600" in DEMO_CSS
+    assert ".receipts-total" in DEMO_CSS
 
 
 def test_ask_after_extract_matches_visible_list(
@@ -211,7 +223,7 @@ def test_ask_snacks_in_august_after_extract(client, fake_api, fake_n8n) -> None:
     ).text
     assert fake_api.questions == []
     assert "$6.70 on snacks in August" in html
-    assert "Green Basket and Green Basket Market" in html
+    assert "Corner Bakery and Green Basket Market" in html
     assert "Across your 4 receipts" in html
     assert "16.70" not in html
 

@@ -35,3 +35,19 @@ def _resolve_live_panel(
     if live_imports:
         return live_imports[0].receipt, live_imports[0]
     return None, None
+
+
+def line_item_count(receipt: dict[str, Any] | None) -> int:
+    """How many line items landed on the review card."""
+    if not receipt:
+        return 0
+    items = receipt.get("line_items") or []
+    return sum(1 for item in items if isinstance(item, dict))
+
+
+def format_read_summary(item_count: int, seconds: float | None) -> str:
+    """Short extract status: real item count and measured wait."""
+    noun = "item" if item_count == 1 else "items"
+    if seconds is None:
+        return f"✓ {item_count} {noun} read"
+    return f"✓ {item_count} {noun} read in {max(0, int(round(seconds)))}s"

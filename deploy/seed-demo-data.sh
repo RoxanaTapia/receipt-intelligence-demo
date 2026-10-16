@@ -11,7 +11,8 @@ mkdir -p "$DEST"
 
 # Drop retired supermarket fixtures so they do not linger beside new seeds.
 # Live ingest files (content-hash names) are left alone.
-for stale in "$DEST"/2026-05-*_aldi_*.json "$DEST"/2026-05-*_rewe_*.json; do
+for stale in "$DEST"/2026-05-*_aldi_*.json "$DEST"/2026-05-*_rewe_*.json \
+  "$DEST"/2026-08-01_green-basket_*.json; do
   [[ -f "$stale" ]] || continue
   rm -f "$stale"
   echo "Removed stale seed: $(basename "$stale")"

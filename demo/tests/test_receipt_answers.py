@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from app.live_panel import format_read_summary
 from app.receipt_answers import (
     answer_visible_question,
     catalog_payloads,
@@ -30,6 +31,12 @@ def _seed_receipts() -> list[dict]:
     return receipts
 
 
+def test_read_summary_uses_count_and_elapsed() -> None:
+    assert format_read_summary(10, 11.2) == "✓ 10 items read in 11s"
+    assert format_read_summary(1, 0.2) == "✓ 1 item read in 0s"
+    assert format_read_summary(10, None) == "✓ 10 items read"
+
+
 def test_short_date_is_compact() -> None:
     assert short_date("2026-08-15") == "Aug 15"
 
@@ -46,11 +53,14 @@ def test_list_rows_mark_live_imports_just_added() -> None:
     assert [row["merchant"] for row in rows] == [
         "Lumen Pantry",
         "Harbor Home",
-        "Green Basket",
+        "Corner Bakery",
         "Green Basket Market",
     ]
     assert [row["just_added"] for row in rows] == [False, False, False, True]
     assert rows[-1]["date_label"] == "Aug 15"
+    assert rows[-1]["total_label"] == "$25.00"
+    assert rows[2]["merchant"] == "Corner Bakery"
+    assert rows[2]["total_label"] == "$18.90"
 
 
 def test_per_category_uses_every_visible_receipt() -> None:
@@ -78,7 +88,7 @@ def test_august_snacks_names_the_receipts_in_the_list() -> None:
     )
     assert text == (
         "You spent $6.70 on snacks in August "
-        "(Green Basket and Green Basket Market)."
+        "(Corner Bakery and Green Basket Market)."
     )
     assert source == "Across your 4 receipts"
     assert "16.70" not in text
