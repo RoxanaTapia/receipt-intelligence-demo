@@ -5,11 +5,16 @@ from __future__ import annotations
 import re
 from datetime import date
 
-# Category + month questions the companion API can answer today.
+# Short labels for chips; ``question`` is what we POST (API-friendly wording).
 SUGGESTED_QUESTIONS = (
-    "How much did I spend on drinks in July?",
-    "How much did I spend on food in August?",
-    "How much did I spend on household in July?",
+    {
+        "label": "How much did I spend per category?",
+        "question": "How much did I spend per category?",
+    },
+    {
+        "label": "Drinks in August",
+        "question": "How much did I spend on drinks in August?",
+    },
 )
 
 _MONTH_NAME = re.compile(
@@ -72,3 +77,18 @@ def prepare_question(question: str, *, window_start: str, window_end: str) -> st
         year = int(window_start[:4]) if len(window_start) >= 4 else 2026
     with_year = enrich_question_months(question, year=year)
     return apply_demo_window(with_year, window_start, window_end)
+
+
+def answer_source_line(question: str, window_start: str, window_end: str) -> str:
+    """One line under the answer: where the numbers came from."""
+    q = question.lower()
+    if "drink" in q and "august" in q:
+        return "Source: drinks on demo receipts in August 2026. DC demo data."
+    if "per category" in q or "by category" in q:
+        return (
+            f"Source: category totals on demo receipts "
+            f"from {window_start} to {window_end}. DC demo data."
+        )
+    return (
+        f"Source: demo receipts from {window_start} to {window_end}. DC demo data."
+    )

@@ -1,84 +1,84 @@
 .ask-form {
   display: grid;
-  gap: 0.65rem;
-  margin-top: 0.5rem;
+  gap: var(--space);
+  margin-top: var(--space);
 }
 
 .ask-form label {
-  font-size: 0.9rem;
+  font-size: 16px;
   color: var(--muted);
 }
 
 .ask-form textarea {
   width: 100%;
-  min-height: 5rem;
+  min-height: 3.5rem;
   resize: vertical;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.7rem 0.8rem;
+  border-radius: var(--radius);
+  padding: 12px 16px;
   font: inherit;
+  font-size: 18px;
   background: #fff;
   color: var(--ink);
 }
 
 .ask-form button {
   justify-self: start;
-  border: 0;
-  border-radius: 6px;
-  padding: 0.65rem 1.1rem;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font: inherit;
-  font-weight: 650;
-  cursor: pointer;
 }
 
-.ask-form button:hover {
-  filter: brightness(1.06);
-}
-
-.ask-form button:disabled {
-  cursor: wait;
-  opacity: 0.85;
-  filter: none;
-}
-/* segment */
 .answer {
-  margin-top: 1rem;
-  padding: 0.85rem 0.95rem;
-  border-left: 3px solid var(--accent);
-  background: var(--ok-bg);
+  margin-top: var(--space);
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent-soft);
+  background: var(--accent-soft);
 }
 
 .answer p {
   margin: 0;
+  font-size: 18px;
 }
-/* segment */
+
+.answer-source {
+  margin: 8px 0 0;
+  font-size: 16px;
+  color: var(--muted);
+}
+
 .ask-wait {
-  margin: 0.35rem 0 0;
+  margin: 4px 0 0;
 }
 
 .ask-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space);
 }
 
 .ask-chip {
   border: 1px solid var(--line);
-  background: #fff;
-  color: var(--accent);
+  background: var(--panel);
+  color: var(--ink);
   border-radius: 999px;
-  padding: 0.35rem 0.75rem;
+  padding: 8px 16px;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  box-shadow: none;
 }
 
 .ask-chip:hover:not(:disabled) {
-  background: var(--ok-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ask-chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .ask-chip:disabled {

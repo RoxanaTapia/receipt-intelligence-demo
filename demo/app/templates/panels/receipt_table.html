@@ -1,0 +1,31 @@
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Category</th>
+      <th class="num"><abbr title="Demo currency">{{ demo_currency }}</abbr></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in receipt.line_items %}
+    <tr>
+      <td>{{ line.description }}</td>
+      <td><span class="cat-chip">{{ line.category }}</span></td>
+      <td class="num">{{ money(line.price) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="receipt-total">
+  <span>Total</span>
+  <span>
+    <span class="num">{{ money(receipt.total) }}</span>
+    <span class="dc-note" title="Demo currency — fictional amounts, not euros or dollars"
+      >DC demo data</span
+    >
+  </span>
+</div>
+<p class="meta">
+  <abbr title="Demo currency — fictional amounts, not euros or dollars">DC</abbr>
+  = demo currency (not real money).
+</p>

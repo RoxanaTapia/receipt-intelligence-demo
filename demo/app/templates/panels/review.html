@@ -1,0 +1,34 @@
+<section class="step-card" id="review">
+  <h2>Review fields</h2>
+  {% if live_panel %}
+  <div class="live-result-panel" id="live-panel" data-persist="live-panel-open">
+    <h3 class="live-heading">
+      {{ live_panel.merchant }}
+      <span class="live-badge">Live</span>
+    </h3>
+    <p class="meta">{{ live_panel.date }}</p>
+    {% set receipt = live_panel %}
+    {% include "panels/receipt_table.html" %}
+    {% if live_panel_example %}
+    <form
+      class="live-delete-form live-panel-remove"
+      method="post"
+      action="{{ public_url('/live-import/delete') }}"
+      onsubmit="return confirm('Hide this live import from your session?');"
+    >
+      <input type="hidden" name="example" value="{{ live_panel_example.id }}" />
+      <input type="hidden" name="start" value="{{ window_start }}" />
+      <input type="hidden" name="end" value="{{ window_end }}" />
+      <button type="submit" class="live-delete-btn">Remove live import</button>
+    </form>
+    {% endif %}
+  </div>
+  {% elif selected and selected.source != "live" and picked_example %}
+  <h3 class="receipt-heading">{{ selected.receipt.merchant }}</h3>
+  <p class="meta">{{ selected.receipt.date }}</p>
+  {% set receipt = selected.receipt %}
+  {% include "panels/receipt_table.html" %}
+  {% else %}
+  <p class="empty-review">Extract a sample to see merchant, date, and line items.</p>
+  {% endif %}
+</section>
