@@ -35,7 +35,7 @@
   </li>
 </ol>
 
-<div class="flow">
+<div class="flow{% if live_panel %} is-extracted{% endif %}">
 {% include "panels/live_ingest.html" %}
 {% include "panels/review.html" %}
 {% include "panels/ask.html" %}

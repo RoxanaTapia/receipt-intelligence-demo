@@ -1,4 +1,4 @@
-<section class="step-card live-panel" id="live-ingest">
+<section class="step-card live-panel{% if live_panel %} is-compact{% endif %}" id="live-ingest">
   <h2>Add receipt</h2>
   {% if sample_ready %}
   <form
@@ -71,11 +71,17 @@
   <div class="banner err" style="margin-top: 1rem" role="alert">{{ live_error }}</div>
   {% endif %}
   {% if ingest_ok and live_meta %}
-  <div class="banner ok" style="margin-top: 1rem" id="live-result" role="status">
+  <div class="banner ok" id="live-result" role="status">
     <span class="live-badge">Extracted</span>
     {% if live_meta.merchant %}
     {{ live_meta.merchant }}
     {% endif %}
   </div>
+  {% endif %}
+  {% if live_panel and not ingest_ok %}
+  <p class="extracted-line">
+    <span class="live-badge">Extracted</span>
+    {{ live_panel.merchant }}
+  </p>
   {% endif %}
 </section>

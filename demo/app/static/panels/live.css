@@ -1,3 +1,42 @@
+.live-panel.is-compact {
+  padding: 12px 20px;
+}
+
+.live-panel.is-compact h2 {
+  display: none;
+}
+
+.live-panel.is-compact .sample-one-click {
+  margin: 0 0 8px;
+}
+
+.live-panel.is-compact .sample-one-click button {
+  padding: 8px 14px;
+  font-size: 16px;
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+.live-panel.is-compact .upload-alt {
+  margin: 0;
+}
+
+.live-panel.is-compact .banner.ok,
+.extracted-line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space);
+}
+
+.extracted-line {
+  font-size: 16px;
+  color: var(--ink);
+}
+
 .sample-one-click {
   display: flex;
   flex-wrap: wrap;
