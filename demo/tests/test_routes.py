@@ -105,21 +105,22 @@ def test_ingest_sample_one_click(client, fake_n8n, sample_id) -> None:
     assert "Extracting…" in html
     assert "already in the corpus" not in html
     assert 'data-scroll="live-ingest"' in html
-    assert "Lumen Pantry" in html
-    # Live result is the review card; seed table stays out of the way.
+    # Live result is the review card; seed table and extra chrome stay out of the way.
     assert html.count('class="receipt-heading"') == 0
     assert "cat-chip" in html
-    assert "DC demo data" in html
+    assert html.count("DC demo data") == 1
+    assert "Remove live import" not in html
+    assert "Examples and spending window" not in html
+    assert "Lumen Pantry" not in html
 
 
-def test_rerun_copy_is_friendly_when_totals_do_not_move(
-    client, fake_api, fake_n8n
-) -> None:
-    response = client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
-    html = response.text
+def test_extracted_view_hides_spending_footer(client, fake_api, fake_n8n) -> None:
+    html = client.post(
+        "/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"}
+    ).text
     assert "already in the corpus" not in html
-    assert "already in the demo" in html
-    assert "totals did not change" in html
+    assert "Examples and spending window" not in html
+    assert "totals did not change" not in html
 
 
 def test_live_selection_does_not_duplicate_main_receipt(
@@ -140,3 +141,50 @@ def test_demo_css_includes_new_rules() -> None:
     assert ".sample-one-click" in DEMO_CSS
     assert "--accent:" in DEMO_CSS
     assert "Inter" in DEMO_CSS
+    assert "1400px" in DEMO_CSS
+    assert "font-size: 18px" in DEMO_CSS
+
+
+def test_ask_after_extract_matches_on_screen_receipt(
+    client, fake_api, fake_n8n
+) -> None:
+    client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
+    fake_api.questions.clear()
+    html = client.post(
+        "/ask",
+        data={
+            "question": "How much did I spend per category?",
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+        },
+    ).text
+    assert fake_api.questions == []
+    assert "15.00 DC" in html
+    assert "4.40 DC" in html
+    assert "5.60 DC" in html
+    assert "25.00 DC" in html
+    assert "21.20" not in html
+    assert "16.10" not in html
+    assert "5.10 DC" not in html
+    assert "July" not in html
+    assert "snacks" not in html.lower()
+    assert "Source: Green Basket Market, 2026-08-15." in html
+
+
+def test_ask_drinks_after_extract_matches_receipt(
+    client, fake_api, fake_n8n
+) -> None:
+    client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
+    fake_api.questions.clear()
+    html = client.post(
+        "/ask",
+        data={
+            "question": "How much did I spend on drinks in August?",
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+        },
+    ).text
+    assert fake_api.questions == []
+    assert "4.40 DC" in html
+    assert "4.10 DC" not in html
+    assert "Source: Green Basket Market, 2026-08-15." in html

@@ -57,6 +57,7 @@ def _page(
     example: str | None = None,
     question: str = "",
     answer: dict[str, Any] | None = None,
+    answer_source: str | None = None,
     qa_error: str | None = None,
     live_receipt: dict[str, Any] | None = None,
     live_meta: dict[str, Any] | None = None,
@@ -111,7 +112,9 @@ def _page(
         flow_step = 1
 
     source = ""
-    if question:
+    if answer_source is not None:
+        source = answer_source
+    elif question:
         source = answer_source_line(question, start, end)
 
     response = templates.TemplateResponse(

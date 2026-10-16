@@ -41,6 +41,7 @@
 {% include "panels/ask.html" %}
 </div>
 
+{% if not live_panel %}
 <details class="more-panel">
   <summary>Examples and spending window</summary>
   <div class="more-body layout">
@@ -54,6 +55,7 @@
   (<abbr title="Demo currency — fictional amounts, not euros or dollars">demo currency</abbr>)
   — not real money.
 </p>
+{% endif %}
 <script>
   (function () {
     function setBusy(btn, wait, busy) {

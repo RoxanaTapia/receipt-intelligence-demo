@@ -48,7 +48,7 @@ main {
 }
 
 main:has(.flow.is-extracted) {
-  width: min(1080px, calc(100% - 32px));
+  width: min(1400px, calc(100% - 32px));
 }
 
 .top-bar {
@@ -237,7 +237,7 @@ th:last-child {
 .num {
   text-align: right;
   font-family: var(--mono);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 tfoot th,
@@ -404,6 +404,6 @@ tfoot td {
   }
 
   table {
-    font-size: 16px;
+    font-size: 18px;
   }
 }

@@ -19,7 +19,7 @@
             type="button"
             class="ask-chip{% if question == item.question %} is-active{% endif %}"
             data-question="{{ item.question }}"
-            {% if not api_ok %}disabled{% endif %}
+            {% if not api_ok and not live_panel %}disabled{% endif %}
           >{{ item.label }}</button>
           {% endfor %}
         </div>
@@ -36,7 +36,7 @@
           </div>
           {% endif %}
         </div>
-        <button type="submit" id="ask-btn" class="btn-secondary" {% if not api_ok %}disabled{% endif %}>
+        <button type="submit" id="ask-btn" class="btn-secondary" {% if not api_ok and not live_panel %}disabled{% endif %}>
           <span class="btn-idle">Ask</span>
           <span class="btn-busy" hidden>Thinking…</span>
         </button>

@@ -14,11 +14,13 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import load_examples
+from app.examples import get_example, load_examples, load_live_imports
+from app.live_panel import _resolve_live_panel
 from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.page import _page
 from app.questions import prepare_question
+from app.receipt_answers import answer_receipt_question
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 from app.session import (
     apply_session_cookies,
@@ -94,6 +96,20 @@ def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, dict) else None
+
+
+def _session_live_receipt(request: Request) -> dict[str, Any] | None:
+    """The live receipt on this visitor's review card, if they extracted one."""
+    owned = owned_filenames(request)
+    examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
+    live_imports = [
+        item
+        for item in load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
+        if item.file_name in owned
+    ]
+    selected = get_example(examples, None, live_imports=live_imports)
+    receipt, _ = _resolve_live_panel(None, selected, live_imports)
+    return receipt
 
 
 def _safe_summary(start: str, end: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -261,35 +277,44 @@ def ask(
     cleaned = question.strip()
     answer = None
     qa_error = None
+    answer_source = None
 
     if not cleaned:
         qa_error = "Enter a budget question first."
     else:
-        try:
-            routed_question = prepare_question(
-                cleaned,
-                window_start=window_start,
-                window_end=window_end,
-            )
-            raw = api.ask(
-                routed_question,
-                start_date=window_start,
-                end_date=window_end,
-            )
-            text = present_answer_text(
-                str(raw.get("answer") or ""),
-                window_start=window_start,
-                window_end=window_end,
-            )
-            answer = {**raw, "answer": text} if text else raw
-        except ApiError as exc:
-            qa_error = str(exc)
+        live = _session_live_receipt(request)
+        local = answer_receipt_question(cleaned, live) if live else None
+        if local:
+            # Storyboard chips must match the receipt on screen, not the corpus.
+            text, answer_source = local
+            answer = {"answer": text}
+        else:
+            try:
+                routed_question = prepare_question(
+                    cleaned,
+                    window_start=window_start,
+                    window_end=window_end,
+                )
+                raw = api.ask(
+                    routed_question,
+                    start_date=window_start,
+                    end_date=window_end,
+                )
+                text = present_answer_text(
+                    str(raw.get("answer") or ""),
+                    window_start=window_start,
+                    window_end=window_end,
+                )
+                answer = {**raw, "answer": text} if text else raw
+            except ApiError as exc:
+                qa_error = str(exc)
 
     return _page(
         request,
         example=example or None,
         question=cleaned,
         answer=answer,
+        answer_source=answer_source,
         qa_error=qa_error,
         window_start=window_start,
         window_end=window_end,
