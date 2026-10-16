@@ -9,10 +9,11 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.examples import get_example, load_examples, load_live_imports
-from app.live_panel import _resolve_live_panel
+from app.examples import get_example, session_catalog
+from app.live_panel import _resolve_live_panel, format_read_summary, line_item_count
 from app.money import DEMO_CURRENCY, format_money
-from app.questions import SUGGESTED_QUESTIONS, answer_source_line
+from app.questions import SUGGESTED_QUESTIONS
+from app.receipt_answers import receipt_list_rows
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path
 from app.session import (
     apply_session_cookies,
@@ -63,6 +64,7 @@ def _page(
     live_meta: dict[str, Any] | None = None,
     live_error: str | None = None,
     ingest_ok: bool = False,
+    ingest_elapsed: float | None = None,
     summary_before: dict[str, Any] | None = None,
     window_start: str | None = None,
     window_end: str | None = None,
@@ -81,9 +83,7 @@ def _page(
     if live_meta:
         owned = remember_import(owned, str(live_meta.get("persistedFilename") or ""))
 
-    examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
-    all_live = load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
-    live_imports = [item for item in all_live if item.file_name in owned]
+    examples, live_imports = session_catalog(SEED_DIR, RECEIPT_DATA_PATH, owned)
     selected = get_example(examples, example, live_imports=live_imports)
     summary, api_error = _safe_summary(start, end)
     api_ok = summary is not None and api_error is None
@@ -98,24 +98,27 @@ def _page(
         panel_receipt=panel_receipt,
         seed_dir=SEED_DIR,
     )
-    if ingest_ok:
-        scroll_target = "live-ingest"
-        flow_step = 2
-    elif answer or qa_error:
+    if answer or qa_error:
         scroll_target = "ask-answer"
         flow_step = 3
-    elif panel_receipt:
-        scroll_target = ""
+    elif ingest_ok or panel_receipt:
+        scroll_target = "live-ingest" if ingest_ok else ""
         flow_step = 2
     else:
         scroll_target = ""
         flow_step = 1
 
-    source = ""
-    if answer_source is not None:
-        source = answer_source
-    elif question:
-        source = answer_source_line(question, start, end)
+    source = answer_source or ""
+    elapsed = ingest_elapsed
+    if elapsed is None:
+        raw = request.cookies.get("demo_read_s")
+        try:
+            elapsed = float(raw) if raw is not None else None
+        except ValueError:
+            elapsed = None
+    read_summary = ""
+    if panel_receipt:
+        read_summary = format_read_summary(line_item_count(panel_receipt), elapsed)
 
     response = templates.TemplateResponse(
         request,
@@ -124,6 +127,7 @@ def _page(
             **_base_context(request),
             "examples": examples,
             "live_imports": live_imports,
+            "your_receipts": receipt_list_rows(examples, live_imports),
             "selected": selected,
             "picked_example": bool(example),
             "summary": summary,
@@ -143,10 +147,20 @@ def _page(
             "live_meta": live_meta,
             "live_error": live_error,
             "ingest_ok": ingest_ok,
+            "read_summary": read_summary,
             "sample_ready": sample_pdf_path(SAMPLES_DIR).is_file(),
             "scroll_target": scroll_target,
             "flow_step": flow_step,
         },
     )
     apply_session_cookies(response, sid, owned)
+    if ingest_elapsed is not None:
+        response.set_cookie(
+            "demo_read_s",
+            f"{ingest_elapsed:.3f}",
+            max_age=60 * 60 * 12,
+            httponly=True,
+            samesite="lax",
+            path="/",
+        )
     return response

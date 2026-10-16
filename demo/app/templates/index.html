@@ -23,7 +23,7 @@
 </div>
 {% endif %}
 
-<ol class="flow-nav" aria-label="Demo steps">
+<ol class="flow-nav" id="flow-nav" aria-label="Demo steps">
   <li class="{% if flow_step == 1 %}is-current{% elif flow_step > 1 %}is-done{% endif %}">
     <span class="flow-num">1</span> Add receipt
   </li>
@@ -53,6 +53,23 @@
       if (wait) wait.hidden = !busy;
     }
 
+    function setReading(busy) {
+      const reading = document.getElementById("reading-state");
+      const reviewBody = document.getElementById("review-body");
+      if (reading) reading.hidden = !busy;
+      if (reviewBody) reviewBody.hidden = busy;
+    }
+
+    function markAskStep() {
+      const items = document.querySelectorAll("#flow-nav li");
+      if (items.length < 3) return;
+      items[0].classList.remove("is-current");
+      items[0].classList.add("is-done");
+      items[1].classList.remove("is-current");
+      items[1].classList.add("is-done");
+      items[2].classList.add("is-current");
+    }
+
     function swapAsk(doc) {
       const nextAnswer = doc.getElementById("ask-answer");
       const currentAnswer = document.getElementById("ask-answer");
@@ -68,6 +85,17 @@
         const active = question && chip.getAttribute("data-question") === question.value;
         chip.classList.toggle("is-active", Boolean(active));
       });
+      markAskStep();
+    }
+
+    function fillAskQuestion(text) {
+      const question = document.getElementById("question");
+      if (!question) return;
+      question.value = text;
+      question.focus();
+      document.querySelectorAll(".ask-chip").forEach(function (chip) {
+        chip.classList.toggle("is-active", chip.getAttribute("data-question") === text);
+      });
     }
 
     async function interceptForm(formId, btnId, waitId) {
@@ -79,7 +107,9 @@
         event.preventDefault();
         const btn = document.getElementById(btnId);
         const wait = document.getElementById(waitId);
+        const extracting = formId === "sample-form" || formId === "ingest-form";
         setBusy(btn, wait, true);
+        if (extracting) setReading(true);
         const y = window.scrollY;
         try {
           const response = await fetch(form.action, {
@@ -108,6 +138,7 @@
           window.scrollTo(0, y);
         } catch (err) {
           setBusy(btn, wait, false);
+          if (extracting) setReading(false);
           form.dataset.native = "1";
           form.submit();
         }
@@ -131,14 +162,7 @@
       document.querySelectorAll(".ask-chip").forEach(function (chip) {
         chip.addEventListener("click", function () {
           if (chip.disabled) return;
-          const text = chip.getAttribute("data-question") || "";
-          if (question) question.value = text;
-          if (!askForm) return;
-          if (typeof askForm.requestSubmit === "function") {
-            askForm.requestSubmit();
-          } else {
-            askForm.submit();
-          }
+          fillAskQuestion(chip.getAttribute("data-question") || "");
         });
       });
     }

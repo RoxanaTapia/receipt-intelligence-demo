@@ -77,18 +77,3 @@ def prepare_question(question: str, *, window_start: str, window_end: str) -> st
         year = int(window_start[:4]) if len(window_start) >= 4 else 2026
     with_year = enrich_question_months(question, year=year)
     return apply_demo_window(with_year, window_start, window_end)
-
-
-def answer_source_line(question: str, window_start: str, window_end: str) -> str:
-    """One line under the answer: where the numbers came from."""
-    q = question.lower()
-    if "drink" in q and "august" in q:
-        return "Source: drinks on demo receipts in August 2026. DC demo data."
-    if "per category" in q or "by category" in q:
-        return (
-            f"Source: category totals on demo receipts "
-            f"from {window_start} to {window_end}. DC demo data."
-        )
-    return (
-        f"Source: demo receipts from {window_start} to {window_end}. DC demo data."
-    )

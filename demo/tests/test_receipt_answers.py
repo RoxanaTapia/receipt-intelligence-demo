@@ -1,38 +1,111 @@
-"""Answers scoped to the receipt on screen, not the shared corpus."""
+"""Answers from the visible receipt catalog, matching the Your receipts list."""
 
 from __future__ import annotations
 
-from app.receipt_answers import answer_receipt_question, category_totals
+import json
+from pathlib import Path
+
+from app.live_panel import format_read_summary
+from app.receipt_answers import (
+    answer_visible_question,
+    catalog_payloads,
+    category_totals,
+    receipt_list_rows,
+    short_date,
+)
 from app.sample_receipt import receipt_payload
+
+SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
+
+
+class _Item:
+    def __init__(self, receipt: dict, file_name: str = "") -> None:
+        self.receipt = receipt
+        self.file_name = file_name
+
+
+def _seed_receipts() -> list[dict]:
+    receipts = []
+    for path in sorted(SEED_DIR.glob("2026-*.json")):
+        receipts.append(json.loads(path.read_text(encoding="utf-8")))
+    return receipts
+
+
+def test_read_summary_uses_count_and_elapsed() -> None:
+    assert format_read_summary(10, 11.2) == "✓ 10 items read in 11s"
+    assert format_read_summary(1, 0.2) == "✓ 1 item read in 0s"
+    assert format_read_summary(10, None) == "✓ 10 items read"
+
+
+def test_short_date_is_compact() -> None:
+    assert short_date("2026-08-15") == "Aug 15"
 
 
 def test_green_basket_category_totals() -> None:
     totals = category_totals(receipt_payload())
-    assert totals == {"food": 15.0, "drinks": 4.4, "household": 5.6}
+    assert totals == {"food": 11.8, "drinks": 4.4, "household": 5.6, "snacks": 3.2}
 
 
-def test_per_category_lists_this_receipt_only() -> None:
-    text, source = answer_receipt_question(
+def test_list_rows_mark_live_imports_just_added() -> None:
+    seeds = [_Item(row) for row in _seed_receipts()]
+    live = [_Item(receipt_payload(), "live.json")]
+    rows = receipt_list_rows(seeds, live)
+    assert [row["merchant"] for row in rows] == [
+        "Lumen Pantry",
+        "Harbor Home",
+        "Corner Bakery",
+        "Green Basket Market",
+    ]
+    assert [row["just_added"] for row in rows] == [False, False, False, True]
+    assert rows[-1]["date_label"] == "Aug 15"
+    assert rows[-1]["total_label"] == "$25.00"
+    assert rows[2]["merchant"] == "Corner Bakery"
+    assert rows[2]["total_label"] == "$18.90"
+
+
+def test_per_category_uses_every_visible_receipt() -> None:
+    receipts = catalog_payloads(
+        [_Item(row) for row in _seed_receipts()],
+        [],
+    )
+    text, source = answer_visible_question(
         "How much did I spend per category?",
-        receipt_payload(),
+        receipts,
     )
-    assert "15.00 DC" in text
-    assert "4.40 DC" in text
-    assert "5.60 DC" in text
-    assert "25.00 DC" in text
-    assert "July" not in text
-    assert "snacks" not in text.lower()
-    assert source == "Source: Green Basket Market, 2026-08-15."
+    assert "$21.20 on food" in text
+    assert "$9.20 on drinks" in text
+    assert "$16.10 on household" in text
+    assert "$8.00 on snacks" in text
+    assert source == "Across your 3 receipts"
 
 
-def test_drinks_in_august_uses_receipt_date() -> None:
-    text, source = answer_receipt_question(
-        "How much did I spend on drinks in August?",
-        receipt_payload(),
+def test_august_snacks_names_the_receipts_in_the_list() -> None:
+    receipts = _seed_receipts() + [receipt_payload()]
+    text, source = answer_visible_question(
+        "How much in snacks in August?",
+        receipts,
+        current=receipt_payload(),
     )
-    assert text == "You spent 4.40 DC on drinks in August."
-    assert source == "Source: Green Basket Market, 2026-08-15."
+    assert text == (
+        "You spent $6.70 on snacks in August "
+        "(Corner Bakery and Green Basket Market)."
+    )
+    assert source == "Across your 4 receipts"
+    assert "16.70" not in text
+
+
+def test_this_receipt_snacks_uses_the_review_card() -> None:
+    receipts = _seed_receipts() + [receipt_payload()]
+    text, source = answer_visible_question(
+        "How much in snacks on this receipt?",
+        receipts,
+        current=receipt_payload(),
+    )
+    assert text == (
+        "You spent $3.20 on snacks on this receipt (1 item: Butter croissants)."
+    )
+    assert source == "From Green Basket Market, Aug 15"
 
 
 def test_unknown_prompt_falls_through() -> None:
-    assert answer_receipt_question("What is the tax rate?", receipt_payload()) is None
+    assert answer_visible_question("What is the tax rate?", _seed_receipts()) is None

@@ -1,4 +1,4 @@
-<section class="step-card live-panel{% if live_panel %} is-compact{% endif %}" id="live-ingest">
+<section class="step-card live-panel" id="live-ingest">
   <h2>Add receipt</h2>
   {% if sample_ready %}
   <form
@@ -12,11 +12,11 @@
     {% endif %}
     <input type="hidden" name="start" value="{{ window_start }}" />
     <input type="hidden" name="end" value="{{ window_end }}" />
-    <button type="submit" id="sample-btn" class="{% if flow_step == 1 %}btn{% else %}btn-secondary{% endif %}">
-      <span class="btn-idle">Use sample receipt</span>
-      <span class="btn-busy" hidden>Extracting…</span>
+    <button type="submit" id="sample-btn" class="{% if live_panel %}btn-secondary{% else %}btn{% endif %}">
+      <span class="btn-idle">{% if live_panel %}Sample added ✓{% else %}Use sample receipt{% endif %}</span>
+      <span class="btn-busy" hidden>Reading your receipt…</span>
     </button>
-    <p class="meta ingest-wait" id="sample-wait" hidden>Extracting…</p>
+    <p class="meta ingest-wait" id="sample-wait" hidden>Reading your receipt…</p>
   </form>
   {% else %}
   <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
@@ -60,28 +60,18 @@
         <div class="step-body">
           <button type="submit" id="ingest-btn" class="btn-secondary">
             <span class="btn-idle">Extract receipt</span>
-            <span class="btn-busy" hidden>Extracting…</span>
+            <span class="btn-busy" hidden>Reading your receipt…</span>
           </button>
-          <p class="meta ingest-wait" id="ingest-wait" hidden>Extracting…</p>
+          <p class="meta ingest-wait" id="ingest-wait" hidden>Reading your receipt…</p>
         </div>
       </div>
     </form>
   </details>
-  {% if live_error %}
-  <div class="banner err" style="margin-top: 1rem" role="alert">{{ live_error }}</div>
-  {% endif %}
-  {% if ingest_ok and live_meta %}
-  <div class="banner ok" id="live-result" role="status">
-    <span class="live-badge">Extracted</span>
-    {% if live_meta.merchant %}
-    {{ live_meta.merchant }}
+  <div class="ingest-status">
+    {% if live_error %}
+    <div class="banner err" role="alert">{{ live_error }}</div>
+    {% elif read_summary %}
+    <p class="extracted-line" id="live-result" role="status">{{ read_summary }}</p>
     {% endif %}
   </div>
-  {% endif %}
-  {% if live_panel and not ingest_ok %}
-  <p class="extracted-line">
-    <span class="live-badge">Extracted</span>
-    {{ live_panel.merchant }}
-  </p>
-  {% endif %}
 </section>

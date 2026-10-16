@@ -22,31 +22,44 @@
   color: var(--ink);
 }
 
-.ask-form button {
+.ask-form button[type="submit"] {
   justify-self: start;
 }
 
-.answer {
+.answer-slot {
+  min-height: 7.25rem;
   margin-top: var(--space);
-  padding: 16px 20px;
-  border-radius: var(--radius);
-  border: 1px solid var(--accent-soft);
-  background: var(--accent-soft);
 }
 
-.answer p {
+.answer-card {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.answer-q {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.answer-a {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .answer-source {
-  margin: 8px 0 0;
-  font-size: 16px;
+  margin: 4px 0 0;
+  font-size: 14px;
   color: var(--muted);
 }
 
 .ask-wait {
-  margin: 4px 0 0;
+  margin: 0;
 }
 
 .ask-chips {
@@ -84,4 +97,69 @@
 .ask-chip:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.your-receipts {
+  margin-top: calc(var(--space) * 2);
+}
+
+.your-receipts h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.receipts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.receipts-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.receipts-list li.is-added {
+  background: #f3f4f8;
+}
+
+.receipts-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.receipts-merchant {
+  font-size: 16px;
+}
+
+.receipts-date {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.receipts-total {
+  margin-left: auto;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.just-added {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #e8eaef;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
 }

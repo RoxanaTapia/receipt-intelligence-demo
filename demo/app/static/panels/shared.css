@@ -216,6 +216,12 @@ th {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+th abbr {
+  text-decoration: none;
+  border-bottom: 0;
 }
 
 td:last-child,
@@ -284,8 +290,7 @@ tfoot td {
 .btn,
 .button,
 .btn-secondary,
-.button.secondary,
-.sample-one-click button[type="submit"] {
+.button.secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -303,14 +308,12 @@ tfoot td {
 }
 
 .btn:hover,
-.button:hover,
-.sample-one-click button[type="submit"]:hover {
+.button:hover {
   background: var(--accent-hover);
 }
 
 .btn:disabled,
-.btn-secondary:disabled,
-.sample-one-click button[type="submit"]:disabled {
+.btn-secondary:disabled {
   cursor: wait;
   opacity: 0.85;
 }
@@ -359,8 +362,7 @@ tfoot td {
   }
 
   .btn,
-  .btn-secondary,
-  .sample-one-click button[type="submit"] {
+  .btn-secondary {
     width: 100%;
   }
 
