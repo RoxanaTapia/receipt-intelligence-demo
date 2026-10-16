@@ -3,7 +3,7 @@
     <tr>
       <th>Item</th>
       <th>Category</th>
-      <th class="num"><abbr title="Demo currency">{{ demo_currency }}</abbr></th>
+      <th class="num">$</th>
     </tr>
   </thead>
   <tbody>
@@ -18,10 +18,5 @@
 </table>
 <div class="receipt-total">
   <span>Total</span>
-  <span>
-    <span class="num">{{ money(receipt.total) }}</span>
-    <span class="dc-note" title="Demo currency — fictional amounts, not euros or dollars"
-      >DC demo data</span
-    >
-  </span>
+  <span class="num">{{ money(receipt.total) }}</span>
 </div>

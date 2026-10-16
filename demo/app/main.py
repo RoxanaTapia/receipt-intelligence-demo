@@ -14,13 +14,13 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import get_example, load_examples, load_live_imports
+from app.examples import get_example, load_examples, load_live_imports, session_catalog
 from app.live_panel import _resolve_live_panel
 from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.page import _page
 from app.questions import prepare_question
-from app.receipt_answers import answer_receipt_question
+from app.receipt_answers import answer_visible_question, catalog_payloads
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 from app.session import (
     apply_session_cookies,
@@ -98,18 +98,14 @@ def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-def _session_live_receipt(request: Request) -> dict[str, Any] | None:
-    """The live receipt on this visitor's review card, if they extracted one."""
-    owned = owned_filenames(request)
-    examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
-    live_imports = [
-        item
-        for item in load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
-        if item.file_name in owned
-    ]
+def _visible_receipts(request: Request) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """Catalog shown under Your receipts, plus the receipt on the review card."""
+    examples, live_imports = session_catalog(
+        SEED_DIR, RECEIPT_DATA_PATH, owned_filenames(request)
+    )
     selected = get_example(examples, None, live_imports=live_imports)
-    receipt, _ = _resolve_live_panel(None, selected, live_imports)
-    return receipt
+    current, _ = _resolve_live_panel(None, selected, live_imports)
+    return catalog_payloads(examples, live_imports), current
 
 
 def _safe_summary(start: str, end: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -282,12 +278,17 @@ def ask(
     if not cleaned:
         qa_error = "Enter a budget question first."
     else:
-        live = _session_live_receipt(request)
-        local = answer_receipt_question(cleaned, live) if live else None
+        receipts, current = _visible_receipts(request)
+        local = answer_visible_question(cleaned, receipts, current=current)
         if local:
-            # Storyboard chips must match the receipt on screen, not the corpus.
             text, answer_source = local
             answer = {"answer": text}
+        elif receipts:
+            # Skip the API so a volume-wide total cannot contradict Your receipts.
+            qa_error = (
+                "I couldn't match that to a spending question for these receipts. "
+                "Try a suggested question, or a category (food, drinks, snacks…)."
+            )
         else:
             try:
                 routed_question = prepare_question(
@@ -300,11 +301,7 @@ def ask(
                     start_date=window_start,
                     end_date=window_end,
                 )
-                text = present_answer_text(
-                    str(raw.get("answer") or ""),
-                    window_start=window_start,
-                    window_end=window_end,
-                )
+                text = present_answer_text(str(raw.get("answer") or ""))
                 answer = {**raw, "answer": text} if text else raw
             except ApiError as exc:
                 qa_error = str(exc)

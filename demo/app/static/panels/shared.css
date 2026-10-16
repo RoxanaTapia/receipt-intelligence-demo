@@ -216,6 +216,12 @@ th {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+th abbr {
+  text-decoration: none;
+  border-bottom: 0;
 }
 
 td:last-child,

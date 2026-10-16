@@ -1,0 +1,20 @@
+      <div class="your-receipts" id="your-receipts">
+        <h3>Your receipts</h3>
+        {% if your_receipts %}
+        <ul class="receipts-list">
+          {% for row in your_receipts %}
+          <li{% if row.just_added %} class="is-added"{% endif %}>
+            <span class="receipts-merchant">{{ row.merchant }}</span>
+            {% if row.date_label %}
+            <span class="receipts-date">{{ row.date_label }}</span>
+            {% endif %}
+            {% if row.just_added %}
+            <span class="just-added">Just added</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="meta">No receipts loaded yet.</p>
+        {% endif %}
+      </div>

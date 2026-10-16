@@ -1,6 +1,6 @@
 """Canonical Green Basket Market sample — PDF, fake ingest, and allowlist share this.
 
-n8n still maps each line to the demo taxonomy (food / drinks / household).
+n8n maps each line to the demo taxonomy (food / drinks / household / snacks).
 Department labels on the PDF (Produce, Dairy, …) are for the visitor, not the JSON.
 """
 
@@ -69,7 +69,7 @@ ITEMS: tuple[dict[str, Any], ...] = (
         "dept": "Bakery",
         "quantity": 2,
         "price": 3.20,
-        "category": "food",
+        "category": "snacks",
     },
     {
         "description": "Dish soap",

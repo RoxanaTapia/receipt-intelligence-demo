@@ -13,33 +13,34 @@
           placeholder="How much did I spend per category?"
           required
         >{{ question }}</textarea>
+        <button type="submit" id="ask-btn" class="btn-secondary" {% if not your_receipts and not api_ok %}disabled{% endif %}>
+          <span class="btn-idle">Ask</span>
+          <span class="btn-busy" hidden>Thinking…</span>
+        </button>
+        <p class="meta ask-wait" id="ask-wait" hidden>Thinking…</p>
         <div class="ask-chips" role="group" aria-label="Suggested questions">
           {% for item in suggested_questions %}
           <button
             type="button"
             class="ask-chip{% if question == item.question %} is-active{% endif %}"
             data-question="{{ item.question }}"
-            {% if not api_ok and not live_panel %}disabled{% endif %}
+            {% if not your_receipts and not api_ok %}disabled{% endif %}
           >{{ item.label }}</button>
           {% endfor %}
         </div>
-        <div id="ask-answer">
-          {% if qa_error %}
-          <div class="banner err">{{ qa_error }}</div>
-          {% endif %}
-          {% if answer and answer.answer %}
-          <div class="answer">
-            <p>{{ answer.answer }}</p>
-            {% if answer_source %}
-            <p class="answer-source">{{ answer_source }}</p>
-            {% endif %}
-          </div>
+      </form>
+      <div id="ask-answer" class="answer-slot">
+        {% if qa_error %}
+        <div class="banner err">{{ qa_error }}</div>
+        {% elif answer and answer.answer %}
+        <div class="answer-card">
+          <p class="answer-q">{{ question }}</p>
+          <p class="answer-a">{{ answer.answer }}</p>
+          {% if answer_source %}
+          <p class="answer-source">{{ answer_source }}</p>
           {% endif %}
         </div>
-        <button type="submit" id="ask-btn" class="btn-secondary" {% if not api_ok and not live_panel %}disabled{% endif %}>
-          <span class="btn-idle">Ask</span>
-          <span class="btn-busy" hidden>Thinking…</span>
-        </button>
-        <p class="meta ask-wait" id="ask-wait" hidden>Thinking…</p>
-      </form>
+        {% endif %}
+      </div>
+      {% include "panels/your_receipts.html" %}
     </section>

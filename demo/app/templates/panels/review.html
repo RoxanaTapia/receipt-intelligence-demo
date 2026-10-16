@@ -1,5 +1,20 @@
 <section class="step-card" id="review">
   <h2>Review fields</h2>
+  <div id="reading-state" class="reading-state" hidden>
+    <p class="reading-label" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      Reading your receipt…
+    </p>
+    <div class="skeleton-table" aria-hidden="true">
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row is-short"></div>
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row is-short"></div>
+    </div>
+  </div>
+  <div id="review-body">
   {% if live_panel %}
   <div class="live-result-panel" id="live-panel" data-persist="live-panel-open">
     <h3 class="live-heading">
@@ -18,4 +33,5 @@
   {% else %}
   <p class="empty-review">Extract a sample to see merchant, date, and line items.</p>
   {% endif %}
+  </div>
 </section>

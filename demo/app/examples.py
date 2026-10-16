@@ -87,6 +87,21 @@ def load_live_imports(seed_dir: Path, data_dir: Path) -> list[ExampleReceipt]:
     return imports
 
 
+def session_catalog(
+    seed_dir: Path,
+    data_dir: Path,
+    owned: set[str],
+) -> tuple[list[ExampleReceipt], list[ExampleReceipt]]:
+    """Seed examples plus this browser's live imports, in list order."""
+    examples = load_examples(seed_dir, data_dir)
+    live_imports = [
+        item
+        for item in load_live_imports(seed_dir, data_dir)
+        if item.file_name in owned
+    ]
+    return examples, live_imports
+
+
 def get_example(
     examples: list[ExampleReceipt],
     example_id: str | None,

@@ -1,29 +1,12 @@
-.live-panel.is-compact {
-  padding: 12px 20px;
+#live-ingest {
+  min-height: 168px;
 }
 
-.live-panel.is-compact h2 {
-  display: none;
+.ingest-status {
+  min-height: 2.5rem;
+  margin-top: var(--space);
 }
 
-.live-panel.is-compact .sample-one-click {
-  margin: 0 0 8px;
-}
-
-.live-panel.is-compact .sample-one-click button {
-  padding: 8px 14px;
-  font-size: 16px;
-  background: var(--panel);
-  color: var(--ink);
-  border-color: var(--line);
-  box-shadow: none;
-}
-
-.live-panel.is-compact .upload-alt {
-  margin: 0;
-}
-
-.live-panel.is-compact .banner.ok,
 .extracted-line {
   margin: 0;
   display: flex;
@@ -179,4 +162,61 @@
   margin: 0;
   color: var(--muted);
   font-size: 18px;
+}
+
+.reading-state {
+  margin: 0;
+}
+
+.reading-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 var(--space);
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.skeleton-table {
+  display: grid;
+  gap: 10px;
+  padding: 8px 0 4px;
+}
+
+.skeleton-row {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--line) 0%, #f3f4f6 50%, var(--line) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton-row.is-short {
+  width: 62%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }

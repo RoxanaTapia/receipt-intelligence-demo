@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from app.questions import (
     SUGGESTED_QUESTIONS,
-    answer_source_line,
     apply_demo_window,
     enrich_question_months,
     prepare_question,
@@ -69,20 +68,3 @@ def test_suggested_questions_cover_the_storyboard() -> None:
     assert "How much did I spend per category?" in labels
     assert "Drinks in August" in labels
     assert "How much did I spend on drinks in August?" in questions
-
-
-def test_source_line_names_the_window_or_month() -> None:
-    per_cat = answer_source_line(
-        "How much did I spend per category?",
-        "2026-07-01",
-        "2026-08-31",
-    )
-    assert "2026-07-01" in per_cat
-    assert "DC demo data" in per_cat
-    drinks = answer_source_line(
-        "How much did I spend on drinks in August?",
-        "2026-07-01",
-        "2026-08-31",
-    )
-    assert "August 2026" in drinks
-    assert "DC demo data" in drinks

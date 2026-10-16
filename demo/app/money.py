@@ -1,49 +1,41 @@
-"""Demo currency formatting for visitor-facing amounts."""
+"""Visitor-facing money: a plain dollar sign, no demo-currency jargon."""
 
 from __future__ import annotations
 
 import re
 
-# Neutral unit label — not EUR or USD (see issue #19).
-DEMO_CURRENCY = "DC"
+DEMO_CURRENCY = "$"
 
-_DOLLAR_AMOUNT = re.compile(r"\$(\d+(?:\.\d{1,2})?)")
+_DC_AMOUNT = re.compile(r"(\d+(?:\.\d{1,2})?)\s*DC\b")
 _EURO_AMOUNT = re.compile(r"€\s*(\d+(?:\.\d{1,2})?)")
+_SOURCE_TAIL = re.compile(
+    r"\s*Source:\s*.+$",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def format_money(value: float | int | None) -> str:
-    """Format an amount with the demo currency suffix, e.g. ``14.20 DC``."""
+    """Format an amount the way the review table shows it, e.g. ``$3.20``."""
     if value is None:
-        return f"— {DEMO_CURRENCY}"
-    return f"{float(value):.2f} {DEMO_CURRENCY}"
+        return "—"
+    return f"${float(value):.2f}"
 
 
-def present_answer_text(
-    text: str,
-    *,
-    window_start: str | None = None,
-    window_end: str | None = None,
-) -> str:
-    """Rewrite API answer currency symbols and soften awkward refusal copy."""
-    out = _DOLLAR_AMOUNT.sub(rf"\1 {DEMO_CURRENCY}", text)
-    out = _EURO_AMOUNT.sub(rf"\1 {DEMO_CURRENCY}", out)
+def present_answer_text(text: str) -> str:
+    """Rewrite leftover API currency labels and drop a raw Source: tail."""
+    out = _DC_AMOUNT.sub(r"$\1", text)
+    out = _EURO_AMOUNT.sub(r"$\1", out)
+    out = _SOURCE_TAIL.sub("", out).strip()
     lowered = out.lower()
-    span = ""
-    if window_start and window_end:
-        span = f" Demo receipts cover {window_start} → {window_end}."
     if "couldn't map that" in lowered or "couldn't match that" in lowered:
         return (
-            "I couldn't match that to a spending question for this demo."
-            f"{span} "
-            "Try a suggested question, or a category (food, drinks, snacks…) "
-            "in a month that has data — for example, "
-            "“How much did I spend on drinks in July?”"
+            "I couldn't match that to a spending question. "
+            "Try a suggested question, or a category (food, drinks, snacks…)."
         )
     if "no recorded spending" in lowered or "no spending recorded" in lowered:
         return (
-            "I didn't find spending for that period."
-            f"{span} "
-            "Try a suggested question, or name a category and a month in that "
-            "window — for example, “How much did I spend on drinks in July?”"
+            "I didn't find spending for that. "
+            "Try a suggested question, or name a category — for example, "
+            "“How much did I spend on drinks in August?”"
         )
     return out
