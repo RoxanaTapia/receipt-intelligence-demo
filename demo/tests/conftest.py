@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from app import main
 from app.sample import SAMPLE_ID
+from app.sample_receipt import MERCHANT, receipt_payload
 
 SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
 
@@ -48,35 +49,27 @@ class FakeApi:
                 "end_date": end_date,
             }
         )
+        q = question.lower()
+        if "drink" in q and "august" in q:
+            return {"answer": "You spent 4.10 DC on drinks in August."}
+        if "per category" in q or "by category" in q:
+            return {
+                "answer": (
+                    "Drinks 9.20 DC (including 5.10 DC in July), "
+                    "food 21.20 DC, household 16.10 DC, snacks 8.00 DC."
+                )
+            }
         return {"answer": "You spent $5.10 on drinks in July."}
 
 
 class FakeN8n:
-    """Stand-in that writes a live receipt JSON like n8n persist."""
+    """Stand-in that writes the Green Basket Market JSON like n8n persist."""
 
     def __init__(self, data_dir: Path) -> None:
         self.data_dir = data_dir
         self.calls: list[str] = []
-        self.filename = "2026-08-10_demo-cafe_deadbeef.json"
-        self.receipt = {
-            "date": "2026-08-10",
-            "merchant": "Demo Cafe",
-            "total": 12.5,
-            "line_items": [
-                {
-                    "description": "Iced coffee",
-                    "quantity": 1,
-                    "price": 4.5,
-                    "category": "drinks",
-                },
-                {
-                    "description": "Pastry",
-                    "quantity": 1,
-                    "price": 8.0,
-                    "category": "food",
-                },
-            ],
-        }
+        self.filename = "2026-08-15_green-basket-market_abcd1234.json"
+        self.receipt = receipt_payload()
 
     def trigger_sample(self, sample_id: str) -> dict:
         self.calls.append(sample_id)

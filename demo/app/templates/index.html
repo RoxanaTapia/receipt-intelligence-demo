@@ -7,14 +7,9 @@
   <a class="exit-demo" href="/invite/exit">Exit demo</a>
 </div>
 <h1>Try the demo</h1>
-<p class="lede">
-  Upload a receipt and watch it get categorized automatically. Then explore spending by category
-  or ask a budget question in plain English — all grounded in the actual data.
-</p>
+<p class="lede">Add a receipt, review the fields, ask a question.</p>
 
-{% if api_ok %}
-<p class="status ok">API connected</p>
-{% else %}
+{% if not api_ok %}
 <p class="status bad">API unavailable</p>
 {% if api_error %}
 <div class="banner err">{{ api_error }}</div>
@@ -28,70 +23,25 @@
 </div>
 {% endif %}
 
+<ol class="flow-nav" aria-label="Demo steps">
+  <li class="{% if flow_step == 1 %}is-current{% elif flow_step > 1 %}is-done{% endif %}">
+    <span class="flow-num">1</span> Add receipt
+  </li>
+  <li class="{% if flow_step == 2 %}is-current{% elif flow_step > 2 %}is-done{% endif %}">
+    <span class="flow-num">2</span> Review fields
+  </li>
+  <li class="{% if flow_step == 3 %}is-current{% endif %}">
+    <span class="flow-num">3</span> Ask a question
+  </li>
+</ol>
+
+<div class="flow">
 {% include "panels/live_ingest.html" %}
-{#- Keep the original line break. #}
-
-<div class="layout" style="margin-top: 1.25rem">
-{% include "panels/examples.html" %}
-{#- Keep the original line break. #}
-
-  <div>
-    {% if selected and selected.source != "live" %}
-    <section class="panel">
-      <h2 class="receipt-heading">
-        {{ selected.receipt.merchant }}
-      </h2>
-      <p class="meta">
-        {{ selected.receipt.date }} · total
-        <span class="num">{{ money(selected.receipt.total) }}</span>
-        · seeded
-      </p>
-      <p class="meta">
-        <abbr title="Demo currency — fictional amounts, not euros or dollars">DC</abbr>
-        = demo currency (not real money).
-      </p>
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Category</th>
-            <th class="num">Qty</th>
-            <th class="num"><abbr title="Demo currency">{{ demo_currency }}</abbr></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for line in selected.receipt.line_items %}
-          <tr>
-            <td>{{ line.description }}</td>
-            <td>{{ line.category }}</td>
-            <td class="num">{{ line.quantity }}</td>
-            <td class="num">{{ money(line.price) }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </section>
-    {% endif %}
-
-{% include "panels/spending.html" %}
-{#- Keep the original line break. #}
-
+{% include "panels/review.html" %}
 {% include "panels/ask.html" %}
-{#- Keep the original line break. #}
-  </div>
 </div>
-
-<p class="note">
-  Amounts shown in <strong>{{ demo_currency }}</strong>
-  (<abbr title="Demo currency — fictional amounts, not euros or dollars">demo currency</abbr>)
-  — not real money.
-</p>
 <script>
   (function () {
-    function currentScrollTarget() {
-      return document.querySelector("main")?.getAttribute("data-scroll") || "";
-    }
-
     function setBusy(btn, wait, busy) {
       if (btn) {
         btn.disabled = busy;
@@ -103,13 +53,20 @@
       if (wait) wait.hidden = !busy;
     }
 
-    function bindBusy(formId, btnId, waitId) {
-      const form = document.getElementById(formId);
-      const btn = document.getElementById(btnId);
-      const wait = document.getElementById(waitId);
-      if (!form || !btn) return;
-      form.addEventListener("submit", function () {
-        setBusy(btn, wait, true);
+    function swapAsk(doc) {
+      const nextAnswer = doc.getElementById("ask-answer");
+      const currentAnswer = document.getElementById("ask-answer");
+      const nextQuestion = doc.getElementById("question");
+      const question = document.getElementById("question");
+      if (nextAnswer && currentAnswer) {
+        currentAnswer.replaceWith(nextAnswer);
+      }
+      if (question && nextQuestion) {
+        question.value = nextQuestion.value;
+      }
+      document.querySelectorAll(".ask-chip").forEach(function (chip) {
+        const active = question && chip.getAttribute("data-question") === question.value;
+        chip.classList.toggle("is-active", Boolean(active));
       });
     }
 
@@ -123,14 +80,22 @@
         const btn = document.getElementById(btnId);
         const wait = document.getElementById(waitId);
         setBusy(btn, wait, true);
+        const y = window.scrollY;
         try {
           const response = await fetch(form.action, {
             method: "POST",
             body: new FormData(form),
+            credentials: "same-origin",
             headers: { "X-Requested-With": "fetch" },
           });
           const html = await response.text();
           const doc = new DOMParser().parseFromString(html, "text/html");
+          if (formId === "ask-form") {
+            swapAsk(doc);
+            setBusy(btn, wait, false);
+            window.scrollTo(0, y);
+            return;
+          }
           const nextMain = doc.querySelector("main");
           const currentMain = document.querySelector("main");
           if (!nextMain || !currentMain) {
@@ -140,6 +105,7 @@
           }
           currentMain.replaceWith(nextMain);
           window.initDemo();
+          window.scrollTo(0, y);
         } catch (err) {
           setBusy(btn, wait, false);
           form.dataset.native = "1";
@@ -177,42 +143,11 @@
       });
     }
 
-    function bindLivePanel() {
-      const panel = document.getElementById("live-panel");
-      if (!panel) return;
-      const key = panel.getAttribute("data-persist") || "live-panel-open";
-      const justIngested = currentScrollTarget() === "live-ingest";
-      if (!justIngested) {
-        const saved = sessionStorage.getItem(key);
-        panel.open = saved !== "0";
-      } else {
-        panel.open = true;
-        sessionStorage.setItem(key, "1");
-      }
-      panel.addEventListener("toggle", function () {
-        sessionStorage.setItem(key, panel.open ? "1" : "0");
-      });
-    }
-
-    function scrollToResult() {
-      const target = currentScrollTarget();
-      if (!target) return;
-      document.getElementById(target)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-
     window.initDemo = function initDemo() {
-      bindBusy("ingest-form", "ingest-btn", "ingest-wait");
-      bindBusy("ask-form", "ask-btn", "ask-wait");
-      bindBusy("sample-form", "sample-btn", "sample-wait");
       interceptForm("ingest-form", "ingest-btn", "ingest-wait");
       interceptForm("ask-form", "ask-btn", "ask-wait");
       interceptForm("sample-form", "sample-btn", "sample-wait");
       bindAskShortcuts();
-      bindLivePanel();
-      scrollToResult();
     };
 
     window.initDemo();

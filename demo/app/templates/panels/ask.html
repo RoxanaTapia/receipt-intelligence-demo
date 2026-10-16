@@ -1,4 +1,4 @@
-    <section class="panel" style="margin-top: 1.25rem" id="ask-panel">
+    <section class="step-card" id="ask-panel">
       <h2>Ask a question</h2>
       <form class="ask-form" id="ask-form" method="post" action="{{ public_url('/ask') }}">
         {% if selected %}
@@ -6,42 +6,40 @@
         {% endif %}
         <input type="hidden" name="start" value="{{ window_start }}" />
         <input type="hidden" name="end" value="{{ window_end }}" />
-        <label for="question">Ask in plain English</label>
-        <p class="meta">
-          This demo answers a category in a month that has data
-          ({{ window_start }} → {{ window_end }}).
-        </p>
+        <label for="question">Your question</label>
+        <textarea
+          id="question"
+          name="question"
+          placeholder="How much did I spend per category?"
+          required
+        >{{ question }}</textarea>
         <div class="ask-chips" role="group" aria-label="Suggested questions">
           {% for item in suggested_questions %}
           <button
             type="button"
-            class="ask-chip"
-            data-question="{{ item }}"
-            {% if not api_ok %}disabled{% endif %}
-          >{{ item }}</button>
+            class="ask-chip{% if question == item.question %} is-active{% endif %}"
+            data-question="{{ item.question }}"
+            {% if not api_ok and not live_panel %}disabled{% endif %}
+          >{{ item.label }}</button>
           {% endfor %}
         </div>
-        <textarea
-          id="question"
-          name="question"
-          placeholder="How much did I spend on drinks in July?"
-          required
-        >{{ question }}</textarea>
-        <button type="submit" id="ask-btn" {% if not api_ok %}disabled{% endif %}>
+        <div id="ask-answer">
+          {% if qa_error %}
+          <div class="banner err">{{ qa_error }}</div>
+          {% endif %}
+          {% if answer and answer.answer %}
+          <div class="answer">
+            <p>{{ answer.answer }}</p>
+            {% if answer_source %}
+            <p class="answer-source">{{ answer_source }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        <button type="submit" id="ask-btn" class="btn-secondary" {% if not api_ok and not live_panel %}disabled{% endif %}>
           <span class="btn-idle">Ask</span>
           <span class="btn-busy" hidden>Thinking…</span>
         </button>
-        <p class="meta">Enter to ask · Shift+Enter for new line</p>
         <p class="meta ask-wait" id="ask-wait" hidden>Thinking…</p>
       </form>
-      <div id="ask-answer">
-        {% if qa_error %}
-        <div class="banner err" style="margin-top: 1rem">{{ qa_error }}</div>
-        {% endif %}
-        {% if answer and answer.answer %}
-        <div class="answer">
-          <p>{{ answer.answer }}</p>
-        </div>
-        {% endif %}
-      </div>
     </section>

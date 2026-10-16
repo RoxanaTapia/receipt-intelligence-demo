@@ -1,20 +1,20 @@
 .cats {
   display: grid;
-  gap: 0.45rem;
-  margin: 0.75rem 0 0;
+  gap: var(--space);
+  margin: var(--space) 0 0;
 }
 
 .cat-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.5rem;
-  font-size: 0.95rem;
+  gap: var(--space);
+  font-size: 16px;
 }
 
 .cat-bar {
   grid-column: 1 / -1;
-  height: 6px;
-  background: #d7e1e6;
+  height: 8px;
+  background: var(--line);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -26,7 +26,7 @@
   background: var(--accent);
   border-radius: inherit;
 }
-/* segment */
+
 .spending-fresh {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -36,7 +36,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space);
 }
 
 .cats-animate .cat-bar > span {
@@ -49,40 +49,42 @@
     width: var(--to, 0%);
   }
 }
-/* segment */
+
 .window-form {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: 0.55rem 0.75rem;
-  margin: 0.65rem 0 0.35rem;
+  gap: var(--space) 12px;
+  margin: var(--space) 0 4px;
 }
 
 .window-form label {
-  font-size: 0.85rem;
+  font-size: 16px;
   color: var(--muted);
 }
 
 .window-form input[type="date"] {
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius);
+  padding: 8px 12px;
   font: inherit;
+  font-size: 16px;
   background: #fff;
   color: var(--ink);
 }
 
 .window-form button {
   border: 0;
-  border-radius: 6px;
-  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius);
+  padding: 8px 16px;
   background: var(--accent);
   color: var(--accent-ink);
   font: inherit;
   font-weight: 650;
+  font-size: 16px;
   cursor: pointer;
 }
 
 .window-form button:hover {
-  filter: brightness(1.06);
+  background: var(--accent-hover);
 }

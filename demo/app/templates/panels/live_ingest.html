@@ -1,9 +1,5 @@
-<section class="panel live-panel" id="live-ingest">
-  <h2>Extract a receipt</h2>
-  <p class="meta">
-    Use the allowlisted demo PDF in one click, or download it and upload it yourself.
-  </p>
-
+<section class="step-card live-panel{% if live_panel %} is-compact{% endif %}" id="live-ingest">
+  <h2>Add receipt</h2>
   {% if sample_ready %}
   <form
     class="sample-one-click"
@@ -16,135 +12,76 @@
     {% endif %}
     <input type="hidden" name="start" value="{{ window_start }}" />
     <input type="hidden" name="end" value="{{ window_end }}" />
-    <button type="submit" id="sample-btn">
+    <button type="submit" id="sample-btn" class="{% if flow_step == 1 %}btn{% else %}btn-secondary{% endif %}">
       <span class="btn-idle">Use sample receipt</span>
-      <span class="btn-busy" hidden>Extracting… this can take a minute</span>
+      <span class="btn-busy" hidden>Extracting…</span>
     </button>
-    <p class="meta ingest-wait" id="sample-wait" hidden>
-      Processing — keep this tab open.
-    </p>
+    <p class="meta ingest-wait" id="sample-wait" hidden>Extracting…</p>
   </form>
   {% else %}
   <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
   {% endif %}
 
-  <p class="meta ingest-or">Or download and upload the same file</p>
+  <details class="upload-alt">
+    <summary>Or upload {{ sample_filename }}</summary>
+    <form
+      class="ingest-steps"
+      id="ingest-form"
+      method="post"
+      action="{{ public_url('/ingest') }}"
+      enctype="multipart/form-data"
+    >
+      {% if selected %}
+      <input type="hidden" name="example" value="{{ selected.id }}" />
+      {% endif %}
+      <input type="hidden" name="start" value="{{ window_start }}" />
+      <input type="hidden" name="end" value="{{ window_end }}" />
 
-  <form
-    class="ingest-steps"
-    id="ingest-form"
-    method="post"
-    action="{{ public_url('/ingest') }}"
-    enctype="multipart/form-data"
-  >
-    {% if selected %}
-    <input type="hidden" name="example" value="{{ selected.id }}" />
-    {% endif %}
-    <input type="hidden" name="start" value="{{ window_start }}" />
-    <input type="hidden" name="end" value="{{ window_end }}" />
-
-    <div class="ingest-step">
-      <span class="step-num">1</span>
-      <div class="step-body">
-        <span class="step-label">Download the sample PDF</span>
-        {% if sample_ready %}
-        <a class="button secondary" href="{{ public_url('/sample.pdf') }}">Download {{ sample_filename }}</a>
-        {% endif %}
+      <div class="ingest-step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <span class="step-label">Download the sample PDF</span>
+          {% if sample_ready %}
+          <a class="button secondary" href="{{ public_url('/sample.pdf') }}">Download {{ sample_filename }}</a>
+          {% endif %}
+        </div>
       </div>
-    </div>
 
-    <div class="ingest-step">
-      <span class="step-num">2</span>
-      <div class="step-body">
-        <span class="step-label">Upload the file you just downloaded</span>
-        <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
+      <div class="ingest-step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <span class="step-label">Upload that same file</span>
+          <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
+        </div>
       </div>
-    </div>
 
-    <div class="ingest-step">
-      <span class="step-num">3</span>
-      <div class="step-body">
-        <button type="submit" id="ingest-btn">
-          <span class="btn-idle">Extract receipt</span>
-          <span class="btn-busy" hidden>Extracting… this can take a minute</span>
-        </button>
-        <p class="meta ingest-wait" id="ingest-wait" hidden>
-          Processing — keep this tab open.
-        </p>
+      <div class="ingest-step">
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <button type="submit" id="ingest-btn" class="btn-secondary">
+            <span class="btn-idle">Extract receipt</span>
+            <span class="btn-busy" hidden>Extracting…</span>
+          </button>
+          <p class="meta ingest-wait" id="ingest-wait" hidden>Extracting…</p>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </details>
   {% if live_error %}
   <div class="banner err" style="margin-top: 1rem" role="alert">{{ live_error }}</div>
   {% endif %}
   {% if ingest_ok and live_meta %}
-  <div class="banner ok" style="margin-top: 1rem" id="live-result" role="status">
+  <div class="banner ok" id="live-result" role="status">
     <span class="live-badge">Extracted</span>
-    Succeeded
     {% if live_meta.merchant %}
-    · {{ live_meta.merchant }}
+    {{ live_meta.merchant }}
     {% endif %}
   </div>
   {% endif %}
-  {% if live_panel %}
-  <details
-    class="live-result-panel"
-    id="live-panel"
-    data-persist="live-panel-open"
-    {% if ingest_ok %}open{% endif %}
-  >
-    <summary class="live-heading">
-      <span>
-        {{ live_panel.merchant }}
-        <span class="live-badge">Live</span>
-      </span>
-      <span class="live-collapse-hint">Collapse / expand</span>
-    </summary>
-    <p class="meta">
-      {{ live_panel.date }} · total
-      <span class="num">{{ money(live_panel.total) }}</span>
-      · live import
-      {% if live_panel_example %}
-      · <code>{{ live_panel_example.file_name }}</code>
-      {% endif %}
-    </p>
-    <p class="meta">
-      <abbr title="Demo currency — fictional amounts, not euros or dollars">DC</abbr>
-      = demo currency (not real money).
-    </p>
-    <table>
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Category</th>
-          <th class="num">Qty</th>
-          <th class="num"><abbr title="Demo currency">{{ demo_currency }}</abbr></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for line in live_panel.line_items %}
-        <tr>
-          <td>{{ line.description }}</td>
-          <td>{{ line.category }}</td>
-          <td class="num">{{ line.quantity }}</td>
-          <td class="num">{{ money(line.price) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% if live_panel_example %}
-    <form
-      class="live-delete-form live-panel-remove"
-      method="post"
-      action="{{ public_url('/live-import/delete') }}"
-      onsubmit="return confirm('Remove this live import so you can extract the sample again?');"
-    >
-      <input type="hidden" name="example" value="{{ live_panel_example.id }}" />
-      <input type="hidden" name="start" value="{{ window_start }}" />
-      <input type="hidden" name="end" value="{{ window_end }}" />
-      <button type="submit" class="live-delete-btn">Remove live import</button>
-    </form>
-    {% endif %}
-  </details>
+  {% if live_panel and not ingest_ok %}
+  <p class="extracted-line">
+    <span class="live-badge">Extracted</span>
+    {{ live_panel.merchant }}
+  </p>
   {% endif %}
 </section>

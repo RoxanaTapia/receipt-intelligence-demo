@@ -5,11 +5,11 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-# Primary visitor sample (must match n8n allowlist id → <id>.pdf on the samples mount).
-SAMPLE_ID = "05-demo-basket"
+# Must match n8n's sample id → ``{id}.pdf`` on the samples mount.
+SAMPLE_ID = "sample-supermarket-receipt"
 SAMPLE_FILENAME = f"{SAMPLE_ID}.pdf"
-# Vendored copy under demo/samples/ — keep in sync with n8n samples/receipts/05-demo-basket.pdf.
-SAMPLE_SHA256 = "252d0b854bfe1fca304b1ed7b07c941a3d37bf415a652e06dc8d04e5551b19d3"
+# Vendored copy under demo/samples/ — regenerate with scripts/generate_sample_receipt.py.
+SAMPLE_SHA256 = "9d494c29a96fea3f56c03d1161bbccb76901463647ed3ae2bc9970c17aa3a014"
 
 
 def sample_pdf_path(samples_dir: Path) -> Path:

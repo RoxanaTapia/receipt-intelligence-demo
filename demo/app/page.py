@@ -12,8 +12,14 @@ from fastapi.templating import Jinja2Templates
 from app.examples import get_example, load_examples, load_live_imports
 from app.live_panel import _resolve_live_panel
 from app.money import DEMO_CURRENCY, format_money
-from app.questions import SUGGESTED_QUESTIONS
+from app.questions import SUGGESTED_QUESTIONS, answer_source_line
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path
+from app.session import (
+    apply_session_cookies,
+    owned_filenames,
+    remember_import,
+    session_id,
+)
 from app.spending import _spending_contrast
 
 APP_DIR = Path(__file__).resolve().parent
@@ -51,6 +57,7 @@ def _page(
     example: str | None = None,
     question: str = "",
     answer: dict[str, Any] | None = None,
+    answer_source: str | None = None,
     qa_error: str | None = None,
     live_receipt: dict[str, Any] | None = None,
     live_meta: dict[str, Any] | None = None,
@@ -69,8 +76,14 @@ def _page(
     )
 
     start, end = _parse_window(window_start, window_end)
+    sid = session_id(request)
+    owned = owned_filenames(request)
+    if live_meta:
+        owned = remember_import(owned, str(live_meta.get("persistedFilename") or ""))
+
     examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
-    live_imports = load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
+    all_live = load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
+    live_imports = [item for item in all_live if item.file_name in owned]
     selected = get_example(examples, example, live_imports=live_imports)
     summary, api_error = _safe_summary(start, end)
     api_ok = summary is not None and api_error is None
@@ -87,12 +100,24 @@ def _page(
     )
     if ingest_ok:
         scroll_target = "live-ingest"
+        flow_step = 2
     elif answer or qa_error:
         scroll_target = "ask-answer"
+        flow_step = 3
+    elif panel_receipt:
+        scroll_target = ""
+        flow_step = 2
     else:
         scroll_target = ""
+        flow_step = 1
 
-    return templates.TemplateResponse(
+    source = ""
+    if answer_source is not None:
+        source = answer_source
+    elif question:
+        source = answer_source_line(question, start, end)
+
+    response = templates.TemplateResponse(
         request,
         "index.html",
         {
@@ -100,6 +125,7 @@ def _page(
             "examples": examples,
             "live_imports": live_imports,
             "selected": selected,
+            "picked_example": bool(example),
             "summary": summary,
             "summary_before": summary_before,
             **contrast,
@@ -108,6 +134,7 @@ def _page(
             "api_ok": api_ok,
             "api_error": api_error,
             "answer": answer,
+            "answer_source": source if answer and answer.get("answer") else "",
             "question": question,
             "qa_error": qa_error,
             "live_receipt": live_receipt,
@@ -118,5 +145,8 @@ def _page(
             "ingest_ok": ingest_ok,
             "sample_ready": sample_pdf_path(SAMPLES_DIR).is_file(),
             "scroll_target": scroll_target,
+            "flow_step": flow_step,
         },
     )
+    apply_session_cookies(response, sid, owned)
+    return response

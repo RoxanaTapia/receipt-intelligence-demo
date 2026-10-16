@@ -14,12 +14,20 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import delete_live_import, load_examples
+from app.examples import get_example, load_examples, load_live_imports
+from app.live_panel import _resolve_live_panel
 from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.page import _page
 from app.questions import prepare_question
+from app.receipt_answers import answer_receipt_question
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
+from app.session import (
+    apply_session_cookies,
+    forget_import,
+    owned_filenames,
+    session_id,
+)
 
 APP_DIR = Path(__file__).resolve().parent
 SEED_DIR = Path(os.getenv("SEED_DIR", str(APP_DIR.parent / "seed")))
@@ -37,43 +45,14 @@ DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-08-31")
 # Keep empty for local host publish on :8080. Shared-edge / solo Caddy set /app.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
 # Inlined so the demo stays styled even if /app/static/* is mis-proxied.
-# Segments are joined in the original rule order so nothing in the sheet shifts.
-_CSS_SEGMENT = "\n/* segment */\n"
-_CSS_ORDER = (
-    "shared",
-    "examples",
-    "shared",
-    "spending",
-    "ask",
-    "live",
-    "spending",
-    "ask",
-    "shared",
-    "live",
-    "examples",
-    "ask",
-    "spending",
-    "examples",
-    "live",
-    "shared",
-    "live",
-    "shared",
-    "live",
-)
+_CSS_FILES = ("shared", "examples", "spending", "ask", "live")
 
 
 def _load_demo_css() -> str:
     folder = APP_DIR / "static" / "panels"
-    parts = {
-        name: (folder / f"{name}.css").read_text(encoding="utf-8").split(_CSS_SEGMENT)
-        for name in ("shared", "examples", "spending", "ask", "live")
-    }
-    cursor = {name: 0 for name in parts}
-    chunks = []
-    for name in _CSS_ORDER:
-        chunks.append(parts[name][cursor[name]])
-        cursor[name] += 1
-    return "\n\n".join(chunks)
+    return "\n\n".join(
+        (folder / f"{name}.css").read_text(encoding="utf-8") for name in _CSS_FILES
+    )
 
 
 DEMO_CSS = _load_demo_css()
@@ -117,6 +96,20 @@ def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, dict) else None
+
+
+def _session_live_receipt(request: Request) -> dict[str, Any] | None:
+    """The live receipt on this visitor's review card, if they extracted one."""
+    owned = owned_filenames(request)
+    examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
+    live_imports = [
+        item
+        for item in load_live_imports(SEED_DIR, RECEIPT_DATA_PATH)
+        if item.file_name in owned
+    ]
+    selected = get_example(examples, None, live_imports=live_imports)
+    receipt, _ = _resolve_live_panel(None, selected, live_imports)
+    return receipt
 
 
 def _safe_summary(start: str, end: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -284,39 +277,58 @@ def ask(
     cleaned = question.strip()
     answer = None
     qa_error = None
+    answer_source = None
 
     if not cleaned:
         qa_error = "Enter a budget question first."
     else:
-        try:
-            routed_question = prepare_question(
-                cleaned,
-                window_start=window_start,
-                window_end=window_end,
-            )
-            raw = api.ask(
-                routed_question,
-                start_date=window_start,
-                end_date=window_end,
-            )
-            text = present_answer_text(
-                str(raw.get("answer") or ""),
-                window_start=window_start,
-                window_end=window_end,
-            )
-            answer = {**raw, "answer": text} if text else raw
-        except ApiError as exc:
-            qa_error = str(exc)
+        live = _session_live_receipt(request)
+        local = answer_receipt_question(cleaned, live) if live else None
+        if local:
+            # Storyboard chips must match the receipt on screen, not the corpus.
+            text, answer_source = local
+            answer = {"answer": text}
+        else:
+            try:
+                routed_question = prepare_question(
+                    cleaned,
+                    window_start=window_start,
+                    window_end=window_end,
+                )
+                raw = api.ask(
+                    routed_question,
+                    start_date=window_start,
+                    end_date=window_end,
+                )
+                text = present_answer_text(
+                    str(raw.get("answer") or ""),
+                    window_start=window_start,
+                    window_end=window_end,
+                )
+                answer = {**raw, "answer": text} if text else raw
+            except ApiError as exc:
+                qa_error = str(exc)
 
     return _page(
         request,
         example=example or None,
         question=cleaned,
         answer=answer,
+        answer_source=answer_source,
         qa_error=qa_error,
         window_start=window_start,
         window_end=window_end,
     )
+
+
+def _filename_from_live_id(example_id: str) -> str | None:
+    """Map ``live-<stem>`` to the JSON basename on the shared volume."""
+    if not example_id.startswith("live-"):
+        return None
+    stem = example_id.removeprefix("live-")
+    if not stem or "/" in stem or "\\" in stem or stem in {".", ".."}:
+        return None
+    return f"{stem}.json"
 
 
 @app.post("/live-import/delete", response_model=None)
@@ -326,10 +338,15 @@ def remove_live_import(
     start: str = Form(""),
     end: str = Form(""),
 ):
-    """Delete a live-ingest file so the visitor can run the sample again."""
+    """Hide a live import from this browser session.
+
+    Files stay on the shared receipts volume so another visitor's extract is
+    not deleted. A fresh session cookie already starts with an empty list.
+    """
     window_start, window_end = _parse_window(start or None, end or None)
     target = example.strip()
-    if not delete_live_import(SEED_DIR, RECEIPT_DATA_PATH, target):
+    filename = _filename_from_live_id(target)
+    if filename is None:
         return _page(
             request,
             example=target,
@@ -337,9 +354,13 @@ def remove_live_import(
             window_end=window_end,
             live_error="Could not remove that live import. It may already be gone.",
         )
+    sid = session_id(request)
+    owned = forget_import(owned_filenames(request), filename)
     examples = load_examples(SEED_DIR, RECEIPT_DATA_PATH)
     fallback = examples[0].id if examples else None
-    return _home_redirect(start=window_start, end=window_end, example=fallback)
+    response = _home_redirect(start=window_start, end=window_end, example=fallback)
+    apply_session_cookies(response, sid, owned)
+    return response
 
 
 @app.get("/ask")

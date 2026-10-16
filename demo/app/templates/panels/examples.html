@@ -35,7 +35,7 @@
           class="live-delete-form"
           method="post"
           action="{{ public_url('/live-import/delete') }}"
-          onsubmit="return confirm('Remove this live import so you can extract the sample again?');"
+          onsubmit="return confirm('Hide this live import from your session?');"
         >
           <input type="hidden" name="example" value="{{ item.id }}" />
           <input type="hidden" name="start" value="{{ window_start }}" />

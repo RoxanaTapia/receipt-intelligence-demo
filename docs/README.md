@@ -20,6 +20,7 @@ This page is the map of the repository. The [root README](../README.md) is the p
 ├── .cursor/           Agent roles, rules, slash commands
 └── docs/              You are here
       product/         Architecture (what runs on the VM)
+      screenshots/     60s Loom frames (1920×1080)
 ```
 
 | Path | Open it for |
@@ -31,6 +32,7 @@ This page is the map of the repository. The [root README](../README.md) is the p
 | [`demo/samples/`](../demo/samples/) | Allowlisted PDF the visitor downloads and uploads |
 | [`deploy/`](../deploy/) | Compose stack. Shared portfolio Caddy: [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) |
 | [`docs/product/architecture.md`](product/architecture.md) | What runs on the VM |
+| [`docs/screenshots/`](screenshots/) | Before/after and storyboard frames for the visitor demo |
 | [`DEPLOYMENT.md`](../DEPLOYMENT.md) | Firewall, `.env`, shared-host vs solo Caddy |
 
 ---
