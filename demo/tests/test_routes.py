@@ -19,26 +19,26 @@ def test_parse_window_swaps_reversed_dates() -> None:
     assert end == "2026-08-31"
 
 
-def test_home_has_chips_extract_label_and_dc_hint(client) -> None:
+def test_home_has_chips_and_extract_label(client) -> None:
     response = client.get("/")
     assert response.status_code == 200
     html = response.text
     assert "Run live ingest" not in html
     assert "Extract receipt" in html
     assert "Use sample receipt" in html
-    assert "demo currency" in html.lower()
     assert "initDemo" in html
     for item in SUGGESTED_QUESTIONS:
         assert item["label"] in html
         assert f'data-question="{item["question"]}"' in html
 
 
-def test_home_explains_dc_near_seed_totals(client) -> None:
+def test_home_hides_examples_footer_and_extra_dc_note(client) -> None:
     html = client.get("/").text
-    assert "Lumen Pantry" in html
-    assert "DC" in html
-    assert "demo currency (not real money)" in html
-    assert html.lower().count("demo currency") >= 2
+    assert "Examples and spending window" not in html
+    assert "Lumen Pantry" not in html
+    assert "Amounts shown in" not in html
+    assert "demo currency (not real money)" not in html
+    assert "Remove live import" not in html
 
 
 def test_ask_undated_question_sends_visible_window(client, fake_api) -> None:
@@ -141,7 +141,8 @@ def test_demo_css_includes_new_rules() -> None:
     assert ".sample-one-click" in DEMO_CSS
     assert "--accent:" in DEMO_CSS
     assert "Inter" in DEMO_CSS
-    assert "1400px" in DEMO_CSS
+    assert "min(1400px" in DEMO_CSS
+    assert "min(720px" not in DEMO_CSS
     assert "font-size: 18px" in DEMO_CSS
 
 

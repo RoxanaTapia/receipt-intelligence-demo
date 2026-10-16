@@ -35,27 +35,11 @@
   </li>
 </ol>
 
-<div class="flow{% if live_panel %} is-extracted{% endif %}">
+<div class="flow">
 {% include "panels/live_ingest.html" %}
 {% include "panels/review.html" %}
 {% include "panels/ask.html" %}
 </div>
-
-{% if not live_panel %}
-<details class="more-panel">
-  <summary>Examples and spending window</summary>
-  <div class="more-body layout">
-{% include "panels/examples.html" %}
-{% include "panels/spending.html" %}
-  </div>
-</details>
-
-<p class="note">
-  Amounts shown in <strong>{{ demo_currency }}</strong>
-  (<abbr title="Demo currency — fictional amounts, not euros or dollars">demo currency</abbr>)
-  — not real money.
-</p>
-{% endif %}
 <script>
   (function () {
     function setBusy(btn, wait, busy) {

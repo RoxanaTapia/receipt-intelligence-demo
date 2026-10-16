@@ -42,13 +42,9 @@ body {
 }
 
 main {
-  width: min(720px, calc(100% - 32px));
+  width: min(1400px, calc(100% - 32px));
   margin: 0 auto;
   padding: calc(var(--space) * 3) 0 calc(var(--space) * 5);
-}
-
-main:has(.flow.is-extracted) {
-  width: min(1400px, calc(100% - 32px));
 }
 
 .top-bar {
@@ -169,21 +165,14 @@ h1 {
 }
 
 @media (min-width: 960px) {
-  .flow.is-extracted {
+  .flow {
     grid-template-columns: 1.15fr 0.85fr;
     align-items: start;
   }
 
-  .flow.is-extracted #live-ingest {
+  .flow #live-ingest {
     grid-column: 1 / -1;
   }
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: calc(var(--space) * 2);
-  margin-top: calc(var(--space) * 2);
 }
 
 .panel,
@@ -341,34 +330,6 @@ tfoot td {
   color: var(--accent);
 }
 
-.note {
-  margin-top: calc(var(--space) * 2);
-  color: var(--muted);
-  font-size: 16px;
-}
-
-.more-panel {
-  margin-top: calc(var(--space) * 2);
-}
-
-.more-panel > summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 16px;
-  font-weight: 600;
-  list-style: none;
-}
-
-.more-panel > summary::-webkit-details-marker {
-  display: none;
-}
-
-.more-body {
-  display: grid;
-  gap: calc(var(--space) * 2);
-  margin-top: var(--space);
-}
-
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -393,7 +354,7 @@ tfoot td {
   }
 
   main {
-    width: min(720px, calc(100% - 24px));
+    width: min(1400px, calc(100% - 24px));
     padding-top: 16px;
   }
 
