@@ -8,4 +8,4 @@ Public-safe **fictional** fixtures for the visitor seeded-examples path.
 
 Copy into the shared volume with `./deploy/seed-demo-data.sh`.
 
-The live portfolio sample PDF is separate (`demo/samples/05-demo-basket.pdf`); it is not one of these seed files.
+The live portfolio sample PDF is separate (`demo/samples/sample-supermarket-receipt.pdf`); it is not one of these seed files.

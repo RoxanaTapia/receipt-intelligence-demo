@@ -274,7 +274,7 @@ Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `A
 
 ### Live sample PDF (operators)
 
-Visitors download → upload under `/app` (primary sample id `05-demo-basket`). The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default) — the browser never reaches n8n.
+Visitors download → upload under `/app` (primary sample id `sample-supermarket-receipt`). The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default) — the browser never reaches n8n.
 
 After any n8n volume reset:
 
@@ -286,7 +286,7 @@ After any n8n volume reset:
 ```bash
 docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.shared-edge.yml \
-  exec ux wget -qO- --post-data='{"sample":"05-demo-basket"}' \
+  exec ux wget -qO- --post-data='{"sample":"sample-supermarket-receipt"}' \
   --header='Content-Type: application/json' \
   http://n8n:5678/webhook/receipt-demo-ingest
 ```

@@ -4,11 +4,19 @@ Vendored allowlisted fixtures for the visitor **download → upload → ingest**
 
 | File | n8n sample id | Role |
 |------|---------------|------|
-| [05-demo-basket.pdf](05-demo-basket.pdf) | `05-demo-basket` | **Primary** portfolio sample (fictional café; distinct from seed totals) |
+| [sample-supermarket-receipt.pdf](sample-supermarket-receipt.pdf) | `sample-supermarket-receipt` | **Primary** portfolio sample (Green Basket Market, 15 Aug 2026, DC) |
 | [03-small.pdf](03-small.pdf) | `03-small` | Optional smoke fixture (kept for allowlist parity) |
 
-Keep `05-demo-basket.pdf` (and its SHA-256 in `demo/app/sample.py`) in sync when the upstream n8n sample fixture changes (companion n8n repo; private).
+Regenerate the supermarket PDF (and refresh `SAMPLE_SHA256` in [`../app/sample.py`](../app/sample.py)) with:
 
-Compose mounts this directory into n8n at `/home/node/.n8n-files/samples` so the webhook can read the same bytes the visitor downloads.
+```bash
+python3 demo/scripts/generate_sample_receipt.py
+```
 
-Amounts on the sample PDF are labeled as demo currency (DC) — not EUR/USD.
+The script is deterministic (frozen PDF dates/IDs) so the hash stays stable.
+
+Compose mounts this directory into n8n at `/home/node/.n8n-files/samples`. The webhook looks up `{sample id}.pdf` on that mount — the same bytes the visitor downloads.
+
+Amounts are demo currency (DC) — not EUR/USD.
+
+The **visitor allowlist in this repo** is the SHA-256 in `demo/app/sample.py`. n8n has its own sample-id allowlist (private companion). See the PR notes if ingest 404s after a rename.
