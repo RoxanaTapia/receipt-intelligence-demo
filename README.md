@@ -27,27 +27,7 @@ The public pilot is a shared demo with fictional merchants and demo currency (DC
 
 Each step exists to keep the answer inside receipts that were actually ingested.
 
-```mermaid
-%%{init: {"flowchart": {"useMaxWidth": true, "nodeSpacing": 16, "rankSpacing": 24, "padding": 6}}}%%
-flowchart TB
-    PDF(["PDF"])
-
-    subgraph n8nBox["n8n"]
-        direction LR
-        Extract["Extract"] --> Cat["Categorize"] --> Persist["Persist"]
-    end
-
-    subgraph apiBox["API"]
-        direction LR
-        Analytics["Analytics"] --> Answer["Answer"]
-    end
-
-    PDF --> n8nBox --> apiBox
-
-    classDef default fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
-    classDef header fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
-    class PDF header
-```
+![1 Receipt PDF. 2 n8n + Claude extract. 3 Categorized and checked. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
 
 | Step | Technique | Why? |
 |------|-----------|------|
@@ -86,7 +66,7 @@ The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deplo
 
 ## Stack
 
-n8n · FastAPI · Claude · Docker Compose · Caddy
+n8n · FastAPI · Claude · Docker Compose
 
 The visitor UX and Compose packaging are in this repo. Companion n8n workflows and API source are private; a full-stack walkthrough is available on request — [contact me](https://roxanatapia.dev/contact/). Operator deploy: [DEPLOYMENT.md](DEPLOYMENT.md).
 
