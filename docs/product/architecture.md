@@ -49,7 +49,7 @@ flowchart TB
 
 | Piece | Role |
 |-------|------|
-| **Caddy** | HTTPS and the invite gate. Only ports 80 and 443 face the internet. On the portfolio VPS this process runs in [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge). |
+| **Caddy** | HTTPS and the invite gate. Only ports 80 and 443 face the internet. On a shared host this process may already run outside this repo (same pattern as [ai-doc-to-chat](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline)). |
 | **Demo UX** | Sample download, live ingest, spending context, questions. This repo, [`demo/`](../../demo/). |
 | **n8n** | Extract, categorize, validate, persist JSON. The browser never talks to it. |
 | **API** | Deterministic totals, then a narrated answer from those numbers. |

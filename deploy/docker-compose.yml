@@ -3,7 +3,8 @@
 #   cp .env.example .env   # set secrets
 #   docker compose --env-file .env -f deploy/docker-compose.yml up --build -d
 #
-# Expects sibling clone at ../../receipt-intelligence-api (override with API_BUILD_CONTEXT).
+# Expects a sibling clone of the private companion API (walkthrough on request).
+# Override the default build context with API_BUILD_CONTEXT.
 
 services:
   api:

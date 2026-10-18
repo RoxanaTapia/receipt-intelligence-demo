@@ -10,8 +10,8 @@ Product overview: [README](README.md). Architecture diagram: [docs/product/archi
 
 | Path | When | Compose files | Who owns 80/443 |
 |------|------|---------------|-----------------|
-| **[Shared host with AI Doc](#-shared-host-with-ai-doc-caddy)** | Portfolio VPS already runs [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) Caddy | base + `docker-compose.shared-edge.yml` | **Shared edge Caddy** (do not start this repo’s Caddy) |
-| **[Solo VPS (own Caddy)](#-deploy-on-hetzner-solo-caddy)** | Dedicated box for this demo only | base + `docker-compose.caddy.yml` | **This repo’s Caddy** |
+| **[Shared host with AI Doc](#-shared-host-with-ai-doc-caddy)** | Another Caddy reverse proxy already owns 80/443 on the host | base + `docker-compose.shared-edge.yml` | **Shared edge Caddy** (do not start this repo’s Caddy) |
+| **[Solo VPS (own Caddy)](#-deploy-on-a-linux-vps-solo-caddy)** | Dedicated Linux VPS with Docker for this demo only | base + `docker-compose.caddy.yml` | **This repo’s Caddy** |
 
 Public hostname for the portfolio shared-host path: `https://receipt-intelligence.roxanatapia.dev`
 
@@ -35,7 +35,7 @@ flowchart TD
 |-------------|-------|
 | **Docker 24+** | Compose v2 plugin (`docker compose`) |
 | **git** | Clone this repo + sibling API (build context) |
-| **SSH access** | Hetzner (or any) Ubuntu/Debian VPS |
+| **SSH access** | A Linux VPS with Docker (Ubuntu/Debian) |
 | **Outbound internet** | Image pulls + Let's Encrypt (domain mode) |
 | **Domain (optional)** | Needed for ACME TLS; otherwise use [IP-interim](#ip-interim-no-domain-yet) |
 
@@ -47,7 +47,7 @@ Human ops (not automated here): create the VM, point DNS A/AAAA at the VPS when 
 
 | Profile | Hardware | Use |
 |---------|----------|-----|
-| **Demo / portfolio** | 4 vCPU / 8 GB RAM (e.g. Hetzner **CPX31** or **CPX32**) | n8n + API + Caddy; comfortable headroom for Anthropic calls |
+| **Demo / portfolio** | 4 vCPU / 8 GB RAM | n8n + API + Caddy; comfortable headroom for Anthropic calls |
 | **Minimal smoke** | 2 vCPU / 4 GB | Possible for light checks; tight if n8n + builds run together |
 
 Disk: ~20 GB+ free for images and receipt JSON under `data/receipts/`.
@@ -71,7 +71,7 @@ Local smoke **without** Caddy still publishes API / n8n / UX on the host (see [R
 
 ## 🔗 Shared host with AI Doc Caddy
 
-Use this on the portfolio VPS where [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) terminates TLS. Receipt containers join Docker network `edge`; that Caddy reverse-proxies the hostname. Keep using the existing ai-doc `.env` for edge keys (do not rename them). Cutover: [edge CUTOVER.md](https://github.com/RoxanaTapia/roxanatapia-edge/blob/main/CUTOVER.md).
+Use this when another Caddy process already terminates TLS on the host (same shared-host pattern as [ai-doc-to-chat](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline)). Receipt containers join Docker network `edge`; that Caddy reverse-proxies the public hostname. Keep using the existing edge `.env` for keys (do not rename them).
 
 ⚠️ **Do not** run `deploy/docker-compose.caddy.yml` on that host — it will fight the shared edge for ports 80/443.
 
@@ -104,7 +104,7 @@ N8N_BASIC_AUTH_ACTIVE=false
 
 Use `N8N_PATH=/` (not empty) on the subdomain so editor assets are absolute (`/assets/…`). Empty path makes relative `assets/…` URLs that 404-as-HTML on `/home/workflows` (blank page after login).
 
-Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset in **this** repo's `.env`. Edge basic auth and TLS live in **roxanatapia-edge**, reading `/root/ai-doc-to-chat-pipeline/.env`.
+Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset in **this** repo's `.env`. Edge basic auth and TLS live in the shared reverse proxy's own `.env`, not in this repo.
 
 ### 3. Seed demo receipts, then start on `edge` (no receipt Caddy)
 
@@ -132,7 +132,7 @@ Stable aliases on `edge` for the external proxy:
 
 ### 4. Verify (after AI Doc site block is live)
 
-End-to-end HTTPS + invite gate are owned by ai-doc / roxanatapia-web. Public visitor path:
+End-to-end HTTPS + invite gate are owned by the shared reverse proxy, not this stack. Public visitor path:
 
 `https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow at `https://n8n.receipt-intelligence.roxanatapia.dev/` (edge Basic Auth).
 
@@ -162,7 +162,7 @@ docker run --rm --network edge curlimages/curl:8.5.0 \
 
 ---
 
-## 🚀 Deploy on Hetzner (solo Caddy)
+## 🚀 Deploy on a Linux VPS (solo Caddy)
 
 ### 1. Prepare the server
 
@@ -184,17 +184,17 @@ sudo ufw status
 
 ### 2. Clone and configure
 
-Clone **this repo** and the API sibling next to it (Compose build context default):
+Clone **this repo**. Place a sibling clone of the private companion API (walkthrough on request) next to it, or set `API_BUILD_CONTEXT` to that clone.
 
 ```text
-/opt/receipt-intelligence/   # example layout on the VPS
-├── receipt-intelligence-api
+<parent>/                         # example layout on the VPS
+├── receipt-intelligence-api      # private companion API (Compose default)
 └── receipt-intelligence-demo
 ```
 
 ```bash
 mkdir -p /opt/receipt-intelligence && cd /opt/receipt-intelligence
-git clone https://github.com/RoxanaTapia/receipt-intelligence-api.git
+# Place the private companion API clone next to this repo (walkthrough on request).
 git clone https://github.com/RoxanaTapia/receipt-intelligence-demo.git
 cd receipt-intelligence-demo
 cp .env.example .env
@@ -279,7 +279,7 @@ Visitors download → upload under `/app` (primary sample id `sample-supermarket
 After any n8n volume reset:
 
 1. Open the n8n host (portfolio: `https://n8n.receipt-intelligence.roxanatapia.dev/`; solo path mode: `/n8n*`). Edge Basic Auth, then n8n **owner** login — keep `N8N_BASIC_AUTH_ACTIVE=false` so you are not challenged twice.
-2. Import [`receipt-pdf-ingest.json`](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/workflows/receipt-pdf-ingest.json) if missing.
+2. Import the receipt PDF ingest workflow if missing (private companion n8n; walkthrough on request).
 3. Toggle the workflow **Active / Published** (import alone is not enough — inactive workflows do not register `/webhook/receipt-demo-ingest`).
 4. Smoke from the UX container:
 
@@ -293,7 +293,7 @@ docker compose --env-file .env -p receipt-intelligence-demo \
 
 Expect JSON with `"ok": true` and `persistedFilename`. “Webhook not registered” means the workflow is not Active.
 
-Sample PDFs: `demo/samples/` mounted into n8n — [n8n demo webhook](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/n8n-setup.md#demo-sample-webhook).
+Sample PDFs: `demo/samples/` mounted into n8n. The ingest webhook lives in the private companion n8n (walkthrough on request).
 
 ---
 
@@ -362,7 +362,7 @@ To exercise Caddy locally, use IP-interim with `127.0.0.1` (self-signed) and the
 | Doc | Role |
 |-----|------|
 | [README.md](README.md) | Local compose smoke |
-| [AGENTS.md](AGENTS.md) | Ship order and agent workflow |
-| [n8n integration](https://github.com/RoxanaTapia/receipt-intelligence-n8n/blob/main/docs/integration.md) | Workflow import / sample PDFs |
-| [ai-doc deploy pattern](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) | Shared-host Caddy owner on the portfolio VPS |
+| [AGENTS.md](AGENTS.md) | Tests, layout, and review note |
+| Private companion n8n (walkthrough on request) | Workflow import / sample PDFs |
+| [ai-doc deploy pattern](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) | Shared-host Caddy pattern |
 | [ai-doc #111](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/issues/111) | Site block for `receipt-intelligence.roxanatapia.dev` |

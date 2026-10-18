@@ -2,9 +2,9 @@
 
 ## Background
 
-This page is the map of the repository. The [root README](../README.md) is the product overview. Start here when you want to know where code lives, how a receipt becomes an answer, and how work ships.
+This page is the map of the repository. The [root README](../README.md) is the product overview. Start here when you want to know where code lives and how a receipt becomes an answer.
 
-> **Takeaway:** Visitor UX in `demo/`. Ops in `deploy/`. Shipping in `.cursor/` and [AGENTS.md](../AGENTS.md). Categorization and Q&A live in companion modules (private); this repo is the public packaging.
+> **Takeaway:** Visitor UX in `demo/`. Ops in `deploy/`. Categorization and Q&A live in companion modules (private); this repo is the public packaging.
 
 ---
 
@@ -13,11 +13,11 @@ This page is the map of the repository. The [root README](../README.md) is the p
 ```text
 .
 ├── README.md          Client overview and live demo
-├── AGENTS.md          How Cursor agents ship issues
+├── AGENTS.md          Tests, layout, and review note
 ├── DEPLOYMENT.md      Self-host and VPS notes
 ├── demo/              Visitor UI (FastAPI + Jinja)
 ├── deploy/            Docker, Compose, Caddy overlays
-├── .cursor/           Agent roles, rules, slash commands
+├── .cursor/           Coding and docs conventions
 └── docs/              You are here
       product/         Architecture (what runs on the VM)
       screenshots/     60s Loom frames (1920×1080)
@@ -30,10 +30,11 @@ This page is the map of the repository. The [root README](../README.md) is the p
 | [`demo/app/api_client.py`](../demo/app/api_client.py) | UX → analytics and questions API |
 | [`demo/seed/`](../demo/seed/) | Fictional example receipts for the seeded path |
 | [`demo/samples/`](../demo/samples/) | Allowlisted PDF the visitor downloads and uploads |
-| [`deploy/`](../deploy/) | Compose stack. Shared portfolio Caddy: [roxanatapia-edge](https://github.com/RoxanaTapia/roxanatapia-edge) |
+| [`deploy/`](../deploy/) | Compose stack. Shared-host Caddy follows the [ai-doc deploy pattern](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) |
 | [`docs/product/architecture.md`](product/architecture.md) | What runs on the VM |
 | [`docs/screenshots/`](screenshots/) | Before/after and storyboard frames for the visitor demo |
 | [`DEPLOYMENT.md`](../DEPLOYMENT.md) | Firewall, `.env`, shared-host vs solo Caddy |
+| [`AGENTS.md`](../AGENTS.md) | How to run tests and what lives where |
 
 ---
 
@@ -61,18 +62,5 @@ Deploy picture and sequence: [product/architecture.md](product/architecture.md).
 Product steps in more detail: [README — How a receipt becomes an answer](../README.md#how-a-receipt-becomes-an-answer).
 
 ---
-
-## How work ships
-
-This repo includes a Cursor setup that can take a GitHub issue to a pull request without hand-wiring the steps.
-
-| Piece | Role |
-|-------|------|
-| [`AGENTS.md`](../AGENTS.md) | Playbook: one issue, one branch, one PR |
-| [`.cursor/agents/`](../.cursor/agents/) | Specialists (demo UX, deploy, docs, verifier) |
-| [`.cursor/commands/`](../.cursor/commands/) | `/ship-issue`, `/document`, `/verify` |
-| [`.cursor/rules/`](../.cursor/rules/) | Always-on coding and docs conventions |
-
-Specialists edit only what they own. They do not commit. The milestone orchestrator commits and opens the PR. Full queue and human gates: [AGENTS.md](../AGENTS.md).
 
 Self-host steps stay in [DEPLOYMENT.md](../DEPLOYMENT.md). Live demo: [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/).
