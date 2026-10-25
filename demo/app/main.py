@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.api_client import ApiError, ReceiptApiClient
@@ -22,6 +22,7 @@ from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.page import _page
 from app.questions import prepare_question
 from app.receipt_answers import answer_visible_question, catalog_payloads
+from app.receipt_export import LineRow, line_rows, render_csv, render_xlsx
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 from app.session import (
     apply_session_cookies,
@@ -148,6 +149,44 @@ def download_sample() -> FileResponse:
         path,
         media_type="application/pdf",
         filename=SAMPLE_FILENAME,
+    )
+
+
+def _session_rows(request: Request) -> list[LineRow]:
+    """Receipts under Your receipts for this cookie, not the shared API."""
+    examples, live_imports = session_catalog(
+        SEED_DIR, RECEIPT_DATA_PATH, owned_filenames(request)
+    )
+    return line_rows(examples, live_imports)
+
+
+def _attachment(content: bytes, *, media_type: str, filename: str) -> Response:
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/export/receipts.csv")
+def export_receipts_csv(request: Request) -> Response:
+    """Download this browser's receipts as UTF-8 CSV."""
+    return _attachment(
+        render_csv(_session_rows(request)),
+        media_type="text/csv; charset=utf-8",
+        filename="receipts.csv",
+    )
+
+
+@app.get("/export/receipts.xlsx")
+def export_receipts_xlsx(request: Request) -> Response:
+    """Download this browser's receipts as an Excel workbook."""
+    return _attachment(
+        render_xlsx(_session_rows(request)),
+        media_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+        filename="receipts.xlsx",
     )
 
 

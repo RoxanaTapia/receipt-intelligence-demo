@@ -109,6 +109,13 @@
   font-weight: 650;
 }
 
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space);
+  margin-top: calc(var(--space) * 2);
+}
+
 .receipts-list {
   list-style: none;
   margin: 0;
