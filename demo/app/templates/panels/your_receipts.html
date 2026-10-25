@@ -17,6 +17,10 @@
           </li>
           {% endfor %}
         </ul>
+        <div class="export-actions">
+          <a class="btn" href="{{ public_url('/export/receipts.xlsx') }}">Download Excel</a>
+          <a class="btn-secondary" href="{{ public_url('/export/receipts.csv') }}">Download CSV (for Sheets)</a>
+        </div>
         {% else %}
         <p class="meta">No receipts loaded yet.</p>
         {% endif %}
