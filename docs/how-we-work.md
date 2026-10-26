@@ -8,8 +8,6 @@ Three things never change:
 - **I deploy.** No AI tool or automated agent can release to your server.
 - **I'm responsible for the result.** If something breaks, fixing it is on me.
 
-You may see "Co-authored-by" lines in the commit history. I keep them on purpose, so you can see where an assistant helped.
-
 The AI model that reads receipts and answers questions in this demo is separate from these coding tools.
 
 Questions are always welcome.
