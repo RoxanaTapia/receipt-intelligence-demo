@@ -17,7 +17,6 @@ A visitor tries the loop without opening n8n: download a sample receipt, watch i
 - Request an invite on the gate, then redeem the code
 - Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear
 - Seeded examples stay available if you skip the live upload
-- Download your receipts as CSV or Excel.
 - Optional: [ask for a walkthrough on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/contact/)
 
 The public pilot is a shared demo with fictional merchants and demo currency (DC). Use only the sample PDF.
@@ -65,10 +64,24 @@ The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deplo
 
 ---
 
+## What is in this repo
+
+This repository is a portfolio demo of the visitor UI and the deployment setup.
+
+| Path | What it holds |
+|------|----------------|
+| [`demo/`](demo/) | Visitor UI (FastAPI and Jinja templates) |
+| [`deploy/`](deploy/) | Deployment files |
+| [`docs/`](docs/) | Architecture notes and the screenshot map |
+
+The extraction workflows and the API are not part of this repository.
+
+---
+
 ## Stack
 
 n8n · FastAPI · Claude · Docker Compose
 
 The visitor UX and Compose packaging are in this repo. Companion n8n workflows and API source stay outside this repo; a full-stack walkthrough is available on request — [contact me](https://roxanatapia.dev/contact/). Operator deploy: [DEPLOYMENT.md](DEPLOYMENT.md).
 
-[Roxana Tapia](https://github.com/RoxanaTapia) · [Upwork](https://www.upwork.com/freelancers/roxanadev) · [How I work with AI](docs/how-we-work.md)
+[Roxana Tapia](https://github.com/RoxanaTapia) · [Upwork](https://www.upwork.com/freelancers/roxanadev) · [How I work with AI](docs/how-we-work.md) · [MIT License](LICENSE)

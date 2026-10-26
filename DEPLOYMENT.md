@@ -2,7 +2,7 @@
 
 ## Background
 
-For operators standing up the Receipt Intelligence demo on a single VM: Docker Compose (n8n writer + API reader) with HTTPS at the edge.
+For operators standing up the Receipt Intelligence demo on one host: Docker Compose (n8n writer + API reader) with HTTPS at the edge.
 
 Product overview: [README](README.md). Architecture diagram: [docs/product/architecture.md](docs/product/architecture.md). This guide covers **firewall → `.env` → up → verify**. Companion n8n and API source stay private; this repo is the public packaging.
 
@@ -10,22 +10,22 @@ Product overview: [README](README.md). Architecture diagram: [docs/product/archi
 
 | Path | When | Compose files | Who owns 80/443 |
 |------|------|---------------|-----------------|
-| **[Shared host with AI Doc](#-shared-host-with-ai-doc-caddy)** | Another Caddy reverse proxy already owns 80/443 on the host | base + `docker-compose.shared-edge.yml` | **Shared edge Caddy** (do not start this repo’s Caddy) |
-| **[Solo VPS (own Caddy)](#-deploy-on-a-linux-vps-solo-caddy)** | Dedicated Linux VPS with Docker for this demo only | base + `docker-compose.caddy.yml` | **This repo’s Caddy** |
+| **[Behind an existing reverse proxy](#-behind-an-existing-reverse-proxy)** | Another reverse proxy already owns 80/443 on the host | base + `docker-compose.shared-edge.yml` | **Existing reverse proxy** (do not start this repo’s Caddy) |
+| **[Solo host (own Caddy)](#-deploy-on-a-linux-host-solo-caddy)** | A Linux host with Docker for this demo only | base + `docker-compose.caddy.yml` | **This repo’s Caddy** |
 
-Public hostname for the portfolio shared-host path: `https://receipt-intelligence.roxanatapia.dev`
+Live demo: `https://receipt-intelligence.roxanatapia.dev`
 
 ```mermaid
 flowchart TD
-  prep[Prepare VPS + firewall] --> env[Clone + configure .env]
+  prep[Prepare the host + firewall] --> env[Clone + configure .env]
   env --> choose{Edge owner?}
-  choose -->|Shared host| edge[Join network edge · no receipt Caddy]
-  choose -->|Solo VPS| auth[Generate basic auth · start receipt Caddy]
-  edge --> verify[Verify via public hostname]
+  choose -->|Existing proxy| edge[Join network edge · no receipt Caddy]
+  choose -->|Solo host| auth[Generate basic auth · start receipt Caddy]
+  edge --> verify[Verify via your hostname]
   auth --> verify
 ```
 
-> **Takeaway:** Publish only **22 / 80 / 443**. App ports stay off the public internet. On the portfolio VPS, **never** run a second Caddy from this repo.
+> **Takeaway:** Publish only **22 / 80 / 443**. App ports stay off the public internet. When a reverse proxy already owns those ports, **never** run a second Caddy from this repo.
 
 ---
 
@@ -35,22 +35,17 @@ flowchart TD
 |-------------|-------|
 | **Docker 24+** | Compose v2 plugin (`docker compose`) |
 | **git** | Clone this repo + sibling API (build context) |
-| **SSH access** | A Linux VPS with Docker (Ubuntu/Debian) |
-| **Outbound internet** | Image pulls + Let's Encrypt (domain mode) |
+| **SSH access** | A Linux host with Docker (Ubuntu/Debian) |
+| **Outbound internet** | Image pulls + automatic TLS (domain mode) |
 | **Domain (optional)** | Needed for ACME TLS; otherwise use [IP-interim](#ip-interim-no-domain-yet) |
 
-Human ops (not automated here): create the VM, point DNS A/AAAA at the VPS when you have a domain.
+Human ops (not automated here): create the host, point DNS A/AAAA at it when you have a domain.
 
 ---
 
-## 💻 VPS sizing
+## 💻 Host
 
-| Profile | Hardware | Use |
-|---------|----------|-----|
-| **Demo / portfolio** | 4 vCPU / 8 GB RAM | n8n + API + Caddy; comfortable headroom for Anthropic calls |
-| **Minimal smoke** | 2 vCPU / 4 GB | Possible for light checks; tight if n8n + builds run together |
-
-Disk: ~20 GB+ free for images and receipt JSON under `data/receipts/`.
+A small Linux host with Docker is enough for this demo. Leave space for images and for receipt JSON under `data/receipts/`.
 
 ---
 
@@ -61,19 +56,19 @@ Disk: ~20 GB+ free for images and receipt JSON under `data/receipts/`.
 | **22** | Yes | SSH |
 | **80** | Yes | HTTP → ACME / redirect (Caddy) |
 | **443** | Yes | HTTPS (Caddy) |
-| **8000** | No (VPS + Caddy) | API — Compose network only |
-| **5678** | No (VPS + Caddy) | n8n — Compose network only |
-| **8080** | No (VPS + Caddy) | Demo UX — Compose network only |
+| **8000** | No | API — Compose network only |
+| **5678** | No | n8n — Compose network only |
+| **8080** | No | Demo UX — Compose network only |
 
 Local smoke **without** Caddy still publishes API / n8n / UX on the host (see [README](README.md)). The Caddy and shared-edge overlays strip those host publishes with `ports: !override []`.
 
 ---
 
-## 🔗 Shared host with AI Doc Caddy
+## 🔗 Behind an existing reverse proxy
 
-Use this when another Caddy process already terminates TLS on the host (same shared-host pattern as [ai-doc-to-chat](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline)). Receipt containers join Docker network `edge`; that Caddy reverse-proxies the public hostname. Keep using the existing edge `.env` for keys (do not rename them).
+Use this when another reverse proxy already terminates TLS on the host. Receipt containers join Docker network `edge`; that proxy reaches them by the aliases below. TLS and basic auth stay in the existing proxy’s own config.
 
-⚠️ **Do not** run `deploy/docker-compose.caddy.yml` on that host — it will fight the shared edge for ports 80/443.
+⚠️ **Do not** run `deploy/docker-compose.caddy.yml` on that host — it will fight the existing proxy for ports 80/443.
 
 ### 1. Network (once)
 
@@ -83,7 +78,7 @@ docker network create edge   # ignore error if it already exists
 
 ### 2. Clone and configure
 
-Same sibling layout as the solo path. In `.env` for **shared host**:
+Same sibling layout as the solo path. In `.env` when you are **behind an existing reverse proxy** (placeholders — use your own hostnames):
 
 ```bash
 N8N_BASIC_AUTH_PASSWORD=change-me-strong
@@ -91,22 +86,22 @@ ANTHROPIC_API_KEY=          # if you will run workflows / Q&A
 
 COMPOSE_PROJECT_NAME=receipt-intelligence-demo
 
-# Public URL behind AI Doc Caddy — n8n on its own host (root path).
-# DNS: n8n.receipt-intelligence.roxanatapia.dev → same VPS as the demo host.
-N8N_HOST=n8n.receipt-intelligence.roxanatapia.dev
+# Public URL behind the existing reverse proxy — n8n on its own host (root path).
+# Point DNS for both names at this host.
+N8N_HOST=n8n.example.com
 N8N_PROTOCOL=https
 N8N_PATH=/
-WEBHOOK_URL=https://n8n.receipt-intelligence.roxanatapia.dev/
-N8N_EDITOR_BASE_URL=https://n8n.receipt-intelligence.roxanatapia.dev/
+WEBHOOK_URL=https://n8n.example.com/
+N8N_EDITOR_BASE_URL=https://n8n.example.com/
 N8N_PROXY_HOPS=1
 N8N_BASIC_AUTH_ACTIVE=false
 ```
 
-Use `N8N_PATH=/` (not empty) on the subdomain so editor assets are absolute (`/assets/…`). Empty path makes relative `assets/…` URLs that 404-as-HTML on `/home/workflows` (blank page after login).
+Use `N8N_PATH=/` (not empty) on that host so editor assets are absolute (`/assets/…`). Empty path makes relative `assets/…` URLs that 404-as-HTML on `/home/workflows` (blank page after login).
 
-Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset in **this** repo's `.env`. Edge basic auth and TLS live in the shared reverse proxy's own `.env`, not in this repo.
+Leave `SITE_ADDRESS` / `ACME_EMAIL` / `CADDYFILE` unset in **this** repo's `.env`. TLS and basic auth live in the existing reverse proxy, not in this repo.
 
-### 3. Seed demo receipts, then start on `edge` (no receipt Caddy)
+### 3. Seed demo receipts, then start on `edge` (no Caddy from this repo)
 
 ```bash
 ./deploy/seed-demo-data.sh
@@ -128,30 +123,30 @@ Stable aliases on `edge` for the external proxy:
 | `receipt-n8n` | 5678 | n8n operator UI |
 | `receipt-ux` | 8080 | Visitor demo UX |
 
-⚠️ **Shared edge Caddy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). Serve n8n on **`n8n.receipt-intelligence.roxanatapia.dev`** at `/` (sibling `N8N_PATH=` empty). Path-prefix `/n8n*` on the demo host hits n8n’s known login redirect bug — prefer the subdomain.
+⚠️ **Existing reverse proxy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). Serve n8n on its own host (for example **`n8n.example.com`**) at `/` (`N8N_PATH=/`). Path-prefix `/n8n*` on the demo host hits n8n’s known login redirect bug — prefer a separate host.
 
-### 4. Verify (after AI Doc site block is live)
+### 4. Verify
 
-End-to-end HTTPS + invite gate are owned by the shared reverse proxy, not this stack. Public visitor path:
+End-to-end HTTPS and the invite gate are owned by the existing reverse proxy, not this stack. Visitor path on your host:
 
-`https://receipt-intelligence.roxanatapia.dev/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow at `https://n8n.receipt-intelligence.roxanatapia.dev/` (edge Basic Auth).
+`https://demo.example.com/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow at `https://n8n.example.com/` (edge Basic Auth).
 
 ```bash
-curl -sk -o /dev/null -w "%{http_code}\n" https://receipt-intelligence.roxanatapia.dev/health
+curl -sk -o /dev/null -w "%{http_code}\n" https://demo.example.com/health
 # 401 without edge credentials
 
 curl -sk -u demo:YOUR_EDGE_PASSWORD \
-  https://receipt-intelligence.roxanatapia.dev/health
+  https://demo.example.com/health
 # {"status":"ok"}
 
 # After /app* → receipt-ux:
 curl -sk -u demo:YOUR_EDGE_PASSWORD \
   -o /dev/null -w "%{http_code}\n" \
-  https://receipt-intelligence.roxanatapia.dev/app/
+  https://demo.example.com/app/
 # 200
 ```
 
-Until the site block lands, confirm backends from another container on `edge`:
+Before those proxy routes answer, confirm the backends from another container on `edge`:
 
 ```bash
 docker run --rm --network edge curlimages/curl:8.5.0 \
@@ -162,9 +157,9 @@ docker run --rm --network edge curlimages/curl:8.5.0 \
 
 ---
 
-## 🚀 Deploy on a Linux VPS (solo Caddy)
+## 🚀 Deploy on a Linux host (solo Caddy)
 
-### 1. Prepare the server
+### 1. Prepare the host
 
 ```bash
 sudo apt-get update && sudo apt-get install -y git ca-certificates curl
@@ -184,24 +179,24 @@ sudo ufw status
 
 ### 2. Clone and configure
 
-Clone **this repo**. Place a sibling clone of the private companion API (walkthrough on request) next to it, or set `API_BUILD_CONTEXT` to that clone.
+Clone **this repo**. Place a sibling clone of the companion API (walkthrough on request) next to it, or set `API_BUILD_CONTEXT` to that clone.
 
 ```text
-<parent>/                         # example layout on the VPS
-├── receipt-intelligence-api      # private companion API (Compose default)
+<parent>/                         # example clone layout
+├── receipt-intelligence-api      # companion API (Compose default)
 └── receipt-intelligence-demo
 ```
 
 ```bash
-mkdir -p /opt/receipt-intelligence && cd /opt/receipt-intelligence
-# Place the private companion API clone next to this repo (walkthrough on request).
+mkdir -p receipt-intelligence && cd receipt-intelligence
+# Place the companion API clone next to this repo (walkthrough on request).
 git clone https://github.com/RoxanaTapia/receipt-intelligence-demo.git
 cd receipt-intelligence-demo
 cp .env.example .env
 nano .env
 ```
 
-Minimum `.env` for **domain mode** (Let's Encrypt):
+Minimum `.env` for **domain mode** (automatic TLS):
 
 ```bash
 N8N_BASIC_AUTH_PASSWORD=change-me-strong
@@ -220,7 +215,7 @@ WEBHOOK_URL=https://n8n.demo.example.com/
 N8N_BASIC_AUTH_ACTIVE=false
 ```
 
-DNS: point `SITE_ADDRESS` A/AAAA at this VPS before the first Caddy up (ACME needs to reach :80/:443).
+DNS: point `SITE_ADDRESS` A/AAAA at this host before the first Caddy up (ACME needs to reach :80/:443).
 
 ### 3. Generate basic-auth credentials
 
@@ -264,7 +259,7 @@ curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOM
 |------|---------|
 | `/app` | **Visitor demo UX** (download sample → upload → live ingest → spending → ask) |
 | `/health`, `/docs`, `/analytics/*`, `/questions` | API |
-| n8n host `/` (portfolio) or `/n8n/` (solo path mode) | n8n operator UI |
+| n8n host `/` (own host) or `/n8n/` (solo path mode) | n8n operator UI |
 
 Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
 
@@ -278,8 +273,8 @@ Visitors download → upload under `/app` (primary sample id `sample-supermarket
 
 After any n8n volume reset:
 
-1. Open the n8n host (portfolio: `https://n8n.receipt-intelligence.roxanatapia.dev/`; solo path mode: `/n8n*`). Edge Basic Auth, then n8n **owner** login — keep `N8N_BASIC_AUTH_ACTIVE=false` so you are not challenged twice.
-2. Import the receipt PDF ingest workflow if missing (private companion n8n; walkthrough on request).
+1. Open the n8n host (`https://n8n.example.com/` when n8n has its own host; solo path mode: `/n8n*`). Edge Basic Auth, then n8n **owner** login — keep `N8N_BASIC_AUTH_ACTIVE=false` so you are not challenged twice.
+2. Import the receipt PDF ingest workflow if missing (companion n8n; walkthrough on request).
 3. Toggle the workflow **Active / Published** (import alone is not enough — inactive workflows do not register `/webhook/receipt-demo-ingest`).
 4. Smoke from the UX container:
 
@@ -293,13 +288,13 @@ docker compose --env-file .env -p receipt-intelligence-demo \
 
 Expect JSON with `"ok": true` and `persistedFilename`. “Webhook not registered” means the workflow is not Active.
 
-Sample PDFs: `demo/samples/` mounted into n8n. The ingest webhook lives in the private companion n8n (walkthrough on request).
+Sample PDFs: `demo/samples/` mounted into n8n. The ingest webhook lives in the companion n8n (walkthrough on request).
 
 ---
 
 ## 📌 IP-interim (no domain yet)
 
-Use when the VM exists but DNS is not ready. Same public ports; self-signed TLS (browser warning expected).
+Use when the host exists but DNS is not ready. Same public ports; self-signed TLS (browser warning expected).
 
 ```bash
 # In .env — do not set SITE_ADDRESS for this mode
@@ -307,23 +302,23 @@ CADDYFILE=./Caddyfile.ip
 # Path is relative to deploy/ when Compose resolves volumes.
 
 ./deploy/generate-caddy-auth.sh demo 'YOUR_STRONG_PASSWORD'
-./deploy/generate-ip-tls.sh YOUR_VPS_IP
+./deploy/generate-ip-tls.sh YOUR_PUBLIC_IP
 
 # Optional: point n8n public URL at the IP (still path-prefixed)
-N8N_HOST=YOUR_VPS_IP
+N8N_HOST=YOUR_PUBLIC_IP
 N8N_PROTOCOL=https
 N8N_PATH=/n8n/
-WEBHOOK_URL=https://YOUR_VPS_IP/n8n/
+WEBHOOK_URL=https://YOUR_PUBLIC_IP/n8n/
 ```
 
 ```bash
 docker compose --env-file .env -p receipt-intelligence-demo \
   -f deploy/docker-compose.yml -f deploy/docker-compose.caddy.yml up --build -d
 
-curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_VPS_IP/health
+curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_PUBLIC_IP/health
 ```
 
-**Cutover IP → domain:** set `SITE_ADDRESS` + `ACME_EMAIL`, remove `CADDYFILE=./Caddyfile.ip`, update `N8N_HOST` / `WEBHOOK_URL`, recreate Caddy (`docker compose … up -d --force-recreate caddy`). Let's Encrypt issues the cert automatically.
+**Cutover IP → domain:** set `SITE_ADDRESS` + `ACME_EMAIL`, remove `CADDYFILE=./Caddyfile.ip`, update `N8N_HOST` / `WEBHOOK_URL`, recreate Caddy (`docker compose … up -d --force-recreate caddy`). The certificate is issued automatically.
 
 ---
 
@@ -348,12 +343,12 @@ To exercise Caddy locally, use IP-interim with `127.0.0.1` (self-signed) and the
 | Symptom | Likely cause | Check |
 |---------|--------------|-------|
 | Connection refused on 443 | Firewall or Caddy down | `ufw status`; `docker compose … ps` |
-| Browser TLS warning (domain mode) | DNS not pointing here / ACME failed | A/AAAA → this VM; `docker compose … logs caddy` |
+| Browser TLS warning (domain mode) | DNS not pointing here / ACME failed | A/AAAA → this host; `docker compose … logs caddy` |
 | 502 after login | Backend not ready | From stack: `exec` into a container and `wget -qO- http://api:8000/health` |
 | `caddy-basicauth.conf: is a directory` | Bad bind path / project-directory misuse | Run compose from repo root **without** `--project-directory`; regenerate auth file |
 | :8000 or :5678 reachable from the internet | Caddy / shared-edge overlay not applied | Confirm the right `-f` overlay and `ports: !override []` |
 | `network edge declared as external but could not be found` | Network not created | `docker network create edge` |
-| Port 80/443 already allocated | Receipt Caddy started next to AI Doc | Stop receipt Caddy; use [shared-host](#-shared-host-with-ai-doc-caddy) overlay only |
+| Port 80/443 already allocated | This repo’s Caddy started beside an existing reverse proxy | Stop this repo’s Caddy; use the [existing-proxy](#-behind-an-existing-reverse-proxy) overlay only |
 
 ---
 
@@ -363,6 +358,4 @@ To exercise Caddy locally, use IP-interim with `127.0.0.1` (self-signed) and the
 |-----|------|
 | [README.md](README.md) | Local compose smoke |
 | [AGENTS.md](AGENTS.md) | Tests, layout, and review note |
-| Private companion n8n (walkthrough on request) | Workflow import / sample PDFs |
-| [ai-doc deploy pattern](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy) | Shared-host Caddy pattern |
-| [ai-doc #111](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/issues/111) | Site block for `receipt-intelligence.roxanatapia.dev` |
+| Companion n8n (walkthrough on request) | Workflow import / sample PDFs |

@@ -26,11 +26,11 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-There is no CI in this repo yet. Run the tests locally before opening a pull request.
+GitHub Actions runs pytest in `demo/` on every pull request and on pushes to main. Run the tests locally before opening a pull request.
 
 ## PR description standard
 
-Roxana's rule since Oct 18, 2026: PR titles and descriptions are concise, consistent and easy to scan, so the PR history of the public repos tells a story. **This is the one standard for every unit**. Repos copy it as written. Also in `.github/pull_request_template.md`.
+PR titles and descriptions are concise, consistent and easy to scan, so the PR history tells a story. The same standard is in `.github/pull_request_template.md`.
 
 ### PR title
 
@@ -72,10 +72,12 @@ One or two lines on the user-visible change. Closes #184
 
 ### Review comment format
 
-Every review comment is short, easy to scan, and uses emojis. Header line and at most five one-line bullets above a collapsed details block. Applies to code, deploy, live-test and copy reviews, and to the post-deploy OK.
+Every review comment is short, easy to scan, and uses emojis. The header states the result, the kind of review, and the short commit. At most five one-line bullets follow, then a collapsed details block. This applies to code, deploy, live-test, and copy reviews, and to the check after deploy.
+
+The bullets state what works, any blocking issue, minor notes, and deploy notes.
 
 ```markdown
-**✅ Pass · Deploy review (Nicky) · `abc1234`**  (or ❌ Fail)
+**✅ Pass · Deploy review · `abc1234`**  (or ❌ Fail)
 - ✅ what works
 - ❌ blocking issue
 - ⚠️ minor, non-blocking
