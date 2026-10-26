@@ -64,6 +64,20 @@ The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deplo
 
 ---
 
+## What is in this repo
+
+This repository is a portfolio demo of the visitor UI and the deployment setup.
+
+| Path | What it holds |
+|------|----------------|
+| [`demo/`](demo/) | Visitor UI (FastAPI and Jinja templates) |
+| [`deploy/`](deploy/) | Deployment files |
+| [`docs/`](docs/) | Architecture notes and the screenshot map |
+
+The extraction workflows and the API are not part of this repository.
+
+---
+
 ## Stack
 
 n8n · FastAPI · Claude · Docker Compose
