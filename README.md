@@ -17,7 +17,6 @@ A visitor tries the loop without opening n8n: download a sample receipt, watch i
 - Request an invite on the gate, then redeem the code
 - Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear
 - Seeded examples stay available if you skip the live upload
-- Download your receipts as CSV or Excel.
 - Optional: [ask for a walkthrough on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/contact/)
 
 The public pilot is a shared demo with fictional merchants and demo currency (DC). Use only the sample PDF.
