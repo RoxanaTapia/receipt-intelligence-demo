@@ -26,7 +26,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-There is no CI in this repo yet. Run the tests locally before opening a pull request.
+GitHub Actions runs pytest in `demo/` on every pull request and on pushes to main. Run the tests locally before opening a pull request.
 
 ## PR description standard
 
