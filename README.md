@@ -71,4 +71,4 @@ n8n · FastAPI · Claude · Docker Compose
 
 The visitor UX and Compose packaging are in this repo. Companion n8n workflows and API source stay outside this repo; a full-stack walkthrough is available on request — [contact me](https://roxanatapia.dev/contact/). Operator deploy: [DEPLOYMENT.md](DEPLOYMENT.md).
 
-[Roxana Tapia](https://github.com/RoxanaTapia) · [Upwork](https://www.upwork.com/freelancers/roxanadev)
+[Roxana Tapia](https://github.com/RoxanaTapia) · [Upwork](https://www.upwork.com/freelancers/roxanadev) · [How I work with AI](docs/how-we-work.md)
