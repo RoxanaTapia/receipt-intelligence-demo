@@ -19,7 +19,7 @@ from app.examples import get_example, load_examples, load_live_imports, session_
 from app.live_panel import _resolve_live_panel
 from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
-from app.page import _page
+from app.page import _page, parse_posted_step
 from app.questions import prepare_question
 from app.receipt_answers import answer_visible_question, catalog_payloads
 from app.receipt_export import LineRow, line_rows, render_csv, render_xlsx
@@ -206,11 +206,14 @@ def _extract_sample_page(
     example: str | None,
     window_start: str,
     window_end: str,
+    question: str = "",
+    preserve_step: int | None = None,
 ) -> HTMLResponse:
     """Trigger allowlisted n8n ingest and render the visitor page."""
     # Snapshot spending before n8n writes so the UI can show before → after bars.
     summary_before, _ = _safe_summary(window_start, window_end)
     started = time.monotonic()
+    place = {"question": question, "preserve_step": preserve_step}
 
     try:
         meta = n8n.trigger_sample(SAMPLE_ID)
@@ -226,6 +229,7 @@ def _extract_sample_page(
             window_start=window_start,
             window_end=window_end,
             ingest_elapsed=time.monotonic() - started,
+            **place,
         )
 
     filename = str(meta["persistedFilename"])
@@ -245,6 +249,7 @@ def _extract_sample_page(
             window_start=window_start,
             window_end=window_end,
             ingest_elapsed=elapsed,
+            **place,
         )
 
     # Keep the seed example in the main pane — the live panel shows this receipt.
@@ -258,6 +263,7 @@ def _extract_sample_page(
         window_start=window_start,
         window_end=window_end,
         ingest_elapsed=elapsed,
+        **place,
     )
 
 
@@ -268,24 +274,32 @@ async def ingest(
     example: str = Form(""),
     start: str = Form(""),
     end: str = Form(""),
+    question: str = Form(""),
+    flow_step: str = Form(""),
 ) -> HTMLResponse:
     """Validate uploaded sample, trigger n8n webhook, show persisted categories."""
     window_start, window_end = _parse_window(start or None, end or None)
+    kept_question = question.strip()
+    kept_step = parse_posted_step(flow_step)
     content = await pdf.read()
     reject = validate_demo_sample(pdf.filename, content)
     if reject:
         return _page(
             request,
             example=example or None,
+            question=kept_question,
             live_error=reject,
             window_start=window_start,
             window_end=window_end,
+            preserve_step=kept_step,
         )
     return _extract_sample_page(
         request,
         example=example or None,
         window_start=window_start,
         window_end=window_end,
+        question=kept_question,
+        preserve_step=kept_step,
     )
 
 
@@ -295,6 +309,8 @@ def ingest_sample(
     example: str = Form(""),
     start: str = Form(""),
     end: str = Form(""),
+    question: str = Form(""),
+    flow_step: str = Form(""),
 ) -> HTMLResponse:
     """One-click extract of the vendored allowlisted sample (no upload)."""
     window_start, window_end = _parse_window(start or None, end or None)
@@ -303,6 +319,8 @@ def ingest_sample(
         example=example or None,
         window_start=window_start,
         window_end=window_end,
+        question=question.strip(),
+        preserve_step=parse_posted_step(flow_step),
     )
 
 

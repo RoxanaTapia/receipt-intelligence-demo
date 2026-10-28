@@ -62,9 +62,13 @@ def test_prepare_question_adds_year_without_appending_iso_range() -> None:
     assert "2026-07-01" not in out
 
 
-def test_suggested_questions_cover_the_storyboard() -> None:
+def test_suggested_questions_use_a_stocked_category_and_an_item() -> None:
     labels = [item["label"] for item in SUGGESTED_QUESTIONS]
     questions = [item["question"] for item in SUGGESTED_QUESTIONS]
     assert "How much did I spend per category?" in labels
-    assert "Drinks in August" in labels
-    assert "How much did I spend on drinks in August?" in questions
+    assert "Snacks in August" in labels
+    assert "How much did I spend on snacks in August?" in questions
+    assert "Most expensive item" in labels
+    assert "What was the most expensive item?" in questions
+    blob = " ".join([*labels, *questions]).lower()
+    assert "drink" not in blob
