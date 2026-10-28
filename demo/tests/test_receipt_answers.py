@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from app.live_panel import format_read_summary
 from app.receipt_answers import (
     answer_visible_question,
@@ -234,6 +236,21 @@ def test_unknown_item_does_not_become_the_total() -> None:
     )
     assert text == "I couldn't find that item on these receipts."
     assert "54.50" not in text
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "How much was my total in August?",
+        "How much did we pay in August?",
+        "How much have I paid in August?",
+        "How much did I spend in August?",
+    ],
+)
+def test_spend_wording_stays_a_total(question: str) -> None:
+    text, _source = answer_visible_question(question, _seed_receipts())
+    assert text == "You spent $18.90 in August."
+    assert "couldn't find that item" not in text.lower()
 
 
 def test_spend_total_is_not_an_item_lookup() -> None:

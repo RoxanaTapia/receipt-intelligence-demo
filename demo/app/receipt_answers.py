@@ -36,7 +36,7 @@ _ACROSS_RECEIPTS = re.compile(
     r"\b(?:across|all|every|each)\b(?:\s+\w+){0,4}\s+receipts?\b",
     re.IGNORECASE,
 )
-# "How much did the sourdough loaf cost?" — not "how much did I spend".
+# "How much did the sourdough loaf cost?" — not a basket total.
 _ITEM_PRICE = re.compile(
     r"\b(?:"
     r"how much (?:did|does|do|was|is|were|for) (?:the |a |an )?"
@@ -47,7 +47,11 @@ _ITEM_PRICE = re.compile(
     r")",
     re.IGNORECASE,
 )
-_SPEND_TOTAL = re.compile(r"\bhow much did (?:i|we) spend\b", re.IGNORECASE)
+# These words mean the whole spend, so the line-item lookup stays out of the way.
+_SPEND_TOTAL = re.compile(
+    r"\b(?:my total|total|paid|pay|spent|spend)\b",
+    re.IGNORECASE,
+)
 
 
 def short_date(value: str) -> str:
