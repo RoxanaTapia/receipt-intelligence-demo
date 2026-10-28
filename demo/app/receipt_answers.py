@@ -47,7 +47,7 @@ _ITEM_PRICE = re.compile(
     r")",
     re.IGNORECASE,
 )
-# These words mean the whole spend, so the line-item lookup stays out of the way.
+# Basket words. If the question also names a visible line, that line still wins.
 _SPEND_TOTAL = re.compile(
     r"\b(?:my total|total|paid|pay|spent|spend)\b",
     re.IGNORECASE,
@@ -145,8 +145,8 @@ def answer_visible_question(
             return _named_item_answer(matches), _named_item_source(
                 matches, in_month, receipts, single
             )
-        # "How much for snacks?" names a category, not a line. Keep going.
-        if _named_category(question) is None:
+        # No visible line was named. A category, or a bare total, keeps going.
+        if _named_category(question) is None and _SPEND_TOTAL.search(question) is None:
             return (
                 "I couldn't find that item on these receipts.",
                 _source_line(in_month, receipts, single),
@@ -320,9 +320,11 @@ def _item_pool(
 
 
 def _is_item_price_question(question: str) -> bool:
-    if _SPEND_TOTAL.search(question):
-        return False
-    return _ITEM_PRICE.search(question) is not None
+    """Price wording, including pay or spend that may still name a line."""
+    return (
+        _ITEM_PRICE.search(question) is not None
+        or _SPEND_TOTAL.search(question) is not None
+    )
 
 
 def _line_records(receipts: list[dict[str, Any]]) -> list[dict[str, Any]]:

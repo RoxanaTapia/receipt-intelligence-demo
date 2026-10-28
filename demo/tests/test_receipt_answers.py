@@ -253,6 +253,19 @@ def test_spend_wording_stays_a_total(question: str) -> None:
     assert "couldn't find that item" not in text.lower()
 
 
+@pytest.mark.parametrize(
+    "question",
+    [
+        "How much did I pay for the sourdough loaf?",
+        "What did I pay for the sourdough loaf?",
+        "How much did I spend on the sourdough loaf?",
+    ],
+)
+def test_pay_or_spend_for_a_named_item(question: str) -> None:
+    text, _source = answer_visible_question(question, _seed_receipts())
+    assert text == "Sourdough loaf cost $3.80."
+
+
 def test_spend_total_is_not_an_item_lookup() -> None:
     text, source = answer_visible_question("How much did I spend?", _seed_receipts())
     assert text == "You spent $54.50."
