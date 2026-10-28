@@ -3,8 +3,18 @@
 from __future__ import annotations
 
 from app.main import _parse_window
+from app.page import parse_posted_step
 from app.questions import SUGGESTED_QUESTIONS
 from app.sample_receipt import MERCHANT
+
+
+def _step_class(html: str, step: int) -> str:
+    nav = html.split('id="flow-nav"', 1)[1].split("</ol>", 1)[0]
+    items = nav.split("<li")[1:]
+    opener = items[step - 1].split(">", 1)[0]
+    if 'class="' not in opener:
+        return ""
+    return opener.split('class="', 1)[1].split('"', 1)[0]
 
 
 def test_parse_window_falls_back_to_demo_span() -> None:
@@ -241,3 +251,130 @@ def test_ask_this_receipt_snacks_after_extract(client, fake_api, fake_n8n) -> No
     assert fake_api.questions == []
     assert "$3.20 on snacks on this receipt (1 item: Butter croissants)." in html
     assert "From Green Basket Market, Aug 15" in html
+
+
+def test_parse_posted_step_accepts_only_the_three_steps() -> None:
+    assert parse_posted_step("3") == 3
+    assert parse_posted_step(2) == 2
+    assert parse_posted_step("0") is None
+    assert parse_posted_step("") is None
+    assert parse_posted_step(None) is None
+
+
+def test_home_chips_skip_drinks_and_offer_an_item(client) -> None:
+    html = client.get("/").text
+    chips = html.split('aria-label="Suggested questions"', 1)[1].split("</div>", 1)[0]
+    assert "drink" not in chips.lower()
+    assert "Snacks in August" in chips
+    assert "Most expensive item" in chips
+    assert 'data-question="What was the most expensive item?"' in chips
+    assert 'data-question="How much did I spend on snacks in August?"' in chips
+
+
+def test_snacks_in_august_chip_has_a_nonzero_answer(client, fake_api) -> None:
+    html = client.post(
+        "/ask",
+        data={
+            "question": "How much did I spend on snacks in August?",
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+        },
+    ).text
+    assert fake_api.questions == []
+    assert "You spent $3.50 on snacks in August (Corner Bakery)." in html
+    assert "$0.00" not in html
+    assert "couldn't match" not in html.lower()
+
+
+def test_most_least_and_named_item_after_sample(client, fake_api, fake_n8n) -> None:
+    client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
+    fake_api.questions.clear()
+    most = client.post(
+        "/ask",
+        data={
+            "question": "What was the most expensive item?",
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+        },
+    ).text
+    least = client.post(
+        "/ask",
+        data={
+            "question": "What was the least expensive item?",
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+        },
+    ).text
+    named = client.post(
+        "/ask",
+        data={
+            "question": "How much did the sourdough loaf cost?",
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+        },
+    ).text
+    assert fake_api.questions == []
+    assert "The most expensive item was Sourdough loaf, $3.80." in most
+    assert "couldn't match" not in most.lower()
+    assert "The least expensive item was Bananas, $1.20." in least
+    assert "Sourdough loaf cost $3.80" in named
+
+
+def test_first_sample_extract_lands_on_review(client, fake_n8n) -> None:
+    html = client.post(
+        "/ingest-sample",
+        data={"start": "2026-07-01", "end": "2026-08-31"},
+    ).text
+    assert _step_class(html, 1) == "is-done"
+    assert _step_class(html, 2) == "is-current"
+    assert _step_class(html, 3) == ""
+    assert 'data-scroll="live-ingest"' in html
+
+
+def test_extract_form_remembers_the_question_and_step(client) -> None:
+    html = client.get("/").text
+    assert "rememberVisitorPlace" in html
+    assert "currentFlowStep" in html
+    assert html.count('data-keep="question"') == 2
+    assert html.count('data-keep="flow-step"') == 2
+
+
+def test_second_sample_extract_keeps_question_and_step(client, fake_n8n) -> None:
+    first = client.post(
+        "/ingest-sample",
+        data={"start": "2026-07-01", "end": "2026-08-31"},
+    )
+    assert _step_class(first.text, 2) == "is-current"
+    html = client.post(
+        "/ingest-sample",
+        data={
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+            "question": "What was the most expensive item?",
+            "flow_step": "3",
+        },
+    ).text
+    assert len(fake_n8n.calls) == 2
+    assert ">What was the most expensive item?</textarea>" in html
+    assert _step_class(html, 1) == "is-done"
+    assert _step_class(html, 2) == "is-done"
+    assert _step_class(html, 3) == "is-current"
+    assert 'data-scroll="live-ingest"' not in html
+
+
+def test_second_extract_keeps_a_typed_question_on_the_review_step(
+    client, fake_n8n
+) -> None:
+    client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
+    html = client.post(
+        "/ingest-sample",
+        data={
+            "start": "2026-07-01",
+            "end": "2026-08-31",
+            "question": "bananas please",
+            "flow_step": "2",
+        },
+    ).text
+    assert ">bananas please</textarea>" in html
+    assert _step_class(html, 2) == "is-current"
+    assert _step_class(html, 3) == ""

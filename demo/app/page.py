@@ -27,6 +27,16 @@ APP_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 
 
+def parse_posted_step(raw: str | int | None) -> int | None:
+    """Return 1, 2, or 3 when an extract form posted the stepper's current step."""
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if text not in {"1", "2", "3"}:
+        return None
+    return int(text)
+
+
 def _base_context(request: Request) -> dict[str, Any]:
     # ROOT_PATH and public_url stay in main.py (the /app prefix).
     from app.main import (
@@ -68,6 +78,7 @@ def _page(
     summary_before: dict[str, Any] | None = None,
     window_start: str | None = None,
     window_end: str | None = None,
+    preserve_step: int | None = None,
 ) -> HTMLResponse:
     from app.main import (
         RECEIPT_DATA_PATH,
@@ -107,6 +118,13 @@ def _page(
     else:
         scroll_target = ""
         flow_step = 1
+    # A second extract re-renders the page. Keep a later step the visitor
+    # already reached, and keep whatever they typed in the question box.
+    kept = parse_posted_step(preserve_step)
+    if kept is not None and kept > flow_step:
+        flow_step = kept
+        if kept >= 3:
+            scroll_target = ""
 
     source = answer_source or ""
     elapsed = ingest_elapsed

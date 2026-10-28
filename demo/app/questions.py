@@ -12,8 +12,12 @@ SUGGESTED_QUESTIONS = (
         "question": "How much did I spend per category?",
     },
     {
-        "label": "Drinks in August",
-        "question": "How much did I spend on drinks in August?",
+        "label": "Snacks in August",
+        "question": "How much did I spend on snacks in August?",
+    },
+    {
+        "label": "Most expensive item",
+        "question": "What was the most expensive item?",
     },
 )
 

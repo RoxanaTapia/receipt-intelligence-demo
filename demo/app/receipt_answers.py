@@ -3,6 +3,10 @@
 The companion API totals every JSON file on the shared volume, including
 other visitors' leftover extracts. Numbers on this page come from the same
 catalog as the Your receipts list so the two cannot disagree.
+
+Item questions (most or least expensive, or the price of a named line) use
+those same line items. A bare "most expensive item" follows the receipt on
+the review card when one is open, which is the sample just extracted.
 """
 
 from __future__ import annotations
@@ -20,6 +24,34 @@ _THIS_RECEIPT = re.compile(
     re.IGNORECASE,
 )
 _DRINK_WORD = re.compile(r"\bdrinks?\b", re.IGNORECASE)
+_MOST_ITEM = re.compile(
+    r"\b(?:most expensive|highest priced|highest price|priciest|costliest)\b",
+    re.IGNORECASE,
+)
+_LEAST_ITEM = re.compile(
+    r"\b(?:least expensive|cheapest|lowest priced|lowest price)\b",
+    re.IGNORECASE,
+)
+_ACROSS_RECEIPTS = re.compile(
+    r"\b(?:across|all|every|each)\b(?:\s+\w+){0,4}\s+receipts?\b",
+    re.IGNORECASE,
+)
+# "How much did the sourdough loaf cost?" — not a basket total.
+_ITEM_PRICE = re.compile(
+    r"\b(?:"
+    r"how much (?:did|does|do|was|is|were|for) (?:the |a |an )?"
+    r"|price of (?:the |a |an )?"
+    r"|cost of (?:the |a |an )?"
+    r"|paid for (?:the |a |an )?"
+    r"|what did .+? cost"
+    r")",
+    re.IGNORECASE,
+)
+# Basket words. If the question also names a visible line, that line still wins.
+_SPEND_TOTAL = re.compile(
+    r"\b(?:my total|total|paid|pay|spent|spend)\b",
+    re.IGNORECASE,
+)
 
 
 def short_date(value: str) -> str:
@@ -84,6 +116,41 @@ def answer_visible_question(
         return _per_category_answer(in_month, month_name), _source_line(
             in_month, receipts, single
         )
+
+    rank = _item_rank(question)
+    if rank:
+        pool, ranked_single = _item_pool(
+            question, in_month, current, single, month_name
+        )
+        category = _named_category(question)
+        records = _line_records(pool)
+        if category:
+            records = [
+                record for record in records if record["category"] == category
+            ]
+        return (
+            _ranked_item_answer(
+                records,
+                rank=rank,
+                month_name=month_name,
+                single=ranked_single,
+                category=category,
+            ),
+            _source_line(pool, receipts, ranked_single),
+        )
+
+    if _is_item_price_question(question):
+        matches = _matching_items(question, in_month)
+        if matches:
+            return _named_item_answer(matches), _named_item_source(
+                matches, in_month, receipts, single
+            )
+        # No visible line was named. A category, or a bare total, keeps going.
+        if _named_category(question) is None and _SPEND_TOTAL.search(question) is None:
+            return (
+                "I couldn't find that item on these receipts.",
+                _source_line(in_month, receipts, single),
+            )
 
     category = _named_category(question)
     if category:
@@ -218,6 +285,181 @@ def _receipt_total(receipt: dict[str, Any]) -> float:
     if receipt.get("total") is not None:
         return float(receipt["total"])
     return round(sum(float(item.get("price") or 0) for item in _lines(receipt)), 2)
+
+
+def _item_rank(question: str) -> str | None:
+    """``most`` or ``least`` when the visitor is asking about a line item."""
+    most = _MOST_ITEM.search(question)
+    least = _LEAST_ITEM.search(question)
+    if most and least:
+        return "most" if most.start() < least.start() else "least"
+    if most:
+        return "most"
+    if least:
+        return "least"
+    return None
+
+
+def _item_pool(
+    question: str,
+    in_month: list[dict[str, Any]],
+    current: dict[str, Any] | None,
+    single: bool,
+    month_name: str | None,
+) -> tuple[list[dict[str, Any]], bool]:
+    """Receipts for a most/least question.
+
+    The open review card is the sample the visitor just extracted, so a bare
+    "most expensive item" answers from that receipt. A month name, an explicit
+    "this receipt", or "across all receipts" keeps the wider set.
+    """
+    widened = bool(month_name) or _ACROSS_RECEIPTS.search(question) is not None
+    if single or widened or current is None:
+        return in_month, single
+    return [current], True
+
+
+def _is_item_price_question(question: str) -> bool:
+    """Price wording, including pay or spend that may still name a line."""
+    return (
+        _ITEM_PRICE.search(question) is not None
+        or _SPEND_TOTAL.search(question) is not None
+    )
+
+
+def _line_records(receipts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for receipt in receipts:
+        for item in _lines(receipt):
+            description = str(item.get("description") or "").strip()
+            if not description:
+                continue
+            try:
+                price = round(float(item.get("price")), 2)
+            except (TypeError, ValueError):
+                continue
+            records.append(
+                {
+                    "description": description,
+                    "price": price,
+                    "category": str(item.get("category") or "").strip().lower(),
+                    "merchant": merchant_name(receipt),
+                    "receipt": receipt,
+                }
+            )
+    return records
+
+
+def _ranked_item_answer(
+    records: list[dict[str, Any]],
+    *,
+    rank: str,
+    month_name: str | None,
+    single: bool,
+    category: str | None,
+) -> str:
+    if not records:
+        when = f" in {month_name}" if month_name else ""
+        where = "on this receipt" if single else "on these receipts"
+        what = f"{category} items" if category else "line items"
+        return f"No {what}{when} {where}."
+    target = max(record["price"] for record in records)
+    if rank == "least":
+        target = min(record["price"] for record in records)
+    winners: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for record in records:
+        if record["price"] != target:
+            continue
+        key = record["description"].casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        winners.append(record)
+    label = "most expensive" if rank == "most" else "least expensive"
+    if len(winners) == 1:
+        winner = winners[0]
+        return (
+            f"The {label} item was {winner['description']}, "
+            f"{format_money(winner['price'])}."
+        )
+    parts = [
+        f"{winner['description']}, {format_money(winner['price'])}"
+        for winner in winners
+    ]
+    return f"The {label} items were {_join_parts(parts)}."
+
+
+def _norm(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+def _needles(description: str) -> list[str]:
+    """Full name, plus the name without a trailing pack size (``1L``)."""
+    full = _norm(description)
+    if not full:
+        return []
+    trimmed = re.sub(r"\s+\d+[a-z]*$", "", full).strip()
+    if trimmed and trimmed != full:
+        return [full, trimmed]
+    return [full]
+
+
+def _matching_items(
+    question: str, receipts: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Line items whose description appears in the question. Longest name wins."""
+    norm_q = f" {_norm(question)} "
+    records = _line_records(receipts)
+    best: tuple[int, str] | None = None
+    for record in records:
+        for needle in _needles(record["description"]):
+            if len(needle) < 3:
+                continue
+            if f" {needle} " in norm_q and (best is None or len(needle) > best[0]):
+                best = (len(needle), _norm(record["description"]))
+    if best is None:
+        return []
+    return [record for record in records if _norm(record["description"]) == best[1]]
+
+
+def _named_item_answer(matches: list[dict[str, Any]]) -> str:
+    name = str(matches[0]["description"])
+    prices = {match["price"] for match in matches}
+    merchants: list[str] = []
+    seen_merchants: set[str] = set()
+    for match in matches:
+        merchant = str(match["merchant"])
+        if merchant in seen_merchants:
+            continue
+        seen_merchants.add(merchant)
+        merchants.append(merchant)
+    if len(prices) == 1:
+        money = format_money(matches[0]["price"])
+        if len(merchants) == 1:
+            return f"{name} cost {money}."
+        return f"{name} cost {money} ({_join_names(merchants)})."
+    parts: list[str] = []
+    seen_prices: set[tuple[str, float]] = set()
+    for match in matches:
+        key = (str(match["merchant"]), float(match["price"]))
+        if key in seen_prices:
+            continue
+        seen_prices.add(key)
+        parts.append(f"{format_money(match['price'])} at {match['merchant']}")
+    return f"{name} cost {_join_parts(parts)}."
+
+
+def _named_item_source(
+    matches: list[dict[str, Any]],
+    used: list[dict[str, Any]],
+    catalog: list[dict[str, Any]],
+    single: bool,
+) -> str:
+    merchants = {match["merchant"] for match in matches}
+    if single or len(merchants) == 1:
+        return _source_line([matches[0]["receipt"]], catalog, True)
+    return _source_line(used, catalog, False)
 
 
 def _named_category(question: str) -> str | None:
