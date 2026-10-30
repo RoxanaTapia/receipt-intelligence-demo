@@ -4,7 +4,7 @@
 
 This page is the map of the repository. The [root README](../README.md) is the product overview. Start here when you want to know where code lives and how a receipt becomes an answer.
 
-> **Takeaway:** Visitor UX in `demo/`. Ops in `deploy/`. Categorization and Q&A live in companion modules (private); this repo is the public packaging.
+> **Takeaway:** Visitor UX in `demo/`. Ops in `deploy/`.
 
 ---
 

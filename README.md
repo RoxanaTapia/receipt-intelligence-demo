@@ -12,7 +12,7 @@ A visitor tries the loop without opening n8n: download a sample receipt, watch i
 
 🟢 **Live** · <a href="https://receipt-intelligence.roxanatapia.dev/" target="_blank" rel="noopener noreferrer"><strong>receipt-intelligence.roxanatapia.dev</strong></a>
 
-▶ **[Watch the 58-second demo](https://youtu.be/q03q0kfvTfQ)**
+▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
 
 - Request an invite on the gate, then redeem the code
 - Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear
@@ -27,16 +27,16 @@ The public pilot is a shared demo with fictional merchants and demo currency (DC
 
 Each step exists to keep the answer inside receipts that were actually ingested.
 
-![1 Receipt PDF. 2 n8n + Claude extract. 3 Categorized and checked. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
+![1 Receipt PDF. 2 n8n + Claude extract. 3 Categorized. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
 
 | Step | Technique | Why? |
 |------|-----------|------|
 | **Read** | n8n extracts text from the PDF | Receipts are layouts, not spreadsheets. |
 | **Extract** | Claude fills a receipt schema (merchant, date, line items) | Downstream steps need structured fields, not prose. |
-| **Categorize** | Each line gets a category from a fixed taxonomy | "Drinks" can total across merchants. |
+| **Categorize** | Each line gets a category from a fixed taxonomy | You can ask "How much did I spend per category?" Totals cross merchants. |
 | **Validate** | Schema and taxonomy checks, with a short retry | Invalid JSON never becomes the answer. |
 | **Persist** | Canonical JSON on a shared volume | One store: n8n writes, the API reads. |
-| **Analytics** | FastAPI aggregates by date and category | Totals stay deterministic. The model does not do the math. |
+| **Analytics** | FastAPI aggregates by date and category | Totals are calculated, not guessed. |
 | **Answer** | Claude routes the question, then narrates those totals | The model explains numbers it was given. |
 
 The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deploy/). Map: [docs/README.md](docs/README.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md).
@@ -50,17 +50,17 @@ The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deplo
 | **Live ingest** | Download the sample, upload it, see categories on the same page |
 | **Line-item categories** | Taxonomy on every line, not a single merchant guess |
 | **Spending context** | Totals by category in a date window you can change |
-| **Plain-language Q&A** | Ask how much went to drinks, not how to read a JSON file |
+| **Plain-language Q&A** | Ask "How much did I spend per category?", not how to read a JSON file |
 | **Self-serve** | No n8n editor. The browser never talks to n8n. |
 
 ## Known limits
 
 | Limit | In practice |
 |-------|-------------|
-| **Shared demo** | Fictional merchants, demo currency (DC). Not your private archive. |
+| **Shared demo** | Fictional merchants, demo currency (DC). Not for your real receipts. |
 | **Allowlisted sample** | Live ingest on the public pilot accepts the demo PDF, not arbitrary uploads |
 | **One corpus** | Questions cover the seeded examples plus what you ingested in this session |
-| **Not bookkeeping** | No tax export, bank sync, or multi-user accounts |
+| **Not accounting software** | No tax export, bank sync, or multi-user accounts |
 
 ---
 
@@ -82,6 +82,6 @@ The extraction workflows and the API are not part of this repository.
 
 n8n · FastAPI · Claude · Docker Compose
 
-The visitor UX and Compose packaging are in this repo. Companion n8n workflows and API source stay outside this repo; a full-stack walkthrough is available on request — [contact me](https://roxanatapia.dev/contact/). Operator deploy: [DEPLOYMENT.md](DEPLOYMENT.md).
+The visitor UX and Compose packaging are in this repo. A full-stack walkthrough is available on request — [contact me](https://roxanatapia.dev/contact/). Operator deploy: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 [Roxana Tapia](https://github.com/RoxanaTapia) · [Upwork](https://www.upwork.com/freelancers/roxanadev) · [How I work with AI](docs/how-we-work.md) · [MIT License](LICENSE)

@@ -12,7 +12,7 @@
 | [storyboard_2_extracting_1920x1080.png](storyboard_2_extracting_1920x1080.png) | 2 · Extracting… |
 | [storyboard_3_line_items_1920x1080.png](storyboard_3_line_items_1920x1080.png) | 3 · Line items (money shot) |
 | [storyboard_4_per_category_1920x1080.png](storyboard_4_per_category_1920x1080.png) | 4 · Per-category answer |
-| [storyboard_5_drinks_august_1920x1080.png](storyboard_5_drinks_august_1920x1080.png) | 5 · Drinks in August |
+| [storyboard_5_drinks_august_1920x1080.png](storyboard_5_drinks_august_1920x1080.png) | 5 · How much did I spend per category? |
 | [sample_supermarket_receipt_pdf.png](sample_supermarket_receipt_pdf.png) | Green Basket Market sample PDF |
 | [ask_before_owner_qa.png](ask_before_owner_qa.png) | Owner QA before — DC, corpus-only answer, Ask below the answer |
 | [ask_after_extracted.png](ask_after_extracted.png) | After — `$` totals, Corner Bakery + Just added |

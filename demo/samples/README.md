@@ -19,4 +19,4 @@ Compose mounts this directory into n8n at `/home/node/.n8n-files/samples`. The w
 
 Amounts are demo currency (DC) — not EUR/USD.
 
-The **visitor allowlist in this repo** is the SHA-256 in `demo/app/sample.py`. n8n has its own sample-id allowlist (private companion). See the PR notes if ingest 404s after a rename.
+The **visitor allowlist in this repo** is the SHA-256 in `demo/app/sample.py`.
