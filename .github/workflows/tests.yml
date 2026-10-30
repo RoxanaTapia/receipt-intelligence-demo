@@ -1,4 +1,6 @@
-name: tests
+# Pull request checks are shown as "<workflow name> / <job name>".
+# Both use the same words so the check reads as Automatic tests pass.
+name: Automatic tests pass
 
 on:
   pull_request:
@@ -11,6 +13,7 @@ permissions:
 
 jobs:
   pytest:
+    name: Automatic tests pass
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,4 +29,21 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run tests
+        id: tests
         run: pytest
+
+      - name: Write a plain-English summary
+        if: success() || failure()
+        env:
+          TEST_RESULT: ${{ steps.tests.outcome }}
+        run: |
+          if [ "$TEST_RESULT" = "success" ]; then
+            result="These tests passed."
+          else
+            result="These tests did not pass."
+          fi
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Automatic tests
+
+          ${result} They check the visitor demo: the page loads, a sample receipt opens, spending questions match the receipts on screen, spreadsheet downloads match that list, and one visitor cannot see another visitor's upload.
+          EOF
