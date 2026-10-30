@@ -2,30 +2,25 @@
 
 > Upload a receipt PDF, get line-item categories, and ask spend questions in plain language.
 
-A visitor tries the loop without opening n8n: download a sample receipt, watch it get categorized, then ask what was spent. Categories land as JSON on disk. Questions are answered from those numbers.
-
 > **Takeaway:** This is a receipt-to-answers pipeline, not a chatbot that guesses a budget. If the receipts do not contain the spend, it says so.
 
 ---
 
-## Try the demo
+## What works now
 
-🟢 **Live** · <a href="https://receipt-intelligence.roxanatapia.dev/" target="_blank" rel="noopener noreferrer"><strong>receipt-intelligence.roxanatapia.dev</strong></a>
+| What you can do | In practice |
+|-----------------|-------------|
+| **Live ingest** | You see categories on the same page |
+| **Line-item categories** | You get a category on every line, not a single merchant guess |
+| **Spending context** | You see totals by category in a date window you can change |
+| **Plain-language Q&A** | Ask "How much did I spend per category?", not how to read a JSON file |
+| **Self-serve** | You do not open an n8n editor. The browser never talks to n8n. |
 
-▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
+The demo uses fictional merchants and demo currency (DC). It is not for your real receipts.
 
-- Request an invite on the gate, then redeem the code
-- Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear
-- Seeded examples stay available if you skip the live upload
-- Optional: [ask for a walkthrough on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/contact/)
+## How it fits together
 
-The public pilot is a shared demo with fictional merchants and demo currency (DC). Use only the sample PDF.
-
----
-
-## How a receipt becomes an answer
-
-Each step exists to keep the answer inside receipts that were actually ingested.
+Each step exists to keep your answer inside receipts that were actually ingested.
 
 ![1 Receipt PDF. 2 n8n + Claude extract. 3 Categorized. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
 
@@ -39,32 +34,24 @@ Each step exists to keep the answer inside receipts that were actually ingested.
 | **Analytics** | FastAPI aggregates by date and category | Totals are calculated, not guessed. |
 | **Answer** | Claude routes the question, then narrates those totals | The model explains numbers it was given. |
 
-The visitor UI lives in [`demo/`](demo/). Deploy glue lives in [`deploy/`](deploy/). Map: [docs/README.md](docs/README.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md).
+n8n · FastAPI · Claude · Docker Compose
 
----
+## What's planned
 
-## What it does well
+This is not accounting software yet. Tax export, bank sync, and multi-user accounts come later. Reading the receipt, saving it, and calculating the totals stay the same.
 
-| Feature | In practice |
-|---------|-------------|
-| **Live ingest** | Download the sample, upload it, see categories on the same page |
-| **Line-item categories** | Taxonomy on every line, not a single merchant guess |
-| **Spending context** | Totals by category in a date window you can change |
-| **Plain-language Q&A** | Ask "How much did I spend per category?", not how to read a JSON file |
-| **Self-serve** | No n8n editor. The browser never talks to n8n. |
+## Try it
 
-## Known limits
+🟢 **Live** · <a href="https://receipt-intelligence.roxanatapia.dev/" target="_blank" rel="noopener noreferrer"><strong>receipt-intelligence.roxanatapia.dev</strong></a>
 
-| Limit | In practice |
-|-------|-------------|
-| **Shared demo** | Fictional merchants, demo currency (DC). Not for your real receipts. |
-| **Allowlisted sample** | Live ingest on the public pilot accepts the demo PDF, not arbitrary uploads |
-| **One corpus** | Questions cover the seeded examples plus what you ingested in this session |
-| **Not accounting software** | No tax export, bank sync, or multi-user accounts |
+▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
 
----
+- Request an invite on the gate, then redeem the code
+- Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear. The demo accepts that PDF, not any other file
+- Seeded examples stay available if you skip the live upload. Questions cover those examples plus the receipt you upload in this session
+- A full-stack walkthrough is available on request — [ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
 
-## What is in this repo
+## Where things are
 
 This repository is a portfolio demo of the visitor UI and the deployment setup.
 
@@ -76,12 +63,8 @@ This repository is a portfolio demo of the visitor UI and the deployment setup.
 
 The extraction workflows and the API are not part of this repository.
 
+Repo map: [docs/README.md](docs/README.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md). Operator steps: [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ---
 
-## Stack
-
-n8n · FastAPI · Claude · Docker Compose
-
-The visitor UX and Compose packaging are in this repo. A full-stack walkthrough is available on request — [contact me](https://roxanatapia.dev/contact/). Operator deploy: [DEPLOYMENT.md](DEPLOYMENT.md).
-
-[Roxana Tapia](https://github.com/RoxanaTapia) · [Upwork](https://www.upwork.com/freelancers/roxanadev) · [How I work with AI](docs/how-we-work.md) · [MIT License](LICENSE)
+[Roxana Tapia](https://github.com/RoxanaTapia) · [How I work with AI](docs/how-we-work.md) · [MIT License](LICENSE)

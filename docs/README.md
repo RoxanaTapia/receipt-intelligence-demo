@@ -59,7 +59,7 @@ Deploy picture and sequence: [product/architecture.md](product/architecture.md).
 | Answer | API | Route the question, then narrate those totals. |
 | Show | `demo/` | Categories, spending bars, and the reply. |
 
-Product steps in more detail: [README — How a receipt becomes an answer](../README.md#how-a-receipt-becomes-an-answer).
+Product steps in more detail: [README — How it fits together](../README.md#how-it-fits-together).
 
 ---
 

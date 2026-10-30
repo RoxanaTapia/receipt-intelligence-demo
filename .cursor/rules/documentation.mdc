@@ -25,13 +25,14 @@ Apply when writing or editing markdown documentation in this repository.
 
 ## Public README
 
-The root README is the client-facing first paint:
+The root README is the client-facing first paint, written to "you". Call the live version the demo.
 
-- Product name and tagline, then a **Takeaway**
-- Try the live demo (invite path), not clone/compose smoke
-- How the product works (pipeline + technique table), not deploy internals
-- What it does well / Known limits
-- Stack + walkthrough on request
+- Product name, tagline, and a **Takeaway**
+- **What works now**
+- **How it fits together**
+- **What's planned**
+- **Try it** (the live demo, not clone or compose steps)
+- **Where things are**
 
 Operator steps stay in `DEPLOYMENT.md`. Contributor notes stay in `AGENTS.md`. Do not link private companion repos (n8n, API) — they 404 for visitors.
 
