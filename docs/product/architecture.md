@@ -80,6 +80,6 @@ sequenceDiagram
 
 ---
 
-## What this pilot does not include yet
+## What this demo does not include yet
 
 Not for your real receipts. Tax export, bank sync, and multi-user accounts wait for a real engagement. The extract → persist → aggregate loop stays the same when they land.
