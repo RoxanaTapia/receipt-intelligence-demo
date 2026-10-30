@@ -82,4 +82,4 @@ sequenceDiagram
 
 ## What this pilot does not include yet
 
-A private archive, tax export, bank sync, or multi-user accounts. Those wait for a real engagement. The extract → persist → aggregate loop stays the same when they land.
+Not for your real receipts. Tax export, bank sync, and multi-user accounts wait for a real engagement. The extract → persist → aggregate loop stays the same when they land.

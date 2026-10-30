@@ -1,10 +1,12 @@
 # Deployment Guide
 
+> **Operator-only.** This guide is for you when you stand the demo up. The visitor path is the [README](README.md).
+
 ## Background
 
 For operators standing up the Receipt Intelligence demo on one host: Docker Compose (n8n writer + API reader) with HTTPS at the edge.
 
-Product overview: [README](README.md). Architecture diagram: [docs/product/architecture.md](docs/product/architecture.md). This guide covers **firewall → `.env` → up → verify**. Companion n8n and API source stay private; this repo is the public packaging.
+Product overview: [README](README.md). Architecture diagram: [docs/product/architecture.md](docs/product/architecture.md). This guide covers **firewall → `.env` → up → verify**.
 
 ## Which path?
 
@@ -64,6 +66,23 @@ Local smoke **without** Caddy still publishes API / n8n / UX on the host (see [R
 
 ---
 
+## 🔐 Environment
+
+The HTTPS paths set these in `.env` once. The solo path shows how you copy `.env.example`.
+
+```bash
+N8N_BASIC_AUTH_PASSWORD=change-me-strong
+ANTHROPIC_API_KEY=          # if you will run workflows / Q&A
+
+COMPOSE_PROJECT_NAME=receipt-intelligence-demo
+N8N_PROTOCOL=https
+N8N_BASIC_AUTH_ACTIVE=false
+```
+
+Each path below adds its hostnames. Use your own.
+
+---
+
 ## 🔗 Behind an existing reverse proxy
 
 Use this when another reverse proxy already terminates TLS on the host. Receipt containers join Docker network `edge`; that proxy reaches them by the aliases below. TLS and basic auth stay in the existing proxy’s own config.
@@ -76,25 +95,18 @@ Use this when another reverse proxy already terminates TLS on the host. Receipt 
 docker network create edge   # ignore error if it already exists
 ```
 
-### 2. Clone and configure
+### 2. Path settings
 
-Same sibling layout as the solo path. In `.env` when you are **behind an existing reverse proxy** (placeholders — use your own hostnames):
+Same sibling layout as the solo path. Shared keys are in [Environment](#-environment). When you are **behind an existing reverse proxy**, add these (placeholders — use your own hostnames):
 
 ```bash
-N8N_BASIC_AUTH_PASSWORD=change-me-strong
-ANTHROPIC_API_KEY=          # if you will run workflows / Q&A
-
-COMPOSE_PROJECT_NAME=receipt-intelligence-demo
-
 # Public URL behind the existing reverse proxy — n8n on its own host (root path).
 # Point DNS for both names at this host.
 N8N_HOST=n8n.example.com
-N8N_PROTOCOL=https
 N8N_PATH=/
 WEBHOOK_URL=https://n8n.example.com/
 N8N_EDITOR_BASE_URL=https://n8n.example.com/
 N8N_PROXY_HOPS=1
-N8N_BASIC_AUTH_ACTIVE=false
 ```
 
 Use `N8N_PATH=/` (not empty) on that host so editor assets are absolute (`/assets/…`). Empty path makes relative `assets/…` URLs that 404-as-HTML on `/home/workflows` (blank page after login).
@@ -125,35 +137,7 @@ Stable aliases on `edge` for the external proxy:
 
 ⚠️ **Existing reverse proxy:** point protected `/app*` at `receipt-ux:8080` and **strip the `/app` prefix** (`handle_path /app/*`). Serve n8n on its own host (for example **`n8n.example.com`**) at `/` (`N8N_PATH=/`). Path-prefix `/n8n*` on the demo host hits n8n’s known login redirect bug — prefer a separate host.
 
-### 4. Verify
-
-End-to-end HTTPS and the invite gate are owned by the existing reverse proxy, not this stack. Visitor path on your host:
-
-`https://demo.example.com/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow at `https://n8n.example.com/` (edge Basic Auth).
-
-```bash
-curl -sk -o /dev/null -w "%{http_code}\n" https://demo.example.com/health
-# 401 without edge credentials
-
-curl -sk -u demo:YOUR_EDGE_PASSWORD \
-  https://demo.example.com/health
-# {"status":"ok"}
-
-# After /app* → receipt-ux:
-curl -sk -u demo:YOUR_EDGE_PASSWORD \
-  -o /dev/null -w "%{http_code}\n" \
-  https://demo.example.com/app/
-# 200
-```
-
-Before those proxy routes answer, confirm the backends from another container on `edge`:
-
-```bash
-docker run --rm --network edge curlimages/curl:8.5.0 \
-  -sS http://receipt-api:8000/health
-docker run --rm --network edge curlimages/curl:8.5.0 \
-  -sS http://receipt-ux:8080/health
-```
+Then [verify](#-verify).
 
 ---
 
@@ -196,23 +180,17 @@ cp .env.example .env
 nano .env
 ```
 
-Minimum `.env` for **domain mode** (automatic TLS):
+Minimum `.env` additions for **domain mode** (automatic TLS). Shared keys are in [Environment](#-environment). Add:
 
 ```bash
-N8N_BASIC_AUTH_PASSWORD=change-me-strong
-ANTHROPIC_API_KEY=          # if you will run workflows / Q&A
-
-COMPOSE_PROJECT_NAME=receipt-intelligence-demo
 SITE_ADDRESS=demo.example.com
 ACME_EMAIL=you@example.com
 
 # Public URLs for n8n — prefer a dedicated host at root (avoids n8n path bugs).
 # Path mode (N8N_PATH=/n8n/) still works for solo Caddy if you accept the login quirk.
 N8N_HOST=n8n.demo.example.com
-N8N_PROTOCOL=https
 N8N_PATH=
 WEBHOOK_URL=https://n8n.demo.example.com/
-N8N_BASIC_AUTH_ACTIVE=false
 ```
 
 DNS: point `SITE_ADDRESS` A/AAAA at this host before the first Caddy up (ACME needs to reach :80/:443).
@@ -244,24 +222,7 @@ Expect: `api` healthy · `n8n` Up · `ux` Up · `caddy` Up. Host should **not** 
 
 Set `COMPOSE_PROJECT_NAME=receipt-intelligence-demo` in `.env` so you can omit `-p` later. Always pass `--env-file .env` when the first compose file lives under `deploy/`.
 
-### 5. Verify
-
-```bash
-# 401 without credentials, 200 with (API health via edge)
-curl -sk -o /dev/null -w "%{http_code}\n" https://YOUR_DOMAIN/health
-curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOMAIN/health
-
-# Visitor UX (path prefix stripped by Caddy → ux:8080)
-curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_DOMAIN/app/
-```
-
-| Path | Surface |
-|------|---------|
-| `/app` | **Visitor demo UX** (download sample → upload → live ingest → spending → ask) |
-| `/health`, `/docs`, `/analytics/*`, `/questions` | API |
-| n8n host `/` (own host) or `/n8n/` (solo path mode) | n8n operator UI |
-
-Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
+Then [verify](#-verify).
 
 ### Seed fixtures and demo currency
 
@@ -289,6 +250,46 @@ docker compose --env-file .env -p receipt-intelligence-demo \
 Expect JSON with `"ok": true` and `persistedFilename`. “Webhook not registered” means the workflow is not Active.
 
 Sample PDFs: `demo/samples/` mounted into n8n. The ingest webhook lives in the companion n8n (walkthrough on request).
+
+---
+
+## ✅ Verify
+
+Run this after the stack is up. Q&A needs `ANTHROPIC_API_KEY` in `.env`.
+
+| Path | Surface |
+|------|---------|
+| `/app` | **Visitor demo UX** (download sample → upload → live ingest → spending → ask) |
+| `/health`, `/docs`, `/analytics/*`, `/questions` | API |
+| n8n host `/` (own host) or `/n8n/` (solo path mode) | n8n operator UI |
+
+`YOUR_HOST` is the demo hostname for the path you chose (`demo.example.com` behind an existing reverse proxy, or `YOUR_DOMAIN` on solo Caddy). The password is that proxy’s edge password, or the one you generated for solo Caddy.
+
+```bash
+# 401 without credentials
+curl -sk -o /dev/null -w "%{http_code}\n" https://YOUR_HOST/health
+
+# {"status":"ok"}
+curl -sk -u demo:YOUR_PASSWORD https://YOUR_HOST/health
+
+# 200 after /app* reaches the visitor UX
+curl -sk -o /dev/null -w "%{http_code}\n" -u demo:YOUR_PASSWORD https://YOUR_HOST/app/
+```
+
+**Behind an existing reverse proxy.** End-to-end HTTPS and the invite gate are owned by the existing reverse proxy, not this stack. Visitor path on your host:
+
+`https://demo.example.com/` → invite or Login → **`/app`** (download sample → upload → live ingest → ask). Operators activate the ingest workflow at `https://n8n.example.com/` (edge Basic Auth).
+
+Before those proxy routes answer, confirm the backends from another container on `edge`:
+
+```bash
+docker run --rm --network edge curlimages/curl:8.5.0 \
+  -sS http://receipt-api:8000/health
+docker run --rm --network edge curlimages/curl:8.5.0 \
+  -sS http://receipt-ux:8080/health
+```
+
+**Solo Caddy.** Open `https://YOUR_DOMAIN/app` after the browser basic-auth prompt. Caddy strips the `/app` prefix and forwards to the visitor UX.
 
 ---
 
