@@ -1,22 +1,24 @@
 # Receipt Intelligence
 
-> Upload a receipt PDF, get line-item categories, and ask spend questions in plain language.
+> Use the sample receipt, see a category on every line, and ask spend questions in plain language.
 
 > **Takeaway:** This is a receipt-to-answers pipeline, not a chatbot that guesses a budget. If the receipts do not contain the spend, it says so.
 
----
+## Results
+
+The demo app in this repository has 88 automated tests. GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)). The run covers the visitor demo only.
 
 ## What works now
 
 | What you can do | In practice |
 |-----------------|-------------|
-| **Live ingest** | You see categories on the same page |
+| **Sample receipt** | Use the sample on the page, or upload that same PDF. Any other file is declined |
 | **Line-item categories** | You get a category on every line, not a single merchant guess |
-| **Spending context** | You see totals by category in a date window you can change |
-| **Plain-language Q&A** | Ask "How much did I spend per category?", not how to read a JSON file |
+| **Spending answers** | Totals are calculated from the receipts on the page |
+| **Plain-language Q&A** | Ask "How much did I spend per category?" |
 | **Self-serve** | You do not open an n8n editor. The browser never talks to n8n. |
 
-The demo uses fictional merchants and demo currency (DC). It is not for your real receipts.
+The merchants are fictional. Amounts on the page are demo figures. This is not for your real receipts.
 
 ## How it fits together
 
@@ -32,7 +34,7 @@ Each step exists to keep your answer inside receipts that were actually ingested
 | **Validate** | Schema and taxonomy checks, with a short retry | Invalid JSON never becomes the answer. |
 | **Persist** | Canonical JSON on a shared volume | One store: n8n writes, the API reads. |
 | **Analytics** | FastAPI aggregates by date and category | Totals are calculated, not guessed. |
-| **Answer** | Claude routes the question, then narrates those totals | The model explains numbers it was given. |
+| **Answer** | This page totals the receipts you can see | The sentence uses those numbers. It says when the receipts do not contain the spend. |
 
 n8n · FastAPI · Claude · Docker Compose
 
@@ -47,9 +49,9 @@ This is not accounting software yet. Tax export, bank sync, and multi-user accou
 ▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
 
 - Request an invite on the gate, then redeem the code
-- Start with the sample PDF on the demo page — download it, upload that same file, and watch categories appear. The demo accepts that PDF, not any other file
-- Seeded examples stay available if you skip the live upload. Questions cover those examples plus the receipt you upload in this session
-- A full-stack walkthrough is available on request — [ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
+- Start with the sample PDF on the demo page. Download it, upload that same file, and watch categories appear. The demo accepts that PDF, not any other file
+- Seeded examples stay available if you skip the live upload. Questions cover those examples plus the receipt you add in this session
+- A full-stack walkthrough is available on request. [Ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
 
 ## Where things are
 
