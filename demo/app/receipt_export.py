@@ -21,7 +21,8 @@ COLUMNS = (
     "item",
     "quantity",
     "category",
-    "amount",
+    "unit_price",
+    "line_total",
     "receipt_total",
     "file_name",
 )
@@ -42,7 +43,8 @@ class LineRow:
     item: str
     quantity: int | float
     category: str
-    amount: float
+    unit_price: float
+    line_total: float
     receipt_total: float
     file_name: str
 
@@ -50,8 +52,8 @@ class LineRow:
 def guard_text(value: str) -> str:
     """Prefix formula-like text so a spreadsheet stores it as text.
 
-    Numeric cells must not pass through here: a negative amount has to stay
-    a number, not a quoted string.
+    Numeric cells must not pass through here: a negative line total has to
+    stay a number, not a quoted string.
     """
     if value.startswith(_FORMULA_STARTS):
         return f"'{value}"
@@ -61,9 +63,11 @@ def guard_text(value: str) -> str:
 def line_rows(examples: list[Any], live_imports: list[Any]) -> list[LineRow]:
     """One spreadsheet row per line item.
 
-    ``amount`` is the line's ``price`` (already the line total), rounded to
-    two decimal places. Rows are ordered by date, merchant, file name, then
-    the original line order.
+    ``line_total`` is the line's ``price`` (already the line total), rounded
+    to two decimal places. ``unit_price`` is that total divided by quantity,
+    also rounded to two decimal places. A quantity of zero exports ``0``.
+    Category text uses the same capitalized words as the chips on the page.
+    Rows are ordered by date, merchant, file name, then the original line order.
     """
     ranked: list[tuple[tuple[str, str, str, int], LineRow]] = []
     for item in [*examples, *live_imports]:
@@ -92,7 +96,8 @@ def render_csv(rows: list[LineRow]) -> bytes:
                 row.item,
                 row.quantity,
                 row.category,
-                _amount_text(row.amount),
+                _amount_text(row.unit_price),
+                _amount_text(row.line_total),
                 _amount_text(row.receipt_total),
                 row.file_name,
             ]
@@ -109,7 +114,7 @@ def render_xlsx(rows: list[LineRow]) -> bytes:
     for index, row in enumerate(rows, start=2):
         _write_row(sheet, index, row)
     sheet.freeze_panes = "A2"
-    sheet.auto_filter.ref = f"A1:H{sheet.max_row}"
+    sheet.auto_filter.ref = f"A1:I{sheet.max_row}"
     buffer = io.BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()
@@ -129,14 +134,17 @@ def _rows_for_receipt(
     date_text = date_key if parsed else guard_text(raw_date)
     rows: list[tuple[tuple[str, str, str, int], LineRow]] = []
     for index, line in enumerate(lines):
+        quantity = _quantity(line.get("quantity"))
+        line_total = _cents(line.get("price"))
         row = LineRow(
             date=parsed,
             date_text=date_text,
             merchant=guard_text(merchant),
             item=guard_text(_plain(line.get("description"))),
-            quantity=_quantity(line.get("quantity")),
-            category=guard_text(_plain(line.get("category"))),
-            amount=_cents(line.get("price")),
+            quantity=quantity,
+            category=guard_text(_category_label(_plain(line.get("category")))),
+            unit_price=_unit_price(line_total, quantity),
+            line_total=line_total,
             receipt_total=total,
             file_name=guard_text(file_name),
         )
@@ -160,11 +168,13 @@ def _write_row(sheet: Any, index: int, row: LineRow) -> None:
     sheet.cell(index, 3, row.item)
     sheet.cell(index, 4, row.quantity)
     sheet.cell(index, 5, row.category)
-    amount = sheet.cell(index, 6, row.amount)
-    amount.number_format = AMOUNT_FORMAT
-    total = sheet.cell(index, 7, row.receipt_total)
+    unit = sheet.cell(index, 6, row.unit_price)
+    unit.number_format = AMOUNT_FORMAT
+    line_total = sheet.cell(index, 7, row.line_total)
+    line_total.number_format = AMOUNT_FORMAT
+    total = sheet.cell(index, 8, row.receipt_total)
     total.number_format = AMOUNT_FORMAT
-    sheet.cell(index, 8, row.file_name)
+    sheet.cell(index, 9, row.file_name)
 
 
 def _receipt_total(receipt: dict[str, Any], lines: list[dict[str, Any]]) -> float:
@@ -178,6 +188,24 @@ def _receipt_total(receipt: dict[str, Any], lines: list[dict[str, Any]]) -> floa
     for line in lines:
         total = round(total + _cents(line.get("price")), 2)
     return total
+
+
+def _category_label(value: str) -> str:
+    """Capitalize each word, matching the chip's CSS ``text-transform: capitalize``."""
+    return " ".join(
+        part[:1].upper() + part[1:] if part else part for part in value.split(" ")
+    )
+
+
+def _unit_price(line_total: float, quantity: int | float) -> float:
+    """Line total divided by quantity, rounded to two decimal places."""
+    try:
+        qty = float(quantity)
+    except (TypeError, ValueError):
+        return 0.0
+    if qty == 0:
+        return 0.0
+    return round(line_total / qty, 2)
 
 
 def _cents(value: Any) -> float:

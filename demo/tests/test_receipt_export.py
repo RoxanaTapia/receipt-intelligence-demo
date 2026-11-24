@@ -25,7 +25,8 @@ HEADER = [
     "item",
     "quantity",
     "category",
-    "amount",
+    "unit_price",
+    "line_total",
     "receipt_total",
     "file_name",
 ]
@@ -96,15 +97,18 @@ def test_csv_matches_seed_receipts_and_starts_with_bom(client) -> None:
         "Lumen Pantry",
         "Oat milk",
         "1",
-        "drinks",
+        "Drinks",
+        "2.40",
         "2.40",
         "14.20",
         "2026-07-12_lumen-pantry_aaaaaaaa.json",
     ]
     pasta = next(row for row in rows if row[2] == "Pasta shells")
     assert pasta[3] == "2"
-    assert pasta[5] == "3.20"
-    assert pasta[6] == "21.40"
+    assert pasta[4] == "Food"
+    assert pasta[5] == "1.60"
+    assert pasta[6] == "3.20"
+    assert pasta[7] == "21.40"
     harbor = [row[2] for row in rows if row[1] == "Harbor Home"]
     assert harbor == [
         "Kitchen sponge set",
@@ -143,7 +147,8 @@ def test_csv_umlaut_round_trips(client, data_dir: Path) -> None:
         "Käse Shop",
         "Käse",
         "1",
-        "food",
+        "Food",
+        "3.50",
         "3.50",
         "3.50",
         name,
@@ -173,7 +178,7 @@ def test_csv_quotes_commas_and_keeps_crlf(client, data_dir: Path) -> None:
     content = client.get("/export/receipts.csv").content
     assert b'""Main""' in content
     rows = _csv_rows(content)
-    quoted = next(row for row in rows if row[7] == name)
+    quoted = next(row for row in rows if row[8] == name)
     assert quoted[1] == 'North, "Main" Stall'
     assert quoted[2] == "Oat milk, large"
 
@@ -206,9 +211,12 @@ def test_csv_prefixes_formula_text_and_keeps_negative_amount(
     assert ",=SUM(A1)," not in text
     row = next(item for item in _csv_rows(content) if item[1] == "Guard Shop")
     assert row[2] == "'=SUM(A1)"
+    assert row[4] == "Food"
     assert row[5] == "-0.50"
     assert row[6] == "-0.50"
+    assert row[7] == "-0.50"
     assert not row[5].startswith("'")
+    assert not row[6].startswith("'")
 
 
 def test_xlsx_sheet_matches_seed_receipts(client) -> None:
@@ -221,7 +229,7 @@ def test_xlsx_sheet_matches_seed_receipts(client) -> None:
     assert [cell.value for cell in sheet[1]] == HEADER
     assert all(cell.font.bold for cell in sheet[1])
     assert sheet.freeze_panes == "A2"
-    assert sheet.auto_filter.ref == f"A1:H{sheet.max_row}"
+    assert sheet.auto_filter.ref == f"A1:I{sheet.max_row}"
     assert sheet.max_row == 1 + _seed_line_count()
     assert isinstance(sheet["A2"].value, date)
     assert sheet["A2"].value.year == 2026
@@ -229,18 +237,20 @@ def test_xlsx_sheet_matches_seed_receipts(client) -> None:
     assert sheet["A2"].value.day == 12
     assert sheet["D2"].value == 1
     assert isinstance(sheet["D2"].value, (int, float))
+    assert sheet["E2"].value == "Drinks"
     assert sheet["F2"].value == 2.4
     assert isinstance(sheet["F2"].value, (int, float))
     assert sheet["F2"].number_format == "0.00"
-    assert sheet["G2"].value == 14.2
+    assert sheet["G2"].value == 2.4
     assert sheet["G2"].number_format == "0.00"
+    assert sheet["H2"].value == 14.2
+    assert sheet["H2"].number_format == "0.00"
     for data_row in sheet.iter_rows(min_row=2):
         assert isinstance(data_row[3].value, (int, float))
-        assert isinstance(data_row[5].value, (int, float))
-        assert isinstance(data_row[6].value, (int, float))
-        assert data_row[5].number_format == "0.00"
-        assert data_row[6].number_format == "0.00"
-        assert data_row[5].data_type != "f"
+        for column in (5, 6, 7):
+            assert isinstance(data_row[column].value, (int, float))
+            assert data_row[column].number_format == "0.00"
+            assert data_row[column].data_type != "f"
     for cell in _cells(sheet):
         assert cell.data_type != "f"
 
@@ -286,13 +296,16 @@ def test_xlsx_cells_are_never_formulas(client, data_dir: Path) -> None:
         expected = "'\n=1" if trigger == "\r=1" else f"'{trigger}"
         assert expected in seen
     amounts = [
-        row[5].value
+        (row[5].value, row[6].value)
         for row in sheet.iter_rows(min_row=2)
         if row[2].value == "'=SUM(A1)"
     ]
-    assert amounts == [-0.5]
+    assert amounts == [(-0.5, -0.5)]
     assert all(
-        row[5].data_type == "n" and row[5].number_format == "0.00"
+        row[5].data_type == "n"
+        and row[5].number_format == "0.00"
+        and row[6].data_type == "n"
+        and row[6].number_format == "0.00"
         for row in sheet.iter_rows(min_row=2)
         if isinstance(row[2].value, str) and row[2].value.startswith("'")
     )
@@ -324,7 +337,7 @@ def test_export_skips_another_sessions_live_import(
     items = [row[2] for row in rows]
     merchants = [row[1] for row in rows]
     assert "Bananas" in items
-    assert fake_n8n.filename in [row[7] for row in rows]
+    assert fake_n8n.filename in [row[8] for row in rows]
     assert "Hidden cola" not in items
     assert "Stranger Mart" not in merchants
     assert len(rows) == 1 + _seed_line_count() + len(ITEMS)
@@ -411,13 +424,73 @@ def test_guard_text_prefixes_only_formula_like_text() -> None:
     row = _csv_rows(render_csv(risky))[1]
     assert row[2] == "'=SUM(A1)"
     assert row[5] == "-0.50"
+    assert row[6] == "-0.50"
     sheet = load_workbook(io.BytesIO(render_xlsx(risky)))["Line items"]
     assert sheet["C2"].value == "'=SUM(A1)"
     assert sheet["C2"].data_type != "f"
     assert sheet["F2"].value == -0.5
     assert sheet["F2"].data_type == "n"
+    assert sheet["G2"].value == -0.5
+    assert sheet["G2"].data_type == "n"
     for cell in _cells(sheet):
         assert cell.data_type != "f"
+
+
+def test_unit_price_matches_line_total_and_categories_match_the_page(client) -> None:
+    rows = _csv_rows(client.get("/export/receipts.csv").content)[1:]
+    yogurt = next(row for row in rows if row[2] == "Yogurt cups")
+    assert yogurt[3] == "4"
+    assert yogurt[4] == "Food"
+    assert yogurt[5] == "1.40"
+    assert yogurt[6] == "5.60"
+    by_file: dict[str, list[list[str]]] = {}
+    for row in rows:
+        by_file.setdefault(row[8], []).append(row)
+        assert row[4] == row[4][:1].upper() + row[4][1:]
+        quantity = float(row[3])
+        if quantity:
+            gap = abs(round(float(row[5]) * quantity, 2) - float(row[6]))
+            assert gap <= 0.01
+    for group in by_file.values():
+        line_sum = round(sum(float(row[6]) for row in group), 2)
+        assert line_sum == float(group[0][7])
+
+    odd = line_rows(
+        [
+            ExampleReceipt(
+                id="odd",
+                label="Odd Shop",
+                file_name="odd.json",
+                receipt={
+                    "date": "2026-03-01",
+                    "merchant": "Odd Shop",
+                    "total": 5.0,
+                    "line_items": [
+                        {
+                            "description": "Split",
+                            "quantity": 3,
+                            "price": 1.0,
+                            "category": "snacks",
+                        },
+                        {
+                            "description": "Free note",
+                            "quantity": 0,
+                            "price": 4.0,
+                            "category": "drinks",
+                        },
+                    ],
+                },
+            )
+        ],
+        [],
+    )
+    assert odd[0].category == "Snacks"
+    assert odd[0].unit_price == 0.33
+    assert odd[0].line_total == 1.0
+    assert odd[1].unit_price == 0.0
+    assert odd[1].line_total == 4.0
+    assert odd[1].category == "Drinks"
+    assert round(sum(row.line_total for row in odd), 2) == odd[0].receipt_total
 
 
 def _cells(sheet):

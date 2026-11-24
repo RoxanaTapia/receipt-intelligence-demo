@@ -29,6 +29,20 @@ def test_parse_window_swaps_reversed_dates() -> None:
     assert end == "2026-08-31"
 
 
+def test_home_uses_the_brand_mark_and_the_sample_limit(client) -> None:
+    html = client.get("/").text
+    assert 'rel="icon"' in html
+    assert "favicon.svg" in html
+    assert "Bricolage+Grotesque" in html
+    assert "The shops in this demo are fictional." in html
+    assert "This page accepts that PDF only." in html
+    icon = client.get("/static/favicon.svg")
+    assert icon.status_code == 200
+    assert b"#ff4d9a" in icon.content
+    assert b"#e2186c" in icon.content
+    assert b"#ff7a4a" in icon.content
+
+
 def test_home_has_chips_and_extract_label(client) -> None:
     response = client.get("/")
     assert response.status_code == 200
@@ -182,7 +196,8 @@ def test_demo_css_includes_new_rules() -> None:
     assert ".ask-chip" in DEMO_CSS
     assert ".sample-one-click" in DEMO_CSS
     assert "--accent:" in DEMO_CSS
-    assert "Inter" in DEMO_CSS
+    assert "Bricolage Grotesque" in DEMO_CSS
+    assert "Inter" not in DEMO_CSS
     assert "min(1400px" in DEMO_CSS
     assert "min(720px" not in DEMO_CSS
     assert "font-size: 18px" in DEMO_CSS

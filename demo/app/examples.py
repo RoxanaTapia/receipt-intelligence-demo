@@ -74,7 +74,7 @@ def load_live_imports(seed_dir: Path, data_dir: Path) -> list[ExampleReceipt]:
             continue
         merchant = str(receipt.get("merchant") or "Live receipt").strip() or "Live receipt"
         date = str(receipt.get("date") or "").strip()
-        label = f"{merchant} — {date}" if date else merchant
+        label = f"{merchant} · {date}" if date else merchant
         imports.append(
             ExampleReceipt(
                 id=f"live-{path.stem}",

@@ -17,7 +17,7 @@ _SOURCE_TAIL = re.compile(
 def format_money(value: float | int | None) -> str:
     """Format an amount the way the review table shows it, e.g. ``$3.20``."""
     if value is None:
-        return "—"
+        return "n/a"
     return f"${float(value):.2f}"
 
 
@@ -35,7 +35,7 @@ def present_answer_text(text: str) -> str:
     if "no recorded spending" in lowered or "no spending recorded" in lowered:
         return (
             "I didn't find spending for that. "
-            "Try a suggested question, or name a category — for example, "
+            "Try a suggested question, or name a category. For example, "
             "“How much did I spend on drinks in August?”"
         )
     return out
