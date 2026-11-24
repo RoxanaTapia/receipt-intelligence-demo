@@ -1,5 +1,5 @@
-/* Design tokens — shared with roxanatapia.dev (off-white, near-black, one accent).
-   Accent is calm indigo; type is Inter / system UI; 8px spacing; 12px radius. */
+/* Visitor page. Type is Bricolage Grotesque, the roxanatapia.dev wordmark.
+   The favicon is that site's coral and magenta framed R. 8px spacing, 12px radius. */
 :root {
   --bg: #f6f7f9;
   --ink: #1a1f24;
@@ -16,7 +16,7 @@
   --err-bg: #fdecef;
   --ok: #2f6b4f;
   --ok-bg: #eaf6ef;
-  --font: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --space: 8px;
   --radius: 12px;
@@ -56,12 +56,12 @@ main {
 }
 
 .brand {
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
   margin: 0;
-  font-weight: 650;
+  color: var(--ink);
+  font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
 .exit-demo {

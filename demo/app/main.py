@@ -222,7 +222,7 @@ def _extract_sample_page(
             request,
             example=example,
             live_error=(
-                f"{exc} — Import alone is not enough: the ingest workflow must be "
+                f"{exc}. Import alone is not enough: the ingest workflow must be "
                 "Active/Published in n8n (see DEPLOYMENT.md § Live sample PDF)."
             ),
             summary_before=summary_before,

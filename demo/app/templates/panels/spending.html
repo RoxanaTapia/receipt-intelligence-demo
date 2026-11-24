@@ -38,7 +38,7 @@
       <div class="banner warn" role="status">
         Live receipt date
         <strong>{{ live_panel.date }}</strong>
-        is outside this window — widen the filter to include it in spending context.
+        is outside this window. Widen the filter to include it in spending context.
       </div>
       {% endif %}
 
@@ -52,7 +52,7 @@
         (+{{ money(spend_delta) }}) after
         <strong>{{ live_receipt.merchant }}</strong>.
         {% else %}
-        This sample is already in the demo, so totals did not change —
+        This sample is already in the demo, so totals did not change.
         <strong class="num">{{ money(spend_after) }}</strong>
         already includes
         <strong>{{ live_receipt.merchant }}</strong>.
