@@ -12,7 +12,7 @@ The demo app in this repository has 97 automated tests. GitHub Actions runs them
 
 | What you can do | In practice |
 |-----------------|-------------|
-| **Sample receipt** | Read Green Basket Market on the page. The three seeded receipts are already there. Upload of that PDF stays with an operator session |
+| **Sample receipt** | Read Green Basket Market on the page. The three seeded receipts are already there |
 | **Line-item categories** | You get a category on every line, not a single merchant guess |
 | **Spending answers** | Totals are calculated from the receipts on the page |
 | **Plain-language Q&A** | Ask "How much did I spend per category?" |
@@ -20,11 +20,40 @@ The demo app in this repository has 97 automated tests. GitHub Actions runs them
 
 The merchants are fictional. Amounts on the page are demo figures. This is not for your real receipts.
 
+## Where did August go?
+
+Corner Studio, a fictional studio, asks one question. Where did the August snack money go?
+
+Every amount in this section is sample data from the sample receipt only. That receipt is Green Basket Market, dated 15 August 2026, and the PDF labels it SAMPLE RECEIPT ([`demo/samples/sample-supermarket-receipt.pdf`](demo/samples/sample-supermarket-receipt.pdf)). The other fictional examples on the page are not part of these figures.
+
+The sample prints butter croissants at 3.20 DC. The demo files that line as snacks. The same receipt prints a total of 25.00 DC. The categories are the ones stored with the sample in [`demo/app/sample_receipt.py`](demo/app/sample_receipt.py).
+
+Sample data from the sample receipt only:
+
+| Category | Lines printed on the sample | Sample data |
+|----------|-----------------------------|-------------|
+| Food | Bananas 1.20, baby spinach 2.40, whole milk 1.80, Greek yogurt 2.60, sourdough loaf 3.80 | 11.80 DC |
+| Drinks | Orange juice 2.90, sparkling water 1.50 | 4.40 DC |
+| Snacks | Butter croissants 3.20 | 3.20 DC |
+| Household | Dish soap 2.50, paper towels 3.10 | 5.60 DC |
+
+DC is demo currency, not real money. The amounts are the figures printed on each line. On this sample, August snacks are the croissants.
+
+### One-minute steps
+
+1. You tap a sample receipt.
+2. Claude extracts the merchant, the date, and each line. n8n reads the PDF.
+3. Each line gets a category. The record is checked, then saved as JSON.
+4. FastAPI adds the totals in Python.
+5. Claude explains those totals.
+
+The automated tests that check these sample totals are linked from [Results](#results).
+
 ## How it fits together
 
 Each step exists to keep your answer inside receipts that were actually ingested.
 
-![1 Receipt PDF. 2 n8n + Claude extract. 3 Categorized. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
+![1 Sample receipt. 2 Claude extracts. 3 Categorized and checked. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
 
 | Step | Technique | Why? |
 |------|-----------|------|
@@ -49,8 +78,8 @@ This is not accounting software yet. Tax export, bank sync, and multi-user accou
 ▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
 
 - Request an invite on the gate, then redeem the code
-- Open the page and read Green Basket Market, 15 Aug. Then ask where the snacks went. The demo reads that one sample, not any other file
-- The three seeded receipts are already on the page. Questions use those plus the receipt you read in this session
+- Read Green Basket Market, 15 Aug, on the demo page and watch the categories appear. Then ask where the snacks went
+- The three seeded receipts stay on the page. Questions cover those receipts plus the one you read in this session
 - A full-stack walkthrough is available on request. [Ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
 
 ## Where things are
