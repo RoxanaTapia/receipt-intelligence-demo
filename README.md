@@ -6,13 +6,13 @@
 
 ## Results
 
-The demo app in this repository has 93 automated tests. GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and checks that the vendored demo kit still matches its checksum. The tests cover the visitor demo only.
+The demo app in this repository has 97 automated tests. GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and checks that the vendored demo kit still matches its checksum. The tests cover the visitor demo only.
 
 ## What works now
 
 | What you can do | In practice |
 |-----------------|-------------|
-| **Sample receipt** | Use the sample on the page, or upload that same PDF. Any other file is declined |
+| **Sample receipt** | Read Green Basket Market on the page. The three seeded receipts are already there. Upload of that PDF stays with an operator session |
 | **Line-item categories** | You get a category on every line, not a single merchant guess |
 | **Spending answers** | Totals are calculated from the receipts on the page |
 | **Plain-language Q&A** | Ask "How much did I spend per category?" |
@@ -49,8 +49,8 @@ This is not accounting software yet. Tax export, bank sync, and multi-user accou
 ▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
 
 - Request an invite on the gate, then redeem the code
-- Start with the sample PDF on the demo page. Download it, upload that same file, and watch categories appear. The demo accepts that PDF, not any other file
-- Seeded examples stay available if you skip the live upload. Questions cover those examples plus the receipt you add in this session
+- Open the page and read Green Basket Market, 15 Aug. Then ask where the snacks went. The demo reads that one sample, not any other file
+- The three seeded receipts are already on the page. Questions use those plus the receipt you read in this session
 - A full-stack walkthrough is available on request. [Ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
 
 ## Where things are

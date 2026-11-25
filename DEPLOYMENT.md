@@ -230,7 +230,7 @@ Then [verify](#-verify).
 
 ### Live sample PDF (operators)
 
-Visitors download → upload under `/app` (primary sample id `sample-supermarket-receipt`). The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default) — the browser never reaches n8n.
+Visitors read the sample on the page (Green Basket Market, 15 Aug). Upload of that same PDF is only there for an operator session (`X-Ops-Ok`). The sample id stays `sample-supermarket-receipt`. The UX calls `N8N_INGEST_WEBHOOK_URL` on the Compose network only (`http://n8n:5678/webhook/receipt-demo-ingest` by default). The browser never reaches n8n.
 
 After any n8n volume reset:
 

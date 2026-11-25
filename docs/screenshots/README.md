@@ -19,6 +19,17 @@
 | [ask_after_snacks_august.png](ask_after_snacks_august.png) | After — snacks in August across the visible list |
 | [ask_after_this_receipt.png](ask_after_this_receipt.png) | After — snacks on this receipt |
 
+## August case
+
+Opening view of "Where did August go?" Light and dark, at the same viewports as the brand check. The phone frame shows the full product name and the receipt you can read.
+
+| File | Frame |
+|------|--------|
+| [case-light-1280x800.png](case-light-1280x800.png) | Light, 1280×800 |
+| [case-dark-1280x800.png](case-dark-1280x800.png) | Dark, 1280×800 |
+| [case-light-390x844.png](case-light-390x844.png) | Light, 390×844 |
+| [case-dark-390x844.png](case-dark-390x844.png) | Dark, 390×844 |
+
 ## Brand shell
 
 Light and dark at the viewports used for the header check. Full page, so the footer is in the frame.
