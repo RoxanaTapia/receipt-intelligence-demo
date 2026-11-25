@@ -6,7 +6,7 @@
 
 ## Results
 
-The demo app in this repository has 88 automated tests. GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)). The run covers the visitor demo only.
+The demo app in this repository has [88 automated tests](https://github.com/RoxanaTapia/receipt-intelligence-demo/actions/runs/45440649061). GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)). The run covers the visitor demo only.
 
 ## What works now
 
@@ -20,11 +20,40 @@ The demo app in this repository has 88 automated tests. GitHub Actions runs them
 
 The merchants are fictional. Amounts on the page are demo figures. This is not for your real receipts.
 
+## Where did August go?
+
+Corner Studio, a fictional studio, asks one question. Where did the August snack money go?
+
+Every amount in this section is sample data from the sample receipt only. That receipt is Green Basket Market, dated 15 August 2026, and the PDF labels it SAMPLE RECEIPT ([`demo/samples/sample-supermarket-receipt.pdf`](demo/samples/sample-supermarket-receipt.pdf)). The other fictional examples on the page are not part of these figures.
+
+The sample prints butter croissants at 3.20 DC. The demo files that line as snacks. The same receipt prints a total of 25.00 DC. The categories are the ones stored with the sample in [`demo/app/sample_receipt.py`](demo/app/sample_receipt.py).
+
+Sample data from the sample receipt only:
+
+| Category | Lines printed on the sample | Sample data |
+|----------|-----------------------------|-------------|
+| Food | Bananas 1.20, baby spinach 2.40, whole milk 1.80, Greek yogurt 2.60, sourdough loaf 3.80 | 11.80 DC |
+| Drinks | Orange juice 2.90, sparkling water 1.50 | 4.40 DC |
+| Snacks | Butter croissants 3.20 | 3.20 DC |
+| Household | Dish soap 2.50, paper towels 3.10 | 5.60 DC |
+
+DC is demo currency, not real money. The amounts are the figures printed on each line. On this sample, August snacks are the croissants.
+
+### One-minute steps
+
+1. You start with the sample receipt.
+2. Claude extracts the merchant, the date, and each line. n8n reads the PDF.
+3. Each line gets a category. The record is checked, then saved as JSON.
+4. FastAPI adds the totals in Python.
+5. Claude explains those totals.
+
+The automated tests that check these sample totals are linked from [Results](#results).
+
 ## How it fits together
 
 Each step exists to keep your answer inside receipts that were actually ingested.
 
-![1 Receipt PDF. 2 n8n + Claude extract. 3 Categorized. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
+![1 Sample receipt. 2 Claude extracts. 3 Categorized and checked. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
 
 | Step | Technique | Why? |
 |------|-----------|------|
