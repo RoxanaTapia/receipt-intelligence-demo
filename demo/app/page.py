@@ -44,6 +44,7 @@ def _base_context(request: Request) -> dict[str, Any]:
         DEMO_END_DATE,
         DEMO_START_DATE,
         ROOT_PATH,
+        operator_session,
         public_url,
     )
 
@@ -51,6 +52,7 @@ def _base_context(request: Request) -> dict[str, Any]:
         "request": request,
         "root_path": ROOT_PATH,
         "public_url": public_url,
+        "operator": operator_session(request),
         "demo_css": DEMO_CSS,
         "demo_start": DEMO_START_DATE,
         "demo_end": DEMO_END_DATE,

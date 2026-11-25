@@ -6,13 +6,13 @@
 
 ## Results
 
-The demo app in this repository has [88 automated tests](https://github.com/RoxanaTapia/receipt-intelligence-demo/actions/runs/45440649061). GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)). The run covers the visitor demo only.
+The demo app in this repository has [93 automated tests](https://github.com/RoxanaTapia/receipt-intelligence-demo/actions/runs/45682353883). GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and checks that the vendored demo kit still matches its checksum. The tests cover the visitor demo only.
 
 ## What works now
 
 | What you can do | In practice |
 |-----------------|-------------|
-| **Sample receipt** | Use the sample on the page, or upload that same PDF. Any other file is declined |
+| **Sample receipt** | Tap a sample receipt on the page. Uploading a PDF is for a signed-in operator |
 | **Line-item categories** | You get a category on every line, not a single merchant guess |
 | **Spending answers** | Totals are calculated from the receipts on the page |
 | **Plain-language Q&A** | Ask "How much did I spend per category?" |
@@ -41,7 +41,7 @@ DC is demo currency, not real money. The amounts are the figures printed on each
 
 ### One-minute steps
 
-1. You start with the sample receipt.
+1. You tap a sample receipt.
 2. Claude extracts the merchant, the date, and each line. n8n reads the PDF.
 3. Each line gets a category. The record is checked, then saved as JSON.
 4. FastAPI adds the totals in Python.
@@ -78,8 +78,9 @@ This is not accounting software yet. Tax export, bank sync, and multi-user accou
 ▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
 
 - Request an invite on the gate, then redeem the code
-- Start with the sample PDF on the demo page. Download it, upload that same file, and watch categories appear. The demo accepts that PDF, not any other file
-- Seeded examples stay available if you skip the live upload. Questions cover those examples plus the receipt you add in this session
+- Tap a sample receipt on the demo page and watch the categories appear
+- The examples already on the page stay available. Questions cover those examples plus the receipt you open in this session
+- Uploading a file is for a signed-in operator
 - A full-stack walkthrough is available on request. [Ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
 
 ## Where things are

@@ -1,26 +1,27 @@
-/* Visitor page. Type is Bricolage Grotesque, the roxanatapia.dev wordmark.
-   The favicon is that site's coral and magenta framed R. 8px spacing, 12px radius. */
+/* Visitor page. Colour comes from the vendored demo kit (light and dark).
+   UI type is Plus Jakarta Sans. The wordmark stays Bricolage Grotesque.
+   8px spacing, 12px radius. The header itself is styled by demo-kit.css. */
 :root {
-  --bg: #f6f7f9;
-  --ink: #1a1f24;
-  --muted: #5c6670;
-  --line: #e6e8ec;
-  --panel: #ffffff;
-  --accent: #3d4fd8;
-  --accent-hover: #4a5be0;
-  --accent-ink: #ffffff;
-  --accent-soft: #eef0fc;
+  --bg: var(--color-bg, #f8f4f9);
+  --ink: var(--color-text, #1c1024);
+  --muted: var(--color-muted, #5c4a66);
+  --line: var(--color-border, #e4d6ea);
+  --panel: var(--color-card, #ffffff);
+  --accent: var(--color-accent, #9d174d);
+  --accent-hover: var(--color-accent-hover, #7f1239);
+  --accent-ink: var(--color-on-accent, #ffffff);
+  --accent-soft: var(--color-accent-soft, rgba(157, 23, 77, 0.08));
   --warn: #8a4b00;
   --warn-bg: #fff6e8;
-  --err: #8a1f2b;
+  --err: #8f1d3a;
   --err-bg: #fdecef;
   --ok: #2f6b4f;
   --ok-bg: #eaf6ef;
-  --font: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --space: 8px;
   --radius: 12px;
-  --shadow: 0 1px 2px rgba(26, 31, 36, 0.04), 0 10px 28px rgba(26, 31, 36, 0.06);
+  --shadow: 0 1px 2px rgba(28, 16, 36, 0.04), 0 10px 28px rgba(28, 16, 36, 0.06);
 }
 
 * {
@@ -31,10 +32,6 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  background:
-    radial-gradient(ellipse 70% 45% at 0% 0%, rgba(61, 79, 216, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 35% at 100% 10%, rgba(196, 154, 90, 0.07) 0%, transparent 50%),
-    var(--bg);
   font-family: var(--font);
   font-size: 18px;
   line-height: 1.45;
@@ -45,36 +42,6 @@ main {
   width: min(1400px, calc(100% - 32px));
   margin: 0 auto;
   padding: calc(var(--space) * 3) 0 calc(var(--space) * 5);
-}
-
-.top-bar {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space);
-  margin: 0 0 var(--space);
-}
-
-.brand {
-  margin: 0;
-  color: var(--ink);
-  font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-
-.exit-demo {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--muted);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.exit-demo:hover {
-  color: var(--accent);
-  text-decoration: underline;
 }
 
 h1 {
@@ -287,7 +254,7 @@ tfoot td {
   color: var(--accent);
 }
 
-.btn,
+.btn:not(.dk-exit),
 .button,
 .btn-secondary,
 .button.secondary {
@@ -307,12 +274,12 @@ tfoot td {
   box-shadow: var(--shadow);
 }
 
-.btn:hover,
+.btn:not(.dk-exit):hover,
 .button:hover {
   background: var(--accent-hover);
 }
 
-.btn:disabled,
+.btn:not(.dk-exit):disabled,
 .btn-secondary:disabled {
   cursor: wait;
   opacity: 0.85;
@@ -348,7 +315,7 @@ tfoot td {
 #live-ingest,
 #ask-answer,
 #review {
-  scroll-margin-top: 16px;
+  scroll-margin-top: 96px;
 }
 
 @media (max-width: 640px) {
@@ -361,7 +328,7 @@ tfoot td {
     padding-top: 16px;
   }
 
-  .btn,
+  .btn:not(.dk-exit),
   .btn-secondary {
     width: 100%;
   }

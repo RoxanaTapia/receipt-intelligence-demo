@@ -13,6 +13,7 @@ This repo is the visitor UX and Compose packaging for a receipt-to-answers demo.
 | [`demo/`](demo/) | Visitor UX (FastAPI + Jinja templates) |
 | [`deploy/`](deploy/) | Docker Compose, Caddy overlays, seed script |
 | [`docs/`](docs/) | Architecture and screenshot map |
+| [`vendor/demo-kit/`](vendor/demo-kit/) | Shared header, tokens, fonts, and icons |
 | [`.env.example`](.env.example) | Env template (secrets stay out of git) |
 
 Reference deploy pattern: [ai-doc-to-chat `deploy/`](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy).

@@ -33,10 +33,15 @@ def test_home_uses_the_brand_mark_and_the_sample_limit(client) -> None:
     html = client.get("/").text
     assert 'rel="icon"' in html
     assert "favicon.svg" in html
-    assert "Bricolage+Grotesque" in html
+    assert 'sizes="32x32"' in html
+    assert "favicon-32.png" in html
+    assert 'rel="apple-touch-icon"' in html
+    assert "apple-touch-icon.png" in html
+    assert "fonts.googleapis.com" not in html
+    assert "fonts.gstatic.com" not in html
     assert "The shops in this demo are fictional." in html
     assert "This page accepts that PDF only." in html
-    icon = client.get("/static/favicon.svg")
+    icon = client.get("/demo-kit/favicon.svg")
     assert icon.status_code == 200
     assert b"#ff4d9a" in icon.content
     assert b"#e2186c" in icon.content
@@ -196,7 +201,9 @@ def test_demo_css_includes_new_rules() -> None:
     assert ".ask-chip" in DEMO_CSS
     assert ".sample-one-click" in DEMO_CSS
     assert "--accent:" in DEMO_CSS
-    assert "Bricolage Grotesque" in DEMO_CSS
+    assert "#9d174d" in DEMO_CSS
+    assert "#3d4fd8" not in DEMO_CSS
+    assert "Plus Jakarta Sans" in DEMO_CSS
     assert "Inter" not in DEMO_CSS
     assert "min(1400px" in DEMO_CSS
     assert "min(720px" not in DEMO_CSS
