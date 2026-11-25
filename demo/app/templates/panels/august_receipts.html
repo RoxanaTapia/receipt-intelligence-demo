@@ -1,0 +1,89 @@
+<section class="step-card" id="live-ingest">
+  <h2>August receipts</h2>
+  <p class="meta">Four sample receipts. The new one is still a label until you read it.</p>
+  <ul class="receipt-grid">
+    {% for card in august_cards %}
+    <li class="receipt-card{% if card.is_new %} is-new{% endif %}{% if card.read %} is-added{% endif %}">
+      <span class="receipts-copy">
+        <span class="receipts-merchant">{{ card.merchant }}</span>
+        {% if card.when %}
+        <span class="receipts-date">· {{ card.when }}</span>
+        {% endif %}
+        {% if card.is_new and not card.read %}
+        <span class="just-added">New</span>
+        {% elif card.read %}
+        <span class="just-added">Just added</span>
+        {% endif %}
+      </span>
+      {% if card.total_label %}
+      <p class="receipts-total">{{ card.total_label }} <span class="sample-tag">Sample data</span></p>
+      {% else %}
+      <p class="meta card-wait">Sample data. No figure until it is read.</p>
+      {% endif %}
+      {% if card.is_new and card.merchant == "Green Basket Market" and sample_ready %}
+      <form class="sample-one-click" id="sample-form" method="post" action="{{ public_url('/ingest-sample') }}">
+        {% if selected %}
+        <input type="hidden" name="example" value="{{ selected.id }}" />
+        {% endif %}
+        <input type="hidden" name="start" value="{{ window_start }}" />
+        <input type="hidden" name="end" value="{{ window_end }}" />
+        <input type="hidden" name="question" data-keep="question" value="{{ question }}" />
+        <input type="hidden" name="flow_step" data-keep="flow-step" value="{{ flow_step }}" />
+        <button type="submit" id="sample-btn" class="{% if live_panel %}btn-secondary{% else %}btn{% endif %}">
+          <span class="btn-idle">Read this receipt</span>
+          <span class="btn-busy" hidden>Reading this receipt…</span>
+        </button>
+        <p class="meta ingest-wait" id="sample-wait" hidden>Reading this receipt…</p>
+      </form>
+      {% elif card.is_new and card.merchant == "Green Basket Market" %}
+      <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% if operator %}
+  <details class="upload-alt">
+    <summary>Or upload {{ sample_visitor_name }}</summary>
+    <form class="ingest-steps" id="ingest-form" method="post" action="{{ public_url('/ingest') }}" enctype="multipart/form-data">
+      {% if selected %}
+      <input type="hidden" name="example" value="{{ selected.id }}" />
+      {% endif %}
+      <input type="hidden" name="start" value="{{ window_start }}" />
+      <input type="hidden" name="end" value="{{ window_end }}" />
+      <input type="hidden" name="question" data-keep="question" value="{{ question }}" />
+      <input type="hidden" name="flow_step" data-keep="flow-step" value="{{ flow_step }}" />
+      <div class="ingest-step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <span class="step-label">Download the sample</span>
+          {% if sample_ready %}
+          <a class="button secondary" href="{{ public_url('/sample.pdf') }}">Download {{ sample_visitor_name }}</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="ingest-step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <span class="step-label">Upload that same file</span>
+          <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" required />
+        </div>
+      </div>
+      <div class="ingest-step">
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <button type="submit" id="ingest-btn" class="btn-secondary">
+            <span class="btn-idle">Extract receipt</span>
+            <span class="btn-busy" hidden>Reading this receipt…</span>
+          </button>
+          <p class="meta ingest-wait" id="ingest-wait" hidden>Reading this receipt…</p>
+        </div>
+      </div>
+    </form>
+  </details>
+  {% endif %}
+
+  {% if live_error %}
+  <div class="banner err" role="alert">{{ live_error }}</div>
+  {% endif %}
+</section>

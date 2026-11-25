@@ -1,0 +1,198 @@
+/* August case. One column, so a phone and a wide window tell the same story.
+   The product name override is ours: the kit files are hash-checked. */
+
+.flow {
+  grid-template-columns: 1fr;
+}
+
+.receipt-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 700px) {
+  .receipt-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.receipt-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.receipt-card.is-new {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.receipt-card .sample-one-click {
+  width: 100%;
+  margin: 4px 0 0;
+}
+
+.card-wait {
+  margin: 0;
+}
+
+.receipt-card .receipts-total {
+  margin: 2px 0 0;
+}
+
+.sample-tag {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.scan-sheet {
+  position: relative;
+  height: 168px;
+  overflow: hidden;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(var(--line), var(--line)) 16px 28px / 46% 10px no-repeat,
+    linear-gradient(var(--line), var(--line)) 16px 52px / 72% 10px no-repeat,
+    linear-gradient(var(--line), var(--line)) 16px 76px / 38% 10px no-repeat,
+    linear-gradient(var(--line), var(--line)) 16px 100px / 64% 10px no-repeat,
+    var(--bg);
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: scan-pass 1.15s ease-in-out infinite;
+}
+
+@keyframes scan-pass {
+  from { top: 8px; }
+  to { top: calc(100% - 10px); }
+}
+
+.is-fresh .line-in {
+  animation: line-in 0.45s ease both;
+  animation-delay: calc(var(--i) * 160ms);
+}
+
+@keyframes line-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.read-time,
+.answer-time {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.answer-amount {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.answer-amount .num {
+  font-size: 28px;
+}
+
+.computed-badge {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.cat-name {
+  text-transform: capitalize;
+}
+
+.cited-lines {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cited-lines li {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 14px;
+}
+
+.end-card .export-actions {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 700px) {
+  .end-card .export-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.kept-question {
+  margin: 0;
+  color: var(--muted);
+}
+
+tr.dk-source td {
+  background: var(--accent-soft);
+}
+
+/* Kit ellipsizes .dk-product. At 390px the full name needs its own line. */
+@media (max-width: 520px) {
+  .dk-bar {
+    height: auto;
+    align-items: center;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .dk-brand {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .dk-product {
+    flex: 1 0 100%;
+    overflow: visible;
+    font-size: 0.95rem;
+    text-overflow: clip;
+  }
+}

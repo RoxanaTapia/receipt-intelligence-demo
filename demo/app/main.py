@@ -22,7 +22,7 @@ from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
 from app.page import _page, parse_posted_step
 from app.questions import prepare_question
-from app.receipt_answers import answer_visible_question, catalog_payloads
+from app.receipt_answers import case_view, catalog_payloads
 from app.receipt_export import LineRow, line_rows, render_csv, render_xlsx
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
 from app.session import (
@@ -70,7 +70,7 @@ DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-08-31")
 # Keep empty for local host publish on :8080. Shared-edge / solo Caddy set /app.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
 # Inlined so the demo stays styled even if /app/static/* is mis-proxied.
-_CSS_FILES = ("shared", "examples", "spending", "ask", "live")
+_CSS_FILES = ("shared", "examples", "spending", "ask", "live", "case")
 
 
 def _load_demo_css() -> str:
@@ -277,8 +277,8 @@ def _extract_sample_page(
             example=example,
             live_meta=meta,
             live_error=(
-                f"Ingest reported {filename}, but the file is not visible on the "
-                "shared receipts volume yet. Refresh in a moment or check n8n."
+                "The receipt was read, but it is not on the shared volume yet. "
+                "Refresh in a moment."
             ),
             ingest_ok=True,
             summary_before=summary_before,
@@ -313,10 +313,24 @@ async def ingest(
     question: str = Form(""),
     flow_step: str = Form(""),
 ) -> HTMLResponse:
-    """Validate uploaded sample, trigger n8n webhook, show persisted categories."""
+    """Validate uploaded sample, trigger n8n webhook, show persisted categories.
+
+    Visitors never see this form. A request without the operator mark is refused
+    so a hidden control cannot be posted back into view.
+    """
     window_start, window_end = _parse_window(start or None, end or None)
     kept_question = question.strip()
     kept_step = parse_posted_step(flow_step)
+    if not operator_session(request):
+        return _page(
+            request,
+            example=example or None,
+            question=kept_question,
+            live_error="Upload is for an operator session.",
+            window_start=window_start,
+            window_end=window_end,
+            preserve_step=kept_step,
+        )
     content = await pdf.read()
     reject = validate_demo_sample(pdf.filename, content)
     if reject:
@@ -373,17 +387,19 @@ def ask(
     answer = None
     qa_error = None
     answer_source = None
+    view = None
+    started = time.monotonic()
 
     if not cleaned:
         qa_error = "Enter a budget question first."
     else:
         receipts, current = _visible_receipts(request)
-        local = answer_visible_question(cleaned, receipts, current=current)
-        if local:
-            text, answer_source = local
-            answer = {"answer": text}
+        view = case_view(cleaned, receipts, current=current)
+        if view:
+            answer_source = view.source
+            answer = {"answer": view.text}
         elif receipts:
-            # Skip the API so a volume-wide total cannot contradict Your receipts.
+            # Skip the API so a volume-wide total cannot contradict the cards.
             qa_error = (
                 "I couldn't match that to a spending question for these receipts. "
                 "Try a suggested question, or a category (food, drinks, snacks…)."
@@ -405,12 +421,17 @@ def ask(
             except ApiError as exc:
                 qa_error = str(exc)
 
+    elapsed = time.monotonic() - started
+    # An empty question is a validation note, not an answer we timed.
+    ask_elapsed = elapsed if answer or (qa_error and cleaned) else None
     return _page(
         request,
         example=example or None,
         question=cleaned,
         answer=answer,
         answer_source=answer_source,
+        case_answer=view,
+        ask_elapsed=ask_elapsed,
         qa_error=qa_error,
         window_start=window_start,
         window_end=window_end,

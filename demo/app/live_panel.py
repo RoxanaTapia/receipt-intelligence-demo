@@ -46,8 +46,15 @@ def line_item_count(receipt: dict[str, Any] | None) -> int:
 
 
 def format_read_summary(item_count: int, seconds: float | None) -> str:
-    """Short extract status: real item count and measured wait."""
+    """Short extract status: item count and the measured wait, to 0.1s."""
     noun = "item" if item_count == 1 else "items"
     if seconds is None:
-        return f"✓ {item_count} {noun} read"
-    return f"✓ {item_count} {noun} read in {max(0, int(round(seconds)))}s"
+        return f"{item_count} {noun}"
+    return f"{item_count} {noun} · {max(0.0, seconds):.1f}s"
+
+
+def format_answer_time(seconds: float | None) -> str:
+    """Live answer time, measured around the question, to 0.1s."""
+    if seconds is None:
+        return ""
+    return f"Answered in {max(0.0, seconds):.1f}s"

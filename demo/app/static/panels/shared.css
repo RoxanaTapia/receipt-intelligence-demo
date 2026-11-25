@@ -39,7 +39,7 @@ body {
 }
 
 main {
-  width: min(1400px, calc(100% - 32px));
+  width: min(55rem, calc(100% - 32px));
   margin: 0 auto;
   padding: calc(var(--space) * 3) 0 calc(var(--space) * 5);
 }
@@ -324,7 +324,7 @@ tfoot td {
   }
 
   main {
-    width: min(1400px, calc(100% - 24px));
+    width: min(55rem, calc(100% - 24px));
     padding-top: 16px;
   }
 

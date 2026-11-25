@@ -8,6 +8,8 @@ from pathlib import Path
 # Must match n8n's sample id → ``{id}.pdf`` on the samples mount.
 SAMPLE_ID = "sample-supermarket-receipt"
 SAMPLE_FILENAME = f"{SAMPLE_ID}.pdf"
+# What a visitor reads. The allowlisted file name stays on disk.
+SAMPLE_VISITOR_NAME = "Green Basket Market, 15 Aug"
 # Vendored copy under demo/samples/ — regenerate with scripts/generate_sample_receipt.py.
 SAMPLE_SHA256 = "9d494c29a96fea3f56c03d1161bbccb76901463647ed3ae2bc9970c17aa3a014"
 

@@ -1,13 +1,17 @@
-"""Visitor-facing money: a plain dollar sign, no demo-currency jargon."""
+"""Visitor-facing money: demo currency (DC), labelled as sample data.
+
+DC is not a real currency. Amounts on the page stay in this unit so they
+match the Corner Studio case and the printed sample receipt.
+"""
 
 from __future__ import annotations
 
 import re
 
-DEMO_CURRENCY = "$"
+DEMO_CURRENCY = "DC"
 
+_SYMBOL_AMOUNT = re.compile(r"(?:\$|€)\s*(\d+(?:\.\d{1,2})?)")
 _DC_AMOUNT = re.compile(r"(\d+(?:\.\d{1,2})?)\s*DC\b")
-_EURO_AMOUNT = re.compile(r"€\s*(\d+(?:\.\d{1,2})?)")
 _SOURCE_TAIL = re.compile(
     r"\s*Source:\s*.+$",
     re.IGNORECASE | re.DOTALL,
@@ -15,16 +19,20 @@ _SOURCE_TAIL = re.compile(
 
 
 def format_money(value: float | int | None) -> str:
-    """Format an amount the way the review table shows it, e.g. ``$3.20``."""
+    """Format an amount the way the case study shows it, e.g. ``3.20 DC``."""
     if value is None:
         return "n/a"
-    return f"${float(value):.2f}"
+    return f"{float(value):.2f} DC"
+
+
+def _as_dc(match: re.Match[str]) -> str:
+    return f"{float(match.group(1)):.2f} DC"
 
 
 def present_answer_text(text: str) -> str:
-    """Rewrite leftover API currency labels and drop a raw Source: tail."""
-    out = _DC_AMOUNT.sub(r"$\1", text)
-    out = _EURO_AMOUNT.sub(r"$\1", out)
+    """Rewrite leftover currency symbols into DC and drop a raw Source: tail."""
+    out = _SYMBOL_AMOUNT.sub(_as_dc, text)
+    out = _DC_AMOUNT.sub(_as_dc, out)
     out = _SOURCE_TAIL.sub("", out).strip()
     lowered = out.lower()
     if "couldn't map that" in lowered or "couldn't match that" in lowered:

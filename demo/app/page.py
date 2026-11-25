@@ -9,12 +9,19 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.examples import get_example, session_catalog
-from app.live_panel import _resolve_live_panel, format_read_summary, line_item_count
+from app.examples import ExampleReceipt, get_example, session_catalog
+from app.live_panel import (
+    _resolve_live_panel,
+    format_answer_time,
+    format_read_summary,
+    line_item_count,
+)
 from app.money import DEMO_CURRENCY, format_money
 from app.questions import SUGGESTED_QUESTIONS
-from app.receipt_answers import receipt_list_rows
-from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path
+from app.receipt_answers import CaseView, merchant_name, receipt_list_rows, story_date
+from app.sample import SAMPLE_FILENAME, SAMPLE_ID, SAMPLE_VISITOR_NAME, sample_pdf_path
+from app.sample_receipt import DATE as SAMPLE_DATE
+from app.sample_receipt import MERCHANT as SAMPLE_MERCHANT
 from app.session import (
     apply_session_cookies,
     owned_filenames,
@@ -58,8 +65,10 @@ def _base_context(request: Request) -> dict[str, Any]:
         "demo_end": DEMO_END_DATE,
         "demo_currency": DEMO_CURRENCY,
         "money": format_money,
+        "story_date": story_date,
         "sample_id": SAMPLE_ID,
         "sample_filename": SAMPLE_FILENAME,
+        "sample_visitor_name": SAMPLE_VISITOR_NAME,
         "suggested_questions": SUGGESTED_QUESTIONS,
     }
 
@@ -77,6 +86,8 @@ def _page(
     live_error: str | None = None,
     ingest_ok: bool = False,
     ingest_elapsed: float | None = None,
+    ask_elapsed: float | None = None,
+    case_answer: CaseView | None = None,
     summary_before: dict[str, Any] | None = None,
     window_start: str | None = None,
     window_end: str | None = None,
@@ -147,6 +158,7 @@ def _page(
             **_base_context(request),
             "examples": examples,
             "live_imports": live_imports,
+            "august_cards": _august_cards(examples, live_imports),
             "your_receipts": receipt_list_rows(examples, live_imports),
             "selected": selected,
             "picked_example": bool(example),
@@ -159,6 +171,10 @@ def _page(
             "api_error": api_error,
             "answer": answer,
             "answer_source": source if answer and answer.get("answer") else "",
+            "answer_time": format_answer_time(ask_elapsed) if answer else "",
+            "ask_elapsed": ask_elapsed,
+            "case_answer": case_answer if answer else None,
+            "cited_lines": list(case_answer.cited) if case_answer and answer else [],
             "question": question,
             "qa_error": qa_error,
             "live_receipt": live_receipt,
@@ -168,6 +184,8 @@ def _page(
             "live_error": live_error,
             "ingest_ok": ingest_ok,
             "read_summary": read_summary,
+            "read_count": line_item_count(panel_receipt) if panel_receipt else 0,
+            "read_seconds": elapsed,
             "sample_ready": sample_pdf_path(SAMPLES_DIR).is_file(),
             "scroll_target": scroll_target,
             "flow_step": flow_step,
@@ -184,3 +202,58 @@ def _page(
             path="/",
         )
     return response
+
+
+def _august_cards(
+    examples: list[ExampleReceipt],
+    live_imports: list[ExampleReceipt],
+) -> list[dict[str, Any]]:
+    """Three seeded receipts, then Green Basket Market marked new.
+
+    The new card is a label until this session reads the allowlisted sample.
+    """
+    seeded = [_seed_card(item) for item in examples]
+    fresh = next(
+        (
+            item
+            for item in live_imports
+            if merchant_name(item.receipt) == SAMPLE_MERCHANT
+        ),
+        None,
+    )
+    if fresh is not None:
+        new_card = _seed_card(fresh, is_new=True, read=True)
+    else:
+        new_card = {
+            "merchant": SAMPLE_MERCHANT,
+            "when": story_date(SAMPLE_DATE),
+            "total_label": "",
+            "is_new": True,
+            "read": False,
+        }
+    others = [
+        _seed_card(item, is_new=True, read=True)
+        for item in live_imports
+        if merchant_name(item.receipt) != SAMPLE_MERCHANT
+    ]
+    # The receipt you can read sits first, so a phone reaches it without a hunt.
+    return [new_card, *seeded, *others]
+
+
+def _seed_card(
+    item: ExampleReceipt, *, is_new: bool = False, read: bool = False
+) -> dict[str, Any]:
+    receipt = item.receipt
+    total = receipt.get("total")
+    try:
+        total_label = format_money(float(total)) if total is not None else ""
+    except (TypeError, ValueError):
+        total_label = ""
+    raw_date = str(receipt.get("date") or "")
+    return {
+        "merchant": merchant_name(receipt),
+        "when": story_date(raw_date) if raw_date else "",
+        "total_label": total_label,
+        "is_new": is_new,
+        "read": read,
+    }

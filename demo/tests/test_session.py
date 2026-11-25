@@ -26,8 +26,11 @@ def test_fresh_session_does_not_see_another_visitors_import(
 
     other = TestClient(main.app)
     html = other.get("/").text
-    assert MERCHANT not in html
+    # The new-receipt label is on every page. The other visitor's lines are not.
     assert 'id="live-panel"' not in html
+    assert "Bananas" not in html
+    assert "Just added" not in html
+    assert "25.00 DC" not in html
     # File is still on the shared volume.
     assert (data_dir / fake_n8n.filename).is_file()
 
@@ -53,6 +56,8 @@ def test_remove_hides_import_for_this_session_only(
         },
         follow_redirects=True,
     )
-    assert MERCHANT not in response.text
+    assert 'id="live-panel"' not in response.text
+    assert "Bananas" not in response.text
+    assert "Just added" not in response.text
     assert fake_n8n.filename not in (response.cookies.get(IMPORTS_COOKIE) or "")
     assert (data_dir / fake_n8n.filename).is_file()

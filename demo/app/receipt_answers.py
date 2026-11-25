@@ -15,10 +15,13 @@ import re
 from datetime import date
 from typing import Any
 
+from dataclasses import dataclass, field
+
 from app.money import format_money
 from app.questions import _MONTH_NAME
 
 CATEGORIES = ("snacks", "household", "drinks", "food")
+_CATEGORY_ORDER = ("food", "drinks", "household", "snacks")
 _THIS_RECEIPT = re.compile(
     r"\bthis receipt\b|\bon this\b|\bthis one\b",
     re.IGNORECASE,
@@ -95,12 +98,36 @@ def category_totals(receipt: dict[str, Any]) -> dict[str, float]:
     return totals
 
 
+@dataclass
+class CaseView:
+    """What the answer card draws: the sentence, the figure, and its lines."""
+
+    text: str
+    source: str
+    amount: float | None = None
+    line_count: int = 0
+    categories: list[dict[str, Any]] = field(default_factory=list)
+    cited: list[str] = field(default_factory=list)
+
+
 def answer_visible_question(
     question: str,
     receipts: list[dict[str, Any]],
     current: dict[str, Any] | None = None,
 ) -> tuple[str, str] | None:
     """Return (answer, source) from the visible catalog, or ``None`` if unmatched."""
+    view = case_view(question, receipts, current)
+    if view is None:
+        return None
+    return view.text, view.source
+
+
+def case_view(
+    question: str,
+    receipts: list[dict[str, Any]],
+    current: dict[str, Any] | None = None,
+) -> CaseView | None:
+    """Same answer as the sentence, plus the figure, bars, and cited lines."""
     if not receipts:
         return None
     scoped, single = _scope(question, receipts, current)
@@ -113,8 +140,14 @@ def answer_visible_question(
     )
 
     if _is_per_category(question):
-        return _per_category_answer(in_month, month_name), _source_line(
-            in_month, receipts, single
+        rows, count, amount = _category_rows(in_month)
+        return CaseView(
+            text=_per_category_answer(in_month, month_name),
+            source=_source_line(in_month, receipts, single),
+            amount=amount if count else None,
+            line_count=count,
+            categories=rows,
+            cited=_top_line_per_category(in_month),
         )
 
     rank = _item_rank(question)
@@ -128,41 +161,171 @@ def answer_visible_question(
             records = [
                 record for record in records if record["category"] == category
             ]
-        return (
-            _ranked_item_answer(
-                records,
-                rank=rank,
-                month_name=month_name,
-                single=ranked_single,
-                category=category,
-            ),
-            _source_line(pool, receipts, ranked_single),
+        text = _ranked_item_answer(
+            records,
+            rank=rank,
+            month_name=month_name,
+            single=ranked_single,
+            category=category,
+        )
+        source = _source_line(pool, receipts, ranked_single)
+        if not records:
+            return CaseView(text=text, source=source)
+        target = max(record["price"] for record in records)
+        if rank == "least":
+            target = min(record["price"] for record in records)
+        winners: list[str] = []
+        for record in records:
+            if record["price"] == target and record["description"] not in winners:
+                winners.append(record["description"])
+        return CaseView(
+            text=text,
+            source=source,
+            amount=target,
+            line_count=len(records),
+            cited=winners,
         )
 
     if _is_item_price_question(question):
         matches = _matching_items(question, in_month)
         if matches:
-            return _named_item_answer(matches), _named_item_source(
-                matches, in_month, receipts, single
+            prices = {match["price"] for match in matches}
+            amount = matches[0]["price"] if len(prices) == 1 else None
+            return CaseView(
+                text=_named_item_answer(matches),
+                source=_named_item_source(matches, in_month, receipts, single),
+                amount=amount,
+                line_count=len(matches),
+                cited=[str(matches[0]["description"])],
             )
         # No visible line was named. A category, or a bare total, keeps going.
         if _named_category(question) is None and _SPEND_TOTAL.search(question) is None:
-            return (
-                "I couldn't find that item on these receipts.",
-                _source_line(in_month, receipts, single),
+            return CaseView(
+                text="I couldn't find that item on these receipts.",
+                source=_source_line(in_month, receipts, single),
             )
 
     category = _named_category(question)
     if category:
-        return _category_answer(
-            category, in_month, month_name, single
-        ), _source_line(in_month, receipts, single)
+        rows, _count, _amount = _category_rows(in_month)
+        named = [row for row in rows if row["name"] == category]
+        cited = _descriptions(in_month, category)
+        amount = named[0]["amount"] if named else 0.0
+        return CaseView(
+            text=_category_answer(category, in_month, month_name, single),
+            source=_source_line(in_month, receipts, single),
+            amount=amount if cited else None,
+            line_count=len(cited),
+            categories=named,
+            cited=cited,
+        )
 
     if _is_total_question(question):
-        return _total_answer(in_month, month_name, single), _source_line(
-            in_month, receipts, single
+        rows, count, amount = _category_rows(in_month)
+        return CaseView(
+            text=_total_answer(in_month, month_name, single),
+            source=_source_line(in_month, receipts, single),
+            amount=amount if count else None,
+            line_count=count,
+            categories=rows,
+            cited=_top_line(in_month),
         )
     return None
+
+
+def story_date(value: str) -> str:
+    """``2026-08-15`` → ``15 Aug 2026`` for the receipt cards."""
+    parsed = _parse_date(value)
+    if parsed is None:
+        return value
+    return f"{parsed.day} {parsed.strftime('%b')} {parsed.year}"
+
+
+def _category_rows(
+    receipts: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, float]:
+    """Category totals, how many lines were added, and the grand total."""
+    totals: dict[str, float] = {}
+    count = 0
+    for receipt in receipts:
+        for item in _lines(receipt):
+            name = str(item.get("category") or "").strip().lower()
+            if not name:
+                continue
+            try:
+                price = float(item.get("price") or 0)
+            except (TypeError, ValueError):
+                continue
+            totals[name] = round(totals.get(name, 0.0) + price, 2)
+            count += 1
+    order = [name for name in _CATEGORY_ORDER if name in totals]
+    extras = [name for name in sorted(totals) if name not in order]
+    grand = round(sum(totals.values()), 2)
+    rows: list[dict[str, Any]] = []
+    for name in [*order, *extras]:
+        amount = totals[name]
+        share = round(amount / grand * 100, 1) if grand else 0.0
+        rows.append({"name": name, "amount": amount, "share": share})
+    return rows, count, grand
+
+
+def _descriptions(
+    receipts: list[dict[str, Any]], category: str | None = None
+) -> list[str]:
+    seen: list[str] = []
+    for receipt in receipts:
+        for item in _lines(receipt):
+            name = str(item.get("category") or "").strip().lower()
+            if category and name != category:
+                continue
+            description = str(item.get("description") or "").strip()
+            if description and description not in seen:
+                seen.append(description)
+    return seen
+
+
+def _top_line_per_category(receipts: list[dict[str, Any]]) -> list[str]:
+    """One cited line per category: the highest price in that category."""
+    best: dict[str, tuple[float, str]] = {}
+    for receipt in receipts:
+        for item in _lines(receipt):
+            name = str(item.get("category") or "").strip().lower()
+            description = str(item.get("description") or "").strip()
+            if not name or not description:
+                continue
+            try:
+                price = float(item.get("price") or 0)
+            except (TypeError, ValueError):
+                continue
+            current = best.get(name)
+            if current is None or price > current[0]:
+                best[name] = (price, description)
+    cited: list[str] = []
+    for name in list(_CATEGORY_ORDER) + sorted(best):
+        if name not in best:
+            continue
+        description = best[name][1]
+        if description not in cited:
+            cited.append(description)
+    return cited
+
+
+def _top_line(receipts: list[dict[str, Any]]) -> list[str]:
+    best: tuple[float, str] | None = None
+    for receipt in receipts:
+        for item in _lines(receipt):
+            description = str(item.get("description") or "").strip()
+            if not description:
+                continue
+            try:
+                price = float(item.get("price") or 0)
+            except (TypeError, ValueError):
+                continue
+            if best is None or price > best[0]:
+                best = (price, description)
+    if best is None:
+        return []
+    return [best[1]]
 
 
 def _list_row(receipt: dict[str, Any], *, just_added: bool) -> dict[str, Any]:

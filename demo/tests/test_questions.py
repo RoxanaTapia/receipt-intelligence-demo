@@ -65,7 +65,8 @@ def test_prepare_question_adds_year_without_appending_iso_range() -> None:
 def test_suggested_questions_use_a_stocked_category_and_an_item() -> None:
     labels = [item["label"] for item in SUGGESTED_QUESTIONS]
     questions = [item["question"] for item in SUGGESTED_QUESTIONS]
-    assert "How much did I spend per category?" in labels
+    assert "Spend per category" in labels
+    assert "How much did I spend per category?" in questions
     assert "Snacks in August" in labels
     assert "How much did I spend on snacks in August?" in questions
     assert "Most expensive item" in labels
