@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import mimetypes
 import os
 import time
 from datetime import date
@@ -31,7 +32,29 @@ from app.session import (
     session_id,
 )
 
+# Browsers accept these from the kit's @font-face rules.
+mimetypes.add_type("font/woff2", ".woff2", strict=True)
+
 APP_DIR = Path(__file__).resolve().parent
+
+
+def _demo_kit_dir() -> Path:
+    """Locate the vendored kit without editing the hashed files.
+
+    A local checkout keeps it at the repo root. The image copies that
+    same folder next to the app package.
+    """
+    override = os.getenv("DEMO_KIT_DIR")
+    if override:
+        return Path(override)
+    for parent in APP_DIR.parents:
+        candidate = parent / "vendor" / "demo-kit"
+        if (candidate / "VERSION").is_file():
+            return candidate
+    return APP_DIR.parents[1] / "vendor" / "demo-kit"
+
+
+DEMO_KIT_DIR = _demo_kit_dir()
 SEED_DIR = Path(os.getenv("SEED_DIR", str(APP_DIR.parent / "seed")))
 SAMPLES_DIR = Path(os.getenv("SAMPLES_DIR", str(APP_DIR.parent / "samples")))
 RECEIPT_DATA_PATH = Path(os.getenv("RECEIPT_DATA_PATH", "/data/receipts"))
@@ -73,6 +96,19 @@ def public_url(path: str = "/") -> str:
 
 app = FastAPI(title="Receipt Intelligence Demo", root_path=ROOT_PATH)
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
+app.mount("/demo-kit", StaticFiles(directory=DEMO_KIT_DIR), name="demo-kit")
+
+
+def operator_session(request: Request) -> bool:
+    """True when the edge marked this request as an operator session.
+
+    The edge sends ``X-Ops-Ok`` only for that session. A value of 0, false,
+    no, or off is treated as a visitor so a default header cannot flip the page.
+    """
+    raw = request.headers.get("x-ops-ok")
+    if raw is None:
+        return False
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
 api = ReceiptApiClient(API_BASE_URL)
 n8n = N8nIngestClient(N8N_INGEST_WEBHOOK_URL)
 

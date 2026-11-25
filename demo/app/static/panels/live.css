@@ -89,7 +89,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 4px;
-  background: #fff;
+  background: var(--panel);
   cursor: pointer;
   width: 100%;
 }
@@ -203,7 +203,7 @@
 .skeleton-row {
   height: 14px;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--line) 0%, #f3f4f6 50%, var(--line) 100%);
+  background: linear-gradient(90deg, var(--line) 0%, var(--panel) 50%, var(--line) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.2s ease-in-out infinite;
 }
