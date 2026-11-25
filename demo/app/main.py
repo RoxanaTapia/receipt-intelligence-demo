@@ -67,6 +67,10 @@ N8N_INGEST_WEBHOOK_URL = os.getenv(
 DEMO_START_DATE = os.getenv("DEMO_START_DATE", "2026-07-01")
 DEMO_END_DATE = os.getenv("DEMO_END_DATE", "2026-08-31")
 # Public URL prefix as seen by the browser (e.g. "/app" behind Caddy handle_path).
+# The proxy strips /app before the request arrives. Do not pass this into
+# FastAPI: with root_path set, Starlette's Mount looks up the full path
+# inside the static directory and 404s every file under /demo-kit and /static.
+# public_url() adds the prefix back on links, redirects, and form actions.
 # Keep empty for local host publish on :8080. Shared-edge / solo Caddy set /app.
 ROOT_PATH = os.getenv("ROOT_PATH", "").rstrip("/")
 # Inlined so the demo stays styled even if /app/static/* is mis-proxied.
@@ -94,7 +98,7 @@ def public_url(path: str = "/") -> str:
     return norm.lstrip("/")
 
 
-app = FastAPI(title="Receipt Intelligence Demo", root_path=ROOT_PATH)
+app = FastAPI(title="Receipt Intelligence Demo")
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
 app.mount("/demo-kit", StaticFiles(directory=DEMO_KIT_DIR), name="demo-kit")
 
