@@ -18,3 +18,14 @@
 | [ask_after_extracted.png](ask_after_extracted.png) | After — `$` totals, Corner Bakery + Just added |
 | [ask_after_snacks_august.png](ask_after_snacks_august.png) | After — snacks in August across the visible list |
 | [ask_after_this_receipt.png](ask_after_this_receipt.png) | After — snacks on this receipt |
+
+## Brand shell
+
+Light and dark at the viewports used for the header check. Full page, so the footer is in the frame.
+
+| File | Frame |
+|------|--------|
+| [brand-light-1280x800.png](brand-light-1280x800.png) | Light, 1280×800 |
+| [brand-dark-1280x800.png](brand-dark-1280x800.png) | Dark, 1280×800 |
+| [brand-light-390x844.png](brand-light-390x844.png) | Light, 390×844 |
+| [brand-dark-390x844.png](brand-dark-390x844.png) | Dark, 390×844 |

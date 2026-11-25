@@ -1,13 +1,16 @@
+# Build from the repo root so vendor/demo-kit is in the context:
+#   docker build -f demo/Dockerfile .
 FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY demo/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY seed ./seed
-COPY samples ./samples
+COPY demo/app ./app
+COPY demo/seed ./seed
+COPY demo/samples ./samples
+COPY vendor/demo-kit ./vendor/demo-kit
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8080
