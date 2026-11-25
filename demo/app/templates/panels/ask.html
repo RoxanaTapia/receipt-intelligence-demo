@@ -1,46 +1,78 @@
-    <section class="step-card" id="ask-panel">
-      <h2>Ask a question</h2>
-      <form class="ask-form" id="ask-form" method="post" action="{{ public_url('/ask') }}">
-        {% if selected %}
-        <input type="hidden" name="example" value="{{ selected.id }}" />
-        {% endif %}
-        <input type="hidden" name="start" value="{{ window_start }}" />
-        <input type="hidden" name="end" value="{{ window_end }}" />
-        <label for="question">Your question</label>
-        <textarea
-          id="question"
-          name="question"
-          placeholder="How much did I spend per category?"
-          required
-        >{{ question }}</textarea>
-        <button type="submit" id="ask-btn" class="{% if live_panel %}btn{% else %}btn-secondary{% endif %}" {% if not your_receipts and not api_ok %}disabled{% endif %}>
-          <span class="btn-idle">Ask</span>
-          <span class="btn-busy" hidden>Thinking…</span>
-        </button>
-        <p class="meta ask-wait" id="ask-wait" hidden>Thinking…</p>
-        <div class="ask-chips" role="group" aria-label="Suggested questions">
-          {% for item in suggested_questions %}
-          <button
-            type="button"
-            class="ask-chip{% if question == item.question %} is-active{% endif %}"
-            data-question="{{ item.question }}"
-            {% if not your_receipts and not api_ok %}disabled{% endif %}
-          >{{ item.label }}</button>
-          {% endfor %}
+<section class="step-card" id="ask-panel">
+  <h2>Ask about August</h2>
+  <p class="meta">Tap a question. The total is computed in Python from the lines on these receipts.</p>
+  <form class="ask-form" id="ask-form" method="post" action="{{ public_url('/ask') }}">
+    {% if selected %}
+    <input type="hidden" name="example" value="{{ selected.id }}" />
+    {% endif %}
+    <input type="hidden" name="start" value="{{ window_start }}" />
+    <input type="hidden" name="end" value="{{ window_end }}" />
+    <input type="hidden" id="question" name="question" data-keep="question" value="{{ question }}" />
+    <input type="hidden" name="flow_step" data-keep="flow-step" value="{{ flow_step }}" />
+    <button type="submit" id="ask-btn" class="visually-hidden" {% if not your_receipts %}disabled{% endif %}>
+      <span class="btn-idle">Ask</span>
+      <span class="btn-busy" hidden>Thinking…</span>
+    </button>
+    <p class="meta ask-wait" id="ask-wait" hidden>Thinking…</p>
+    <div class="ask-chips" role="group" aria-label="Suggested questions">
+      {% for item in suggested_questions %}
+      <button
+        type="button"
+        class="ask-chip{% if question == item.question %} is-active{% endif %}"
+        data-question="{{ item.question }}"
+        {% if not your_receipts %}disabled{% endif %}
+      >{{ item.label }}</button>
+      {% endfor %}
+    </div>
+  </form>
+  <div id="ask-answer" class="answer-slot">
+    {% if qa_error %}
+    <div class="banner err">{{ qa_error }}</div>
+    {% if answer_time %}
+    <p class="answer-time" data-live-time="answer">{{ answer_time }}</p>
+    {% endif %}
+    {% elif answer and answer.answer %}
+    <div class="answer-card">
+      <p class="answer-q">{{ question }}</p>
+      {% if case_answer and case_answer.amount is not none %}
+      <p class="answer-amount">
+        <span class="num" data-count-money="{{ '%.2f'|format(case_answer.amount) }}">{{ money(case_answer.amount) }}</span>
+        <span class="sample-tag">Sample data</span>
+      </p>
+      {% endif %}
+      <p class="answer-a">{{ answer.answer }}</p>
+      {% if case_answer and case_answer.categories %}
+      <div class="cats">
+        {% for row in case_answer.categories %}
+        <div class="cat-row">
+          <span class="cat-name">{{ row.name }}</span>
+          <span class="num">{{ money(row.amount) }}</span>
+          <div class="cat-bar" aria-hidden="true">
+            <span style="--to: {{ row.share }}%"></span>
+          </div>
         </div>
-      </form>
-      <div id="ask-answer" class="answer-slot">
-        {% if qa_error %}
-        <div class="banner err">{{ qa_error }}</div>
-        {% elif answer and answer.answer %}
-        <div class="answer-card">
-          <p class="answer-q">{{ question }}</p>
-          <p class="answer-a">{{ answer.answer }}</p>
-          {% if answer_source %}
-          <p class="answer-source">{{ answer_source }}</p>
-          {% endif %}
-        </div>
-        {% endif %}
+        {% endfor %}
       </div>
-      {% include "panels/your_receipts.html" %}
-    </section>
+      {% endif %}
+      {% if case_answer and case_answer.cited %}
+      <ul class="cited-lines">
+        {% for name in case_answer.cited %}
+        <li class="dk-source">{{ name }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if case_answer and case_answer.line_count %}
+      <p class="computed-badge">Computed in Python from {{ case_answer.line_count }} {{ 'line' if case_answer.line_count == 1 else 'lines' }}</p>
+      {% endif %}
+      {% if answer_source %}
+      <p class="answer-source">{{ answer_source }}</p>
+      {% endif %}
+      {% if answer_time %}
+      <p class="answer-time" data-live-time="answer">{{ answer_time }}</p>
+      {% endif %}
+    </div>
+    {% elif question %}
+    <p class="kept-question">{{ question }}</p>
+    {% endif %}
+  </div>
+</section>

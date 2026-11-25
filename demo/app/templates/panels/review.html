@@ -1,37 +1,25 @@
-<section class="step-card" id="review">
-  <h2>Review fields</h2>
+<section class="step-card" id="review"{% if not live_panel %} hidden{% endif %}>
+  <h2>Read this receipt</h2>
   <div id="reading-state" class="reading-state" hidden>
     <p class="reading-label" role="status">
       <span class="spinner" aria-hidden="true"></span>
-      Reading your receipt…
+      Reading this receipt…
     </p>
-    <div class="skeleton-table" aria-hidden="true">
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row is-short"></div>
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row is-short"></div>
+    <div class="scan-sheet" aria-hidden="true">
+      <span class="scan-line"></span>
     </div>
   </div>
   <div id="review-body">
   {% if live_panel %}
-  <div class="live-result-panel" id="live-panel" data-persist="live-panel-open">
-    <h3 class="live-heading">
-      {{ live_panel.merchant }}
-      <span class="live-badge">Live</span>
-    </h3>
-    <p class="meta">{{ live_panel.date }}</p>
+  <div class="live-result-panel{% if ingest_ok %} is-fresh{% endif %}" id="live-panel">
+    <h3 class="live-heading line-in" style="--i: 0">{{ live_panel.merchant }}</h3>
+    <p class="meta line-in" style="--i: 1">{{ story_date(live_panel.date) }} <span class="sample-tag">Sample data</span></p>
     {% set receipt = live_panel %}
     {% include "panels/receipt_table.html" %}
+    {% if read_summary %}
+    <p class="read-time" id="live-result" data-live-time="read" data-items="{{ read_count }}" role="status">{{ read_summary }}</p>
+    {% endif %}
   </div>
-  {% elif selected and selected.source != "live" and picked_example %}
-  <h3 class="receipt-heading">{{ selected.receipt.merchant }}</h3>
-  <p class="meta">{{ selected.receipt.date }}</p>
-  {% set receipt = selected.receipt %}
-  {% include "panels/receipt_table.html" %}
-  {% else %}
-  <p class="empty-review">Extract a sample to see merchant, date, and line items.</p>
   {% endif %}
   </div>
 </section>

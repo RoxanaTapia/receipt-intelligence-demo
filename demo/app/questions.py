@@ -5,15 +5,15 @@ from __future__ import annotations
 import re
 from datetime import date
 
-# Short labels for chips; ``question`` is what we POST (API-friendly wording).
+# Short labels for the case-study chips. ``question`` is what we POST.
 SUGGESTED_QUESTIONS = (
-    {
-        "label": "How much did I spend per category?",
-        "question": "How much did I spend per category?",
-    },
     {
         "label": "Snacks in August",
         "question": "How much did I spend on snacks in August?",
+    },
+    {
+        "label": "Spend per category",
+        "question": "How much did I spend per category?",
     },
     {
         "label": "Most expensive item",

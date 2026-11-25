@@ -3,12 +3,12 @@
     <tr>
       <th>Item</th>
       <th>Category</th>
-      <th class="num">$</th>
+      <th class="num">DC</th>
     </tr>
   </thead>
   <tbody>
     {% for line in receipt.line_items %}
-    <tr>
+    <tr class="line-in{% if line.description in cited_lines %} dk-source{% endif %}" style="--i: {{ loop.index0 + 2 }}">
       <td>{{ line.description }}</td>
       <td><span class="cat-chip">{{ line.category }}</span></td>
       <td class="num">{{ money(line.price) }}</td>
@@ -16,7 +16,7 @@
     {% endfor %}
   </tbody>
 </table>
-<div class="receipt-total">
-  <span>Total</span>
+<div class="receipt-total line-in" style="--i: {{ receipt.line_items|length + 2 }}">
+  <span>Total <span class="sample-tag">Sample data</span></span>
   <span class="num">{{ money(receipt.total) }}</span>
 </div>

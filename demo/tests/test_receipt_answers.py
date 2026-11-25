@@ -34,9 +34,9 @@ def _seed_receipts() -> list[dict]:
 
 
 def test_read_summary_uses_count_and_elapsed() -> None:
-    assert format_read_summary(10, 11.2) == "✓ 10 items read in 11s"
-    assert format_read_summary(1, 0.2) == "✓ 1 item read in 0s"
-    assert format_read_summary(10, None) == "✓ 10 items read"
+    assert format_read_summary(10, 11.2) == "10 items · 11.2s"
+    assert format_read_summary(1, 0.2) == "1 item · 0.2s"
+    assert format_read_summary(10, None) == "10 items"
 
 
 def test_short_date_is_compact() -> None:
@@ -60,9 +60,9 @@ def test_list_rows_mark_live_imports_just_added() -> None:
     ]
     assert [row["just_added"] for row in rows] == [False, False, False, True]
     assert rows[-1]["date_label"] == "Aug 15"
-    assert rows[-1]["total_label"] == "$25.00"
+    assert rows[-1]["total_label"] == "25.00 DC"
     assert rows[2]["merchant"] == "Corner Bakery"
-    assert rows[2]["total_label"] == "$18.90"
+    assert rows[2]["total_label"] == "18.90 DC"
 
 
 def test_per_category_uses_every_visible_receipt() -> None:
@@ -74,10 +74,10 @@ def test_per_category_uses_every_visible_receipt() -> None:
         "How much did I spend per category?",
         receipts,
     )
-    assert "$21.20 on food" in text
-    assert "$9.20 on drinks" in text
-    assert "$16.10 on household" in text
-    assert "$8.00 on snacks" in text
+    assert "21.20 DC on food" in text
+    assert "9.20 DC on drinks" in text
+    assert "16.10 DC on household" in text
+    assert "8.00 DC on snacks" in text
     assert source == "Across your 3 receipts"
 
 
@@ -89,7 +89,7 @@ def test_august_snacks_names_the_receipts_in_the_list() -> None:
         current=receipt_payload(),
     )
     assert text == (
-        "You spent $6.70 on snacks in August "
+        "You spent 6.70 DC on snacks in August "
         "(Corner Bakery and Green Basket Market)."
     )
     assert source == "Across your 4 receipts"
@@ -104,7 +104,7 @@ def test_this_receipt_snacks_uses_the_review_card() -> None:
         current=receipt_payload(),
     )
     assert text == (
-        "You spent $3.20 on snacks on this receipt (1 item: Butter croissants)."
+        "You spent 3.20 DC on snacks on this receipt (1 item: Butter croissants)."
     )
     assert source == "From Green Basket Market, Aug 15"
 
@@ -120,7 +120,7 @@ def test_most_expensive_item_on_the_open_sample() -> None:
         receipts,
         current=receipt_payload(),
     )
-    assert text == "The most expensive item was Sourdough loaf, $3.80."
+    assert text == "The most expensive item was Sourdough loaf, 3.80 DC."
     assert source == "From Green Basket Market, Aug 15"
     assert "Kitchen sponge" not in text
 
@@ -131,7 +131,7 @@ def test_least_expensive_item_on_the_open_sample() -> None:
         _seed_receipts() + [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "The least expensive item was Bananas, $1.20."
+    assert text == "The least expensive item was Bananas, 1.20 DC."
     assert source == "From Green Basket Market, Aug 15"
 
 
@@ -141,7 +141,7 @@ def test_cheapest_matches_the_least_expensive_item() -> None:
         [receipt_payload()],
         current=receipt_payload(),
     )
-    assert "Bananas, $1.20" in text
+    assert "Bananas, 1.20 DC" in text
 
 
 def test_most_expensive_across_seeds_when_nothing_is_open() -> None:
@@ -149,7 +149,7 @@ def test_most_expensive_across_seeds_when_nothing_is_open() -> None:
         "What was the most expensive item?",
         _seed_receipts(),
     )
-    assert text == "The most expensive item was Kitchen sponge set, $6.00."
+    assert text == "The most expensive item was Kitchen sponge set, 6.00 DC."
     assert source == "Across your 3 receipts"
 
 
@@ -159,7 +159,7 @@ def test_most_expensive_in_a_month_uses_every_receipt_that_month() -> None:
         _seed_receipts() + [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "The most expensive item was Yogurt cups, $5.60."
+    assert text == "The most expensive item was Yogurt cups, 5.60 DC."
 
 
 def test_most_expensive_across_all_receipts_when_asked() -> None:
@@ -168,7 +168,7 @@ def test_most_expensive_across_all_receipts_when_asked() -> None:
         _seed_receipts() + [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "The most expensive item was Kitchen sponge set, $6.00."
+    assert text == "The most expensive item was Kitchen sponge set, 6.00 DC."
 
 
 def test_tied_most_expensive_items_are_both_named() -> None:
@@ -186,7 +186,7 @@ def test_tied_most_expensive_items_are_both_named() -> None:
         [receipt],
         current=receipt,
     )
-    assert text == "The most expensive items were Pears, $4.00 and Plums, $4.00."
+    assert text == "The most expensive items were Pears, 4.00 DC and Plums, 4.00 DC."
 
 
 def test_named_item_cost_on_the_sample() -> None:
@@ -195,7 +195,7 @@ def test_named_item_cost_on_the_sample() -> None:
         [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "Sourdough loaf cost $3.80."
+    assert text == "Sourdough loaf cost 3.80 DC."
     assert source == "From Green Basket Market, Aug 15"
 
 
@@ -205,7 +205,7 @@ def test_named_item_on_this_receipt_stays_on_that_receipt() -> None:
         _seed_receipts() + [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "Sourdough loaf cost $3.80."
+    assert text == "Sourdough loaf cost 3.80 DC."
     assert source == "From Green Basket Market, Aug 15"
 
 
@@ -216,7 +216,7 @@ def test_named_item_lists_each_price() -> None:
         current=receipt_payload(),
     )
     assert text == (
-        "Sparkling water cost $2.70 at Harbor Home and $1.50 at Green Basket Market."
+        "Sparkling water cost 2.70 DC at Harbor Home and 1.50 DC at Green Basket Market."
     )
 
 
@@ -226,7 +226,7 @@ def test_named_item_matches_without_a_pack_size() -> None:
         [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "Whole milk 1L cost $1.80."
+    assert text == "Whole milk 1L cost 1.80 DC."
 
 
 def test_unknown_item_does_not_become_the_total() -> None:
@@ -249,7 +249,7 @@ def test_unknown_item_does_not_become_the_total() -> None:
 )
 def test_spend_wording_stays_a_total(question: str) -> None:
     text, _source = answer_visible_question(question, _seed_receipts())
-    assert text == "You spent $18.90 in August."
+    assert text == "You spent 18.90 DC in August."
     assert "couldn't find that item" not in text.lower()
 
 
@@ -263,12 +263,12 @@ def test_spend_wording_stays_a_total(question: str) -> None:
 )
 def test_pay_or_spend_for_a_named_item(question: str) -> None:
     text, _source = answer_visible_question(question, _seed_receipts())
-    assert text == "Sourdough loaf cost $3.80."
+    assert text == "Sourdough loaf cost 3.80 DC."
 
 
 def test_spend_total_is_not_an_item_lookup() -> None:
     text, source = answer_visible_question("How much did I spend?", _seed_receipts())
-    assert text == "You spent $54.50."
+    assert text == "You spent 54.50 DC."
     assert source == "Across your 3 receipts"
 
 
@@ -277,4 +277,25 @@ def test_how_much_for_a_category_stays_a_category_total() -> None:
         "How much for snacks in August?",
         _seed_receipts(),
     )
-    assert text == "You spent $3.50 on snacks in August (Corner Bakery)."
+    assert text == "You spent 3.50 DC on snacks in August (Corner Bakery)."
+
+
+def test_case_view_counts_the_august_snack_lines() -> None:
+    from app.receipt_answers import case_view
+
+    seeds = case_view("How much did I spend on snacks in August?", _seed_receipts())
+    assert seeds is not None
+    assert seeds.amount == 3.50
+    assert seeds.line_count == 1
+    assert seeds.cited == ["Granola bar pack"]
+    assert seeds.categories[0]["name"] == "snacks"
+
+    both = case_view(
+        "How much did I spend on snacks in August?",
+        _seed_receipts() + [receipt_payload()],
+        current=receipt_payload(),
+    )
+    assert both is not None
+    assert both.amount == 6.70
+    assert both.line_count == 2
+    assert both.cited == ["Granola bar pack", "Butter croissants"]

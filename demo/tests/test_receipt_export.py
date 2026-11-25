@@ -358,16 +358,23 @@ def test_export_skips_another_sessions_live_import(
 
 
 def test_page_renders_download_buttons(client) -> None:
-    html = client.get("/").text
+    html = client.post(
+        "/ask",
+        data={"question": "How much did I spend on snacks in August?"},
+    ).text
     block = html.split('id="your-receipts"', 1)[1].split("</section>", 1)[0]
     assert 'class="btn" href="export/receipts.xlsx"' in block
     assert 'class="btn-secondary" href="export/receipts.csv"' in block
-    assert block.index("Download Excel") < block.index("Download CSV (for Sheets)")
+    assert "Download as spreadsheet" in block
+    assert block.index("Download as spreadsheet") < block.index("Download CSV")
 
 
 def test_download_buttons_follow_public_url_prefix(client, monkeypatch) -> None:
     monkeypatch.setattr(main, "ROOT_PATH", "/app")
-    html = client.get("/").text
+    html = client.post(
+        "/ask",
+        data={"question": "How much did I spend on snacks in August?"},
+    ).text
     block = html.split('id="your-receipts"', 1)[1]
     assert 'class="btn" href="/app/export/receipts.xlsx"' in block
     assert 'class="btn-secondary" href="/app/export/receipts.csv"' in block
@@ -377,7 +384,7 @@ def test_download_buttons_hidden_without_receipts(client, monkeypatch, tmp_path:
     monkeypatch.setattr(main, "SEED_DIR", tmp_path / "no-seeds")
     html = client.get("/").text
     assert "No receipts loaded yet." in html
-    assert "Download Excel" not in html
+    assert "Download as spreadsheet" not in html
     assert "Download CSV" not in html
     assert _csv_rows(client.get("/export/receipts.csv").content) == [HEADER]
 

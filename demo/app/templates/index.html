@@ -1,42 +1,47 @@
 {% extends "base.html" %}
-{% block title %}Receipt Intelligence demo{% endblock %}
+{% block title %}Where did August go?{% endblock %}
 {% block content %}
-<h1>Try the demo</h1>
-<p class="lede">Use the sample receipt, review the fields, and ask a question.</p>
-
-{% if not api_ok %}
-<p class="status bad">API unavailable</p>
-{% if api_error %}
-<div class="banner err">{{ api_error }}</div>
-{% endif %}
-{% endif %}
+<h1>Where did August go?</h1>
+<p class="lede">Corner Studio is a fictional studio of five people. They want to know how much of August went to snacks. Every figure on this page is sample data, in demo currency (DC), not real money.</p>
 
 {% if not examples %}
 <div class="banner warn">
-  No example receipts found. Seed the shared volume with
+  No receipts loaded yet. Seed the shared volume with
   <code>./deploy/seed-demo-data.sh</code>, then refresh.
 </div>
 {% endif %}
 
-<ol class="flow-nav" id="flow-nav" aria-label="Demo steps">
+<ol class="flow-nav" id="flow-nav" aria-label="Case steps">
   <li class="{% if flow_step == 1 %}is-current{% elif flow_step > 1 %}is-done{% endif %}">
-    <span class="flow-num">1</span> Add receipt
+    <span class="flow-num">1</span> August receipts
   </li>
   <li class="{% if flow_step == 2 %}is-current{% elif flow_step > 2 %}is-done{% endif %}">
-    <span class="flow-num">2</span> Review fields
+    <span class="flow-num">2</span> Read
   </li>
   <li class="{% if flow_step == 3 %}is-current{% endif %}">
-    <span class="flow-num">3</span> Ask a question
+    <span class="flow-num">3</span> Ask
   </li>
 </ol>
 
 <div class="flow">
-{% include "panels/live_ingest.html" %}
+{% include "panels/august_receipts.html" %}
 {% include "panels/review.html" %}
 {% include "panels/ask.html" %}
+{% if answer and answer.answer %}
+{% include "panels/end_card.html" %}
+{% endif %}
 </div>
 <script>
   (function () {
+    function reduced() {
+      if (window.DemoKit && DemoKit.reducedMotion) return DemoKit.reducedMotion();
+      try {
+        return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      } catch (err) {
+        return false;
+      }
+    }
+
     function setBusy(btn, wait, busy) {
       if (btn) {
         btn.disabled = busy;
@@ -49,8 +54,10 @@
     }
 
     function setReading(busy) {
+      const review = document.getElementById("review");
       const reading = document.getElementById("reading-state");
       const reviewBody = document.getElementById("review-body");
+      if (review && busy) review.hidden = false;
       if (reading) reading.hidden = !busy;
       if (reviewBody) reviewBody.hidden = busy;
     }
@@ -86,21 +93,83 @@
       rememberVisitorPlace();
     }
 
-    function swapAsk(doc) {
+    function paintLiveTime(root, kind, seconds) {
+      const scope = root || document;
+      scope.querySelectorAll('[data-live-time="' + kind + '"]').forEach(function (el) {
+        if (kind === "read") {
+          const items = Number(el.getAttribute("data-items") || "0");
+          const noun = items === 1 ? "item" : "items";
+          el.textContent = items + " " + noun + " · " + seconds.toFixed(1) + "s";
+          return;
+        }
+        el.textContent = "Answered in " + seconds.toFixed(1) + "s";
+      });
+    }
+
+    function countMoney(root) {
+      const scope = root || document;
+      scope.querySelectorAll("[data-count-money]").forEach(function (el) {
+        const target = Number(el.getAttribute("data-count-money"));
+        if (!isFinite(target)) return;
+        const finalText = target.toFixed(2) + " DC";
+        if (reduced()) {
+          el.textContent = finalText;
+          return;
+        }
+        const start = performance.now();
+        const ms = 800;
+        function frame(now) {
+          const t = Math.min(1, (now - start) / ms);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = (target * eased).toFixed(2) + " DC";
+          if (t < 1) window.requestAnimationFrame(frame);
+          else el.textContent = finalText;
+        }
+        window.requestAnimationFrame(frame);
+      });
+    }
+
+    function highlightCited(root) {
+      if (!window.DemoKit || reduced()) return;
+      const scope = root || document;
+      scope.querySelectorAll(".dk-source").forEach(function (el) {
+        DemoKit.highlight(el);
+      });
+    }
+
+    function scrollToTarget(root) {
+      const main = root && root.querySelector ? root : document.querySelector("main");
+      if (!main) return;
+      const id = main.getAttribute("data-scroll");
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      target.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
+    }
+
+    function swapAsk(doc, seconds) {
       const nextAnswer = doc.getElementById("ask-answer");
       const currentAnswer = document.getElementById("ask-answer");
       const nextQuestion = doc.getElementById("question");
       const question = document.getElementById("question");
-      if (nextAnswer && currentAnswer) {
-        currentAnswer.replaceWith(nextAnswer);
-      }
-      if (question && nextQuestion) {
-        question.value = nextQuestion.value;
+      if (nextAnswer && currentAnswer) currentAnswer.replaceWith(nextAnswer);
+      if (question && nextQuestion) question.value = nextQuestion.value;
+      const nextEnd = doc.getElementById("end-card");
+      const currentEnd = document.getElementById("end-card");
+      if (nextEnd) {
+        if (currentEnd) currentEnd.replaceWith(nextEnd);
+        else {
+          const flow = document.querySelector(".flow");
+          if (flow) flow.appendChild(nextEnd);
+        }
       }
       document.querySelectorAll(".ask-chip").forEach(function (chip) {
         const active = question && chip.getAttribute("data-question") === question.value;
         chip.classList.toggle("is-active", Boolean(active));
       });
+      paintLiveTime(document, "answer", seconds);
+      countMoney(document.getElementById("ask-answer"));
+      highlightCited(document.getElementById("ask-answer"));
       markAskStep();
     }
 
@@ -108,7 +177,6 @@
       const question = document.getElementById("question");
       if (!question) return;
       question.value = text;
-      question.focus();
       document.querySelectorAll(".ask-chip").forEach(function (chip) {
         chip.classList.toggle("is-active", chip.getAttribute("data-question") === text);
       });
@@ -125,10 +193,10 @@
         const btn = document.getElementById(btnId);
         const wait = document.getElementById(waitId);
         const extracting = formId === "sample-form" || formId === "ingest-form";
+        const started = performance.now();
         if (extracting) rememberVisitorPlace();
         setBusy(btn, wait, true);
         if (extracting) setReading(true);
-        const y = window.scrollY;
         try {
           const response = await fetch(form.action, {
             method: "POST",
@@ -138,10 +206,12 @@
           });
           const html = await response.text();
           const doc = new DOMParser().parseFromString(html, "text/html");
+          const seconds = (performance.now() - started) / 1000;
           if (formId === "ask-form") {
-            swapAsk(doc);
+            swapAsk(doc, seconds);
             setBusy(btn, wait, false);
-            window.scrollTo(0, y);
+            const answer = document.getElementById("ask-answer");
+            if (answer) answer.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
             return;
           }
           const nextMain = doc.querySelector("main");
@@ -151,9 +221,19 @@
             form.submit();
             return;
           }
-          currentMain.replaceWith(nextMain);
-          window.initDemo();
-          window.scrollTo(0, y);
+          const apply = function () {
+            currentMain.replaceWith(nextMain);
+            paintLiveTime(document, "read", seconds);
+            window.initDemo();
+            countMoney(document);
+            highlightCited(document);
+            scrollToTarget(nextMain);
+          };
+          if (!reduced() && document.startViewTransition) {
+            document.startViewTransition(apply);
+          } else {
+            apply();
+          }
         } catch (err) {
           setBusy(btn, wait, false);
           if (extracting) setReading(false);
@@ -164,24 +244,14 @@
     }
 
     function bindAskShortcuts() {
-      const askForm = document.getElementById("ask-form");
-      const question = document.getElementById("question");
-      if (askForm && question) {
-        question.addEventListener("input", rememberVisitorPlace);
-        question.addEventListener("keydown", function (event) {
-          if (event.key !== "Enter" || event.shiftKey) return;
-          event.preventDefault();
-          if (typeof askForm.requestSubmit === "function") {
-            askForm.requestSubmit();
-          } else {
-            askForm.submit();
-          }
-        });
-      }
       document.querySelectorAll(".ask-chip").forEach(function (chip) {
         chip.addEventListener("click", function () {
           if (chip.disabled) return;
           fillAskQuestion(chip.getAttribute("data-question") || "");
+          const form = document.getElementById("ask-form");
+          if (!form) return;
+          if (typeof form.requestSubmit === "function") form.requestSubmit();
+          else form.submit();
         });
       });
     }
@@ -194,6 +264,7 @@
     };
 
     window.initDemo();
+    countMoney(document);
   })();
 </script>
 {% endblock %}

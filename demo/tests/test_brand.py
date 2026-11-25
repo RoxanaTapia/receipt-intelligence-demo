@@ -27,7 +27,7 @@ def test_header_uses_the_wordmark_product_and_footer(client) -> None:
     assert "RoxanaTapia" in html
     assert 'class="dk-wordmark-dev">.dev' in html
     assert 'class="dk-product">Receipt Intelligence' in html
-    assert "Portfolio demo · fictional business · sample data" in html
+    assert "Portfolio demo · fictional shops · demo currency (DC)" in html
     assert 'id="demo-exit" href="/invite/exit"' in html
     assert "Exit demo" in html
     assert "Log out" in html
