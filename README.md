@@ -6,7 +6,7 @@
 
 ## Results
 
-The demo app in this repository has 97 automated tests. GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and checks that the vendored demo kit still matches its checksum. The tests cover the visitor demo only.
+The demo app in this repository has 117 automated tests. GitHub Actions runs them on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and checks that the vendored demo kit still matches its checksum. The tests cover the visitor demo only.
 
 ## What works now
 
