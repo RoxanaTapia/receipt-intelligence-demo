@@ -386,7 +386,8 @@ def test_second_sample_extract_keeps_question_and_step(client, fake_n8n) -> None
             "flow_step": "3",
         },
     ).text
-    assert len(fake_n8n.calls) == 2
+    # The sample is already saved for this browser, so the reader is not called again.
+    assert len(fake_n8n.calls) == 1
     assert 'value="What was the most expensive item?"' in html
     assert _step_class(html, 1) == "is-done"
     assert _step_class(html, 2) == "is-done"

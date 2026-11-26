@@ -25,12 +25,14 @@ from app.questions import prepare_question
 from app.receipt_answers import case_view, catalog_payloads
 from app.receipt_export import LineRow, line_rows, render_csv, render_xlsx
 from app.sample import SAMPLE_FILENAME, SAMPLE_ID, sample_pdf_path, validate_demo_sample
+from app.sample_receipt import MERCHANT as SAMPLE_MERCHANT
 from app.session import (
     apply_session_cookies,
     forget_import,
     owned_filenames,
     session_id,
 )
+from app.usage import LIMIT_MESSAGE, allow_model_question, allow_sample_read
 
 # Browsers accept these from the kit's @font-face rules.
 mimetypes.add_type("font/woff2", ".woff2", strict=True)
@@ -138,6 +140,31 @@ def _load_persisted_receipt(filename: str) -> dict[str, Any] | None:
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, dict) else None
+
+
+def _saved_sample(request: Request) -> tuple[dict[str, Any], str] | None:
+    """Sample already stored for this browser, when the file is still on disk.
+
+    A second tap can show that copy. The ingest workflow does not run again.
+    """
+    newest: tuple[float, str, dict[str, Any]] | None = None
+    for name in owned_filenames(request):
+        path = RECEIPT_DATA_PATH / name
+        try:
+            receipt = _load_persisted_receipt(name)
+            mtime = path.stat().st_mtime
+        except (OSError, json.JSONDecodeError):
+            continue
+        if receipt is None:
+            continue
+        merchant = str(receipt.get("merchant") or "").strip()
+        if merchant != SAMPLE_MERCHANT:
+            continue
+        if newest is None or mtime >= newest[0]:
+            newest = (mtime, name, receipt)
+    if newest is None:
+        return None
+    return newest[2], newest[1]
 
 
 def _visible_receipts(request: Request) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
@@ -368,13 +395,39 @@ def ingest_sample(
 ) -> HTMLResponse:
     """One-click extract of the vendored allowlisted sample (no upload)."""
     window_start, window_end = _parse_window(start or None, end or None)
+    kept_question = question.strip()
+    kept_step = parse_posted_step(flow_step)
+    saved = _saved_sample(request)
+    if saved is not None:
+        receipt, filename = saved
+        return _page(
+            request,
+            example=example or None,
+            question=kept_question,
+            live_receipt=receipt,
+            live_meta={"ok": True, "persistedFilename": filename},
+            ingest_ok=True,
+            window_start=window_start,
+            window_end=window_end,
+            preserve_step=kept_step,
+        )
+    if not allow_sample_read(request):
+        return _page(
+            request,
+            example=example or None,
+            question=kept_question,
+            live_error=LIMIT_MESSAGE,
+            window_start=window_start,
+            window_end=window_end,
+            preserve_step=kept_step,
+        )
     return _extract_sample_page(
         request,
         example=example or None,
         window_start=window_start,
         window_end=window_end,
-        question=question.strip(),
-        preserve_step=parse_posted_step(flow_step),
+        question=kept_question,
+        preserve_step=kept_step,
     )
 
 
@@ -409,21 +462,25 @@ def ask(
                 "Try a suggested question, or a category (food, drinks, snacks…)."
             )
         else:
-            try:
-                routed_question = prepare_question(
-                    cleaned,
-                    window_start=window_start,
-                    window_end=window_end,
-                )
-                raw = api.ask(
-                    routed_question,
-                    start_date=window_start,
-                    end_date=window_end,
-                )
-                text = present_answer_text(str(raw.get("answer") or ""))
-                answer = {**raw, "answer": text} if text else raw
-            except ApiError as exc:
-                qa_error = str(exc)
+            # The only call to the API /questions endpoint (two model calls).
+            if allow_model_question(request):
+                try:
+                    routed_question = prepare_question(
+                        cleaned,
+                        window_start=window_start,
+                        window_end=window_end,
+                    )
+                    raw = api.ask(
+                        routed_question,
+                        start_date=window_start,
+                        end_date=window_end,
+                    )
+                    text = present_answer_text(str(raw.get("answer") or ""))
+                    answer = {**raw, "answer": text} if text else raw
+                except ApiError as exc:
+                    qa_error = str(exc)
+            else:
+                qa_error = LIMIT_MESSAGE
 
     elapsed = time.monotonic() - started
     # An empty question is a validation note, not an answer we timed.
