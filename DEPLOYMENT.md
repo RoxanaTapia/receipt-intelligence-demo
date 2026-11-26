@@ -81,6 +81,32 @@ N8N_BASIC_AUTH_ACTIVE=false
 
 Each path below adds its hostnames. Use your own.
 
+### Demo usage limits
+
+Common questions are answered from the receipts on the page. Those answers are not limited.
+
+Two kinds of work call a model, so they are limited:
+
+- A question the page cannot answer from those receipts. That question is sent on, and it makes two model calls.
+- A new read of the sample receipt.
+
+Each visitor can do a few of these in any 60 minutes. The whole demo can do a larger number in one calendar day (UTC). The counts are kept in a small file beside the receipt JSON (`data/receipts/.demo-usage.sqlite`), so a restart does not clear the day.
+
+Visitors are told apart by the address the reverse proxy sends in `X-Forwarded-For`. Caddy already sets this. The useful address is the last one in that header, which is the visitor the proxy accepted. If the header is missing, the browser session is used instead.
+
+A sample receipt already saved for that browser is shown again without a new read, and it does not count.
+
+When a limit is reached, the page says: "This demo has reached its limit for now. Please try again later, or book a short call and I'll walk you through it."
+
+Leave the settings unset to use the defaults. Set them in `.env` when you want different numbers, then recreate the `ux` service.
+
+| Setting | Default | What it limits |
+|---------|---------|----------------|
+| `DEMO_VISITOR_AI_QUESTIONS_PER_HOUR` | 8 | Model questions for one visitor in any 60 minutes |
+| `DEMO_VISITOR_SAMPLE_READS_PER_HOUR` | 4 | Sample reads for one visitor in any 60 minutes |
+| `DEMO_AI_QUESTIONS_PER_DAY` | 60 | Model questions for every visitor in a UTC day |
+| `DEMO_SAMPLE_READS_PER_DAY` | 40 | Sample reads for every visitor in a UTC day |
+
 ---
 
 ## 🔗 Behind an existing reverse proxy
