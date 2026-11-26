@@ -27,11 +27,18 @@ def new_session_id() -> str:
 
 
 def session_id(request: Request) -> str:
-    """Return the inbound session id, or mint one when the cookie is missing."""
+    """Return this request's session id, minting one when the cookie is missing.
+
+    The usage limit and the page both need the same id. A missing cookie
+    is minted once and reused for the rest of this request.
+    """
+    cached = getattr(request.state, "demo_session_id", "")
+    if isinstance(cached, str) and _SAFE_SESSION.match(cached):
+        return cached
     raw = (request.cookies.get(SESSION_COOKIE) or "").strip()
-    if _SAFE_SESSION.match(raw):
-        return raw
-    return new_session_id()
+    sid = raw if _SAFE_SESSION.match(raw) else new_session_id()
+    request.state.demo_session_id = sid
+    return sid
 
 
 def owned_filenames(request: Request) -> set[str]:

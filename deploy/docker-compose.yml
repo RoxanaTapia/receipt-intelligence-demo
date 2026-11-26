@@ -85,6 +85,11 @@ services:
       SAMPLES_DIR: /app/samples
       DEMO_START_DATE: ${DEMO_START_DATE:-2026-07-01}
       DEMO_END_DATE: ${DEMO_END_DATE:-2026-08-31}
+      # Hourly per visitor, and daily for the whole demo. Blank in .env uses these.
+      DEMO_VISITOR_AI_QUESTIONS_PER_HOUR: ${DEMO_VISITOR_AI_QUESTIONS_PER_HOUR:-8}
+      DEMO_VISITOR_SAMPLE_READS_PER_HOUR: ${DEMO_VISITOR_SAMPLE_READS_PER_HOUR:-4}
+      DEMO_AI_QUESTIONS_PER_DAY: ${DEMO_AI_QUESTIONS_PER_DAY:-60}
+      DEMO_SAMPLE_READS_PER_DAY: ${DEMO_SAMPLE_READS_PER_DAY:-40}
       # Empty when Caddy (or ai-doc) strips /app via handle_path.
       ROOT_PATH: ${UX_ROOT_PATH:-}
       # Internal Compose DNS — not a public browser URL. Workflow must be Active.
