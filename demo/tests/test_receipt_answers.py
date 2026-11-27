@@ -53,16 +53,16 @@ def test_list_rows_mark_live_imports_just_added() -> None:
     live = [_Item(receipt_payload(), "live.json")]
     rows = receipt_list_rows(seeds, live)
     assert [row["merchant"] for row in rows] == [
+        "Corner Bakery",
         "Lumen Pantry",
         "Harbor Home",
-        "Corner Bakery",
         "Green Basket Market",
     ]
     assert [row["just_added"] for row in rows] == [False, False, False, True]
     assert rows[-1]["date_label"] == "Aug 15"
     assert rows[-1]["total_label"] == "25.00 DC"
-    assert rows[2]["merchant"] == "Corner Bakery"
-    assert rows[2]["total_label"] == "18.90 DC"
+    corner = next(row for row in rows if row["merchant"] == "Corner Bakery")
+    assert corner["total_label"] == "18.90 DC"
 
 
 def test_per_category_uses_every_visible_receipt() -> None:
@@ -89,8 +89,8 @@ def test_august_snacks_names_the_receipts_in_the_list() -> None:
         current=receipt_payload(),
     )
     assert text == (
-        "You spent 6.70 DC on snacks in August "
-        "(Corner Bakery and Green Basket Market)."
+        "You spent 11.20 DC on snacks in August "
+        "(Corner Bakery, Lumen Pantry, and Green Basket Market)."
     )
     assert source == "Across your 4 receipts"
     assert "16.70" not in text
@@ -159,7 +159,7 @@ def test_most_expensive_in_a_month_uses_every_receipt_that_month() -> None:
         _seed_receipts() + [receipt_payload()],
         current=receipt_payload(),
     )
-    assert text == "The most expensive item was Yogurt cups, 5.60 DC."
+    assert text == "The most expensive item was Kitchen sponge set, 6.00 DC."
 
 
 def test_most_expensive_across_all_receipts_when_asked() -> None:
@@ -249,7 +249,7 @@ def test_unknown_item_does_not_become_the_total() -> None:
 )
 def test_spend_wording_stays_a_total(question: str) -> None:
     text, _source = answer_visible_question(question, _seed_receipts())
-    assert text == "You spent 18.90 DC in August."
+    assert text == "You spent 54.50 DC in August."
     assert "couldn't find that item" not in text.lower()
 
 
@@ -277,7 +277,9 @@ def test_how_much_for_a_category_stays_a_category_total() -> None:
         "How much for snacks in August?",
         _seed_receipts(),
     )
-    assert text == "You spent 3.50 DC on snacks in August (Corner Bakery)."
+    assert text == (
+        "You spent 8.00 DC on snacks in August (Corner Bakery and Lumen Pantry)."
+    )
 
 
 def test_case_view_counts_the_august_snack_lines() -> None:
@@ -285,9 +287,9 @@ def test_case_view_counts_the_august_snack_lines() -> None:
 
     seeds = case_view("How much did I spend on snacks in August?", _seed_receipts())
     assert seeds is not None
-    assert seeds.amount == 3.50
-    assert seeds.line_count == 1
-    assert seeds.cited == ["Granola bar pack"]
+    assert seeds.amount == 8.00
+    assert seeds.line_count == 2
+    assert seeds.cited == ["Granola bar pack", "Mixed nuts"]
     assert seeds.categories[0]["name"] == "snacks"
 
     both = case_view(
@@ -296,6 +298,6 @@ def test_case_view_counts_the_august_snack_lines() -> None:
         current=receipt_payload(),
     )
     assert both is not None
-    assert both.amount == 6.70
-    assert both.line_count == 2
-    assert both.cited == ["Granola bar pack", "Butter croissants"]
+    assert both.amount == 11.20
+    assert both.line_count == 3
+    assert both.cited == ["Granola bar pack", "Mixed nuts", "Butter croissants"]

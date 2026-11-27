@@ -93,16 +93,20 @@ def test_csv_matches_seed_receipts_and_starts_with_bom(client) -> None:
     assert "$" not in text
     assert "DC" not in text
     assert rows[1] == [
-        "2026-07-12",
-        "Lumen Pantry",
-        "Oat milk",
+        "2026-08-01",
+        "Corner Bakery",
+        "Apples",
         "1",
-        "Drinks",
-        "2.40",
-        "2.40",
-        "14.20",
-        "2026-07-12_lumen-pantry_aaaaaaaa.json",
+        "Food",
+        "3.20",
+        "3.20",
+        "18.90",
+        "2026-08-01_corner-bakery_cccccccc.json",
     ]
+    oat = next(row for row in rows if row[2] == "Oat milk")
+    assert oat[0] == "2026-08-12"
+    assert oat[1] == "Lumen Pantry"
+    assert oat[8] == "2026-08-12_lumen-pantry_aaaaaaaa.json"
     pasta = next(row for row in rows if row[2] == "Pasta shells")
     assert pasta[3] == "2"
     assert pasta[4] == "Food"
@@ -233,18 +237,31 @@ def test_xlsx_sheet_matches_seed_receipts(client) -> None:
     assert sheet.max_row == 1 + _seed_line_count()
     assert isinstance(sheet["A2"].value, date)
     assert sheet["A2"].value.year == 2026
-    assert sheet["A2"].value.month == 7
-    assert sheet["A2"].value.day == 12
+    assert sheet["A2"].value.month == 8
+    assert sheet["A2"].value.day == 1
+    assert sheet["B2"].value == "Corner Bakery"
+    assert sheet["C2"].value == "Apples"
     assert sheet["D2"].value == 1
     assert isinstance(sheet["D2"].value, (int, float))
-    assert sheet["E2"].value == "Drinks"
-    assert sheet["F2"].value == 2.4
+    assert sheet["E2"].value == "Food"
+    assert sheet["F2"].value == 3.2
     assert isinstance(sheet["F2"].value, (int, float))
     assert sheet["F2"].number_format == "0.00"
-    assert sheet["G2"].value == 2.4
+    assert sheet["G2"].value == 3.2
     assert sheet["G2"].number_format == "0.00"
-    assert sheet["H2"].value == 14.2
+    assert sheet["H2"].value == 18.9
     assert sheet["H2"].number_format == "0.00"
+    oat = next(
+        row
+        for row in sheet.iter_rows(min_row=2, values_only=True)
+        if row[2] == "Oat milk"
+    )
+    assert oat[0].month == 8
+    assert oat[0].day == 12
+    assert oat[1] == "Lumen Pantry"
+    assert oat[4] == "Drinks"
+    assert oat[5] == 2.4
+    assert oat[7] == 14.2
     for data_row in sheet.iter_rows(min_row=2):
         assert isinstance(data_row[3].value, (int, float))
         for column in (5, 6, 7):

@@ -139,6 +139,18 @@
   text-transform: capitalize;
 }
 
+.cited-note,
+.read-done {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.read-done {
+  font-size: 16px;
+  font-weight: 650;
+}
+
 .cited-lines {
   margin: 8px 0 0;
   padding: 0;
@@ -194,5 +206,19 @@ tr.dk-source td {
     overflow: visible;
     font-size: 0.95rem;
     text-overflow: clip;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-line,
+  .spinner,
+  .skeleton-row,
+  .is-fresh .line-in {
+    animation: none;
+  }
+
+  .is-fresh .line-in {
+    opacity: 1;
+    transform: none;
   }
 }

@@ -1,17 +1,17 @@
 [
   {
-    "id": "lumen-2026-07-12",
-    "file": "2026-07-12_lumen-pantry_aaaaaaaa.json",
-    "label": "Lumen Pantry — 12 Jul 2026"
+    "id": "lumen-2026-08-12",
+    "file": "2026-08-12_lumen-pantry_aaaaaaaa.json",
+    "label": "Lumen Pantry, 12 Aug 2026"
   },
   {
-    "id": "harbor-2026-07-20",
-    "file": "2026-07-20_harbor-home_bbbbbbbb.json",
-    "label": "Harbor Home — 20 Jul 2026"
+    "id": "harbor-2026-08-20",
+    "file": "2026-08-20_harbor-home_bbbbbbbb.json",
+    "label": "Harbor Home, 20 Aug 2026"
   },
   {
     "id": "corner-2026-08-01",
     "file": "2026-08-01_corner-bakery_cccccccc.json",
-    "label": "Corner Bakery — 1 Aug 2026"
+    "label": "Corner Bakery, 1 Aug 2026"
   }
 ]

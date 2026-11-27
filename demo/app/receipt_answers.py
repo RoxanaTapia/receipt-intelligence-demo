@@ -55,6 +55,13 @@ _SPEND_TOTAL = re.compile(
     r"\b(?:my total|total|paid|pay|spent|spend)\b",
     re.IGNORECASE,
 )
+# "How much did I spend at Pine Market?" The shop name closes the question.
+_AT_PLACE = re.compile(
+    r"\bat\s+(?:the\s+)?"
+    r"([A-Za-z0-9][A-Za-z0-9'&.-]*(?:\s+[A-Za-z0-9][A-Za-z0-9'&.-]*){0,5})"
+    r"\s*\??\s*$",
+    re.IGNORECASE,
+)
 
 
 def short_date(value: str) -> str:
@@ -108,6 +115,7 @@ class CaseView:
     line_count: int = 0
     categories: list[dict[str, Any]] = field(default_factory=list)
     cited: list[str] = field(default_factory=list)
+    cited_note: str = ""
 
 
 def answer_visible_question(
@@ -138,16 +146,32 @@ def case_view(
         if month_name
         else scoped
     )
+    place = _named_place(question)
+    if place:
+        matched = [
+            receipt
+            for receipt in in_month
+            if merchant_name(receipt).casefold() == place.casefold()
+        ]
+        if not matched:
+            return CaseView(
+                text=f"{place} is not in the receipts.",
+                source=_source_line(in_month or receipts, receipts, False),
+            )
+        in_month = matched
+        single = True
 
     if _is_per_category(question):
         rows, count, amount = _category_rows(in_month)
+        cited = _top_line_per_category(in_month)
         return CaseView(
             text=_per_category_answer(in_month, month_name),
             source=_source_line(in_month, receipts, single),
             amount=amount if count else None,
             line_count=count,
             categories=rows,
-            cited=_top_line_per_category(in_month),
+            cited=cited,
+            cited_note="Top item in each category." if cited else "",
         )
 
     rank = _item_rank(question)
@@ -645,6 +669,15 @@ def _is_per_category(question: str) -> bool:
 def _is_total_question(question: str) -> bool:
     q = question.lower()
     return "how much" in q and _named_category(question) is None
+
+
+def _named_place(question: str) -> str | None:
+    """Return the shop a question names at the end, if it names one."""
+    match = _AT_PLACE.search(question.strip())
+    if match is None:
+        return None
+    place = match.group(1).strip()
+    return place or None
 
 
 def _month_matches(receipt: dict[str, Any], month_name: str) -> bool:

@@ -147,7 +147,10 @@ def test_ask_drinks_in_august_uses_seed_corner_bakery(client, fake_api) -> None:
     )
     assert fake_api.questions == []
     html = response.text
-    assert "4.10 DC on drinks in August (Corner Bakery)." in html
+    assert (
+        "9.20 DC on drinks in August "
+        "(Lumen Pantry, Harbor Home, and Corner Bakery)."
+    ) in html
     assert "Across your 3 receipts" in html
 
 
@@ -163,8 +166,10 @@ def test_ingest_sample_one_click(client, fake_n8n, sample_id) -> None:
     assert "Extracted" not in html
     assert "10 items ·" in html
     assert "Sample added" not in html
-    assert 'id="sample-btn" class="btn-secondary"' in html
-    assert "Reading this receipt…" in html
+    assert 'id="sample-btn"' not in html
+    assert "Receipt read" in html
+    assert ">Read<" in html
+    assert html.count("Reading this receipt…") == 1
     assert "already in the corpus" not in html
     assert 'data-scroll="live-ingest"' in html
     assert html.count('class="receipt-heading"') == 0
@@ -174,7 +179,7 @@ def test_ingest_sample_one_click(client, fake_n8n, sample_id) -> None:
     assert "15 Aug 2026" in html
     review = html.split('id="review"', 1)[1].split("</section>", 1)[0]
     assert "2026-08-15" not in review
-    assert "Just added" in html
+    assert "Just added" not in html
     assert "is-added" in html
     assert "Lumen Pantry" in html
     assert "Remove live import" not in html
@@ -249,7 +254,8 @@ def test_ask_after_extract_matches_visible_list(
     assert "Across your 4 receipts" in html
     assert "5.10 DC" not in html
     assert "DC demo data" not in html
-    assert "Just added" in html
+    assert "Receipt read" in html
+    assert "Just added" not in html
 
 
 def test_ask_snacks_in_august_after_extract(client, fake_api, fake_n8n) -> None:
@@ -264,8 +270,8 @@ def test_ask_snacks_in_august_after_extract(client, fake_api, fake_n8n) -> None:
         },
     ).text
     assert fake_api.questions == []
-    assert "6.70 DC on snacks in August" in html
-    assert "Corner Bakery and Green Basket Market" in html
+    assert "11.20 DC on snacks in August" in html
+    assert "Lumen Pantry, Corner Bakery, and Green Basket Market" in html
     assert "Across your 4 receipts" in html
     assert "16.70" not in html
 
@@ -299,8 +305,11 @@ def test_home_chips_skip_drinks_and_offer_an_item(client) -> None:
     assert "drink" not in chips.lower()
     assert "Snacks in August" in chips
     assert "Most expensive item" in chips
+    assert "Spend at Pine Market" in chips
+    assert chips.count("ask-chip") == 4
     assert 'data-question="What was the most expensive item?"' in chips
     assert 'data-question="How much did I spend on snacks in August?"' in chips
+    assert 'data-question="How much did I spend at Pine Market?"' in chips
 
 
 def test_snacks_in_august_chip_has_a_nonzero_answer(client, fake_api) -> None:
@@ -313,7 +322,9 @@ def test_snacks_in_august_chip_has_a_nonzero_answer(client, fake_api) -> None:
         },
     ).text
     assert fake_api.questions == []
-    assert "You spent 3.50 DC on snacks in August (Corner Bakery)." in html
+    assert (
+        "You spent 8.00 DC on snacks in August (Lumen Pantry and Corner Bakery)."
+    ) in html
     assert "0.00 DC" not in html
     assert "couldn't match" not in html.lower()
 

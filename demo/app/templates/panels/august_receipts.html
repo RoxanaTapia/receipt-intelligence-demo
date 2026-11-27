@@ -1,6 +1,10 @@
 <section class="step-card" id="live-ingest">
   <h2>August receipts</h2>
+  {% if august_cards | selectattr('read') | list %}
+  <p class="meta">Four sample receipts.</p>
+  {% else %}
   <p class="meta">Four sample receipts. The new one is still a label until you read it.</p>
+  {% endif %}
   <ul class="receipt-grid">
     {% for card in august_cards %}
     <li class="receipt-card{% if card.is_new %} is-new{% endif %}{% if card.read %} is-added{% endif %}">
@@ -12,7 +16,7 @@
         {% if card.is_new and not card.read %}
         <span class="just-added">New</span>
         {% elif card.read %}
-        <span class="just-added">Just added</span>
+        <span class="just-added">Read</span>
         {% endif %}
       </span>
       {% if card.total_label %}
@@ -20,7 +24,9 @@
       {% else %}
       <p class="meta card-wait">Sample data. No figure until it is read.</p>
       {% endif %}
-      {% if card.is_new and card.merchant == "Green Basket Market" and sample_ready %}
+      {% if card.is_new and card.merchant == "Green Basket Market" and sample_ready and card.read %}
+      <p class="read-done">Receipt read</p>
+      {% elif card.is_new and card.merchant == "Green Basket Market" and sample_ready %}
       <form class="sample-one-click" id="sample-form" method="post" action="{{ public_url('/ingest-sample') }}">
         {% if selected %}
         <input type="hidden" name="example" value="{{ selected.id }}" />
@@ -31,9 +37,7 @@
         <input type="hidden" name="flow_step" data-keep="flow-step" value="{{ flow_step }}" />
         <button type="submit" id="sample-btn" class="{% if live_panel %}btn-secondary{% else %}btn{% endif %}">
           <span class="btn-idle">Read this receipt</span>
-          <span class="btn-busy" hidden>Reading this receipt…</span>
         </button>
-        <p class="meta ingest-wait" id="sample-wait" hidden>Reading this receipt…</p>
       </form>
       {% elif card.is_new and card.merchant == "Green Basket Market" %}
       <div class="banner warn">Sample PDF is missing from the container (<code>demo/samples/</code>).</div>
@@ -74,9 +78,7 @@
         <div class="step-body">
           <button type="submit" id="ingest-btn" class="btn-secondary">
             <span class="btn-idle">Extract receipt</span>
-            <span class="btn-busy" hidden>Reading this receipt…</span>
           </button>
-          <p class="meta ingest-wait" id="ingest-wait" hidden>Reading this receipt…</p>
         </div>
       </div>
     </form>

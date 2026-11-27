@@ -1,9 +1,9 @@
 {
-  "date": "2026-07-20",
+  "date": "2026-08-20",
   "merchant": "Harbor Home",
   "total": 21.40,
-  "extracted_at": "2026-07-20T12:00:00Z",
-  "categorized_at": "2026-07-20T12:00:00Z",
+  "extracted_at": "2026-08-20T12:00:00Z",
+  "categorized_at": "2026-08-20T12:00:00Z",
   "line_items": [
     {
       "description": "Kitchen sponge set",
