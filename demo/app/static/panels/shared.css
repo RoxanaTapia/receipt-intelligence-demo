@@ -1,7 +1,6 @@
 /* Visitor page. Colour comes from the vendored demo kit (light and dark).
    UI type is Plus Jakarta Sans. The wordmark stays Bricolage Grotesque.
-   8px spacing, 12px radius. The header itself is styled by demo-kit.css.
-   The portfolio link is text, so it stays out of the kit's exit pill. */
+   8px spacing, 12px radius. The header itself is styled by demo-kit.css. */
 :root {
   --bg: var(--color-bg, #f8f4f9);
   --ink: var(--color-text, #1c1024);
@@ -319,26 +318,6 @@ tfoot td {
   scroll-margin-top: 96px;
 }
 
-.back-portfolio {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--color-text);
-  font-size: 0.9rem;
-  font-weight: 650;
-  line-height: 1.2;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.back-portfolio:hover {
-  color: #9d174d;
-}
-
-:root[data-theme="dark"] .back-portfolio:hover {
-  color: #f7a8c6;
-}
-
 @media (max-width: 640px) {
   body {
     font-size: 18px;
@@ -352,10 +331,6 @@ tfoot td {
   .btn:not(.dk-exit),
   .btn-secondary {
     width: 100%;
-  }
-
-  .back-portfolio {
-    font-size: 0.82rem;
   }
 
   table {

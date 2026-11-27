@@ -52,7 +52,11 @@
               </button>
             </div>
           </div>
-          <a class="back-portfolio" href="https://roxanatapia.dev/">Back to portfolio</a>
+          {# Host-absolute: ops logout lives on the edge, not under ROOT_PATH. #}
+          <a class="dk-exit" id="demo-exit" href="{% if operator %}/ops/logout{% else %}https://roxanatapia.dev/{% endif %}">
+            <span class="dk-exit-visitor">Back to portfolio</span>
+            <span class="dk-exit-ops">Log out</span>
+          </a>
         </div>
       </div>
       <p class="dk-note">Portfolio demo · fictional shops · demo currency (DC)</p>
