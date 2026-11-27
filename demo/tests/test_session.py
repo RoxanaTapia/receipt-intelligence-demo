@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
 from app import main
 from app.sample_receipt import MERCHANT
 from app.session import IMPORTS_COOKIE, SESSION_COOKIE
+from fastapi.testclient import TestClient
 
 
 def test_get_home_sets_session_cookie(client) -> None:
@@ -17,9 +16,7 @@ def test_get_home_sets_session_cookie(client) -> None:
     assert raw == ""
 
 
-def test_fresh_session_does_not_see_another_visitors_import(
-    client, fake_n8n, data_dir
-) -> None:
+def test_fresh_session_does_not_see_another_visitors_import(client, fake_n8n, data_dir) -> None:
     first = client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
     assert MERCHANT in first.text
     assert fake_n8n.filename in first.cookies.get(IMPORTS_COOKIE, "")
@@ -42,9 +39,7 @@ def test_same_session_still_sees_its_import(client, fake_n8n) -> None:
     assert 'id="live-panel"' in html
 
 
-def test_remove_hides_import_for_this_session_only(
-    client, fake_n8n, data_dir
-) -> None:
+def test_remove_hides_import_for_this_session_only(client, fake_n8n, data_dir) -> None:
     client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
     stem = fake_n8n.filename.removesuffix(".json")
     response = client.post(

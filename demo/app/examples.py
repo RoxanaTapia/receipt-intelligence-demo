@@ -95,9 +95,7 @@ def session_catalog(
     """Seed examples plus this browser's live imports, in list order."""
     examples = load_examples(seed_dir, data_dir)
     live_imports = [
-        item
-        for item in load_live_imports(seed_dir, data_dir)
-        if item.file_name in owned
+        item for item in load_live_imports(seed_dir, data_dir) if item.file_name in owned
     ]
     return examples, live_imports
 

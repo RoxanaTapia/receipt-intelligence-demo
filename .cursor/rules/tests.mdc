@@ -1,0 +1,11 @@
+---
+description: Automated tests run before review
+alwaysApply: true
+---
+
+# Tests
+
+- Run the commands in [Tests](../../AGENTS.md#tests) before a pull request is ready.
+- CI runs those same commands on every pull request and on every push to main, and checks the vendored demo kit hash.
+- When a test fails, fix the project. Do not weaken a test to make it pass.
+- A change to what a visitor sees needs an automated test that fails if that change is missing.

@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 
 from app.api_client import ApiError, ReceiptApiClient
-from app.examples import get_example, load_examples, load_live_imports, session_catalog
+from app.examples import get_example, load_examples, session_catalog
 from app.live_panel import _resolve_live_panel
 from app.money import present_answer_text
 from app.n8n_client import N8nIngestClient, N8nIngestError
@@ -81,9 +81,7 @@ _CSS_FILES = ("shared", "examples", "spending", "ask", "live", "case")
 
 def _load_demo_css() -> str:
     folder = APP_DIR / "static" / "panels"
-    return "\n\n".join(
-        (folder / f"{name}.css").read_text(encoding="utf-8") for name in _CSS_FILES
-    )
+    return "\n\n".join((folder / f"{name}.css").read_text(encoding="utf-8") for name in _CSS_FILES)
 
 
 DEMO_CSS = _load_demo_css()
@@ -115,6 +113,8 @@ def operator_session(request: Request) -> bool:
     if raw is None:
         return False
     return raw.strip().lower() not in {"0", "false", "no", "off"}
+
+
 api = ReceiptApiClient(API_BASE_URL)
 n8n = N8nIngestClient(N8N_INGEST_WEBHOOK_URL)
 
@@ -169,9 +169,7 @@ def _saved_sample(request: Request) -> tuple[dict[str, Any], str] | None:
 
 def _visible_receipts(request: Request) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """Catalog shown under Your receipts, plus the receipt on the review card."""
-    examples, live_imports = session_catalog(
-        SEED_DIR, RECEIPT_DATA_PATH, owned_filenames(request)
-    )
+    examples, live_imports = session_catalog(SEED_DIR, RECEIPT_DATA_PATH, owned_filenames(request))
     selected = get_example(examples, None, live_imports=live_imports)
     current, _ = _resolve_live_panel(None, selected, live_imports)
     return catalog_payloads(examples, live_imports), current
@@ -221,9 +219,7 @@ def download_sample() -> FileResponse:
 
 def _session_rows(request: Request) -> list[LineRow]:
     """Receipts under Your receipts for this cookie, not the shared API."""
-    examples, live_imports = session_catalog(
-        SEED_DIR, RECEIPT_DATA_PATH, owned_filenames(request)
-    )
+    examples, live_imports = session_catalog(SEED_DIR, RECEIPT_DATA_PATH, owned_filenames(request))
     return line_rows(examples, live_imports)
 
 
@@ -250,9 +246,7 @@ def export_receipts_xlsx(request: Request) -> Response:
     """Download this browser's receipts as an Excel workbook."""
     return _attachment(
         render_xlsx(_session_rows(request)),
-        media_type=(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ),
+        media_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         filename="receipts.xlsx",
     )
 
@@ -308,8 +302,7 @@ def _extract_sample_page(
             example=example,
             live_meta=meta,
             live_error=(
-                "The receipt was read, but it is not on the shared volume yet. "
-                "Refresh in a moment."
+                "The receipt was read, but it is not on the shared volume yet. Refresh in a moment."
             ),
             ingest_ok=True,
             summary_before=summary_before,

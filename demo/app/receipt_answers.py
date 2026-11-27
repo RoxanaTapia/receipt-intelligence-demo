@@ -12,10 +12,9 @@ the review card when one is open, which is the sample just extracted.
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
-
-from dataclasses import dataclass, field
 
 from app.money import format_money
 from app.questions import _MONTH_NAME
@@ -152,15 +151,11 @@ def case_view(
 
     rank = _item_rank(question)
     if rank:
-        pool, ranked_single = _item_pool(
-            question, in_month, current, single, month_name
-        )
+        pool, ranked_single = _item_pool(question, in_month, current, single, month_name)
         category = _named_category(question)
         records = _line_records(pool)
         if category:
-            records = [
-                record for record in records if record["category"] == category
-            ]
+            records = [record for record in records if record["category"] == category]
         text = _ranked_item_answer(
             records,
             rank=rank,
@@ -269,9 +264,7 @@ def _category_rows(
     return rows, count, grand
 
 
-def _descriptions(
-    receipts: list[dict[str, Any]], category: str | None = None
-) -> list[str]:
+def _descriptions(receipts: list[dict[str, Any]], category: str | None = None) -> list[str]:
     seen: list[str] = []
     for receipt in receipts:
         for item in _lines(receipt):
@@ -373,9 +366,7 @@ def _source_line(
     return f"Across your {len(catalog)} receipts"
 
 
-def _per_category_answer(
-    receipts: list[dict[str, Any]], month_name: str | None
-) -> str:
+def _per_category_answer(receipts: list[dict[str, Any]], month_name: str | None) -> str:
     totals: dict[str, float] = {}
     for receipt in receipts:
         for name, amount in category_totals(receipt).items():
@@ -411,9 +402,7 @@ def _category_answer(
         amount = round(sum(float(item.get("price") or 0) for item in lines), 2)
         total = round(total + amount, 2)
         merchants.append(merchant_name(receipt))
-        items.extend(
-            str(item.get("description") or "").strip() or "item" for item in lines
-        )
+        items.extend(str(item.get("description") or "").strip() or "item" for item in lines)
     when = f" in {month_name}" if month_name else ""
     if total <= 0:
         if single:
@@ -421,10 +410,7 @@ def _category_answer(
         return f"No {category}{when} across your receipts."
     money = format_money(total)
     if single:
-        return (
-            f"You spent {money} on {category} on this receipt"
-            f"{when} ({_item_phrase(items)})."
-        )
+        return f"You spent {money} on {category} on this receipt{when} ({_item_phrase(items)})."
     named = f" ({_join_names(merchants)})" if merchants else ""
     return f"You spent {money} on {category}{when}{named}."
 
@@ -484,10 +470,7 @@ def _item_pool(
 
 def _is_item_price_question(question: str) -> bool:
     """Price wording, including pay or spend that may still name a line."""
-    return (
-        _ITEM_PRICE.search(question) is not None
-        or _SPEND_TOTAL.search(question) is not None
-    )
+    return _ITEM_PRICE.search(question) is not None or _SPEND_TOTAL.search(question) is not None
 
 
 def _line_records(receipts: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -542,14 +525,8 @@ def _ranked_item_answer(
     label = "most expensive" if rank == "most" else "least expensive"
     if len(winners) == 1:
         winner = winners[0]
-        return (
-            f"The {label} item was {winner['description']}, "
-            f"{format_money(winner['price'])}."
-        )
-    parts = [
-        f"{winner['description']}, {format_money(winner['price'])}"
-        for winner in winners
-    ]
+        return f"The {label} item was {winner['description']}, {format_money(winner['price'])}."
+    parts = [f"{winner['description']}, {format_money(winner['price'])}" for winner in winners]
     return f"The {label} items were {_join_parts(parts)}."
 
 
@@ -568,9 +545,7 @@ def _needles(description: str) -> list[str]:
     return [full]
 
 
-def _matching_items(
-    question: str, receipts: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
+def _matching_items(question: str, receipts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Line items whose description appears in the question. Longest name wins."""
     norm_q = f" {_norm(question)} "
     records = _line_records(receipts)

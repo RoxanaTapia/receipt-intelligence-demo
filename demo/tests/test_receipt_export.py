@@ -9,14 +9,13 @@ import zipfile
 from datetime import date
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-from openpyxl import load_workbook
-
 from app import main
 from app.examples import ExampleReceipt
 from app.receipt_export import guard_text, line_rows, render_csv, render_xlsx
 from app.sample_receipt import ITEMS
 from app.session import IMPORTS_COOKIE
+from fastapi.testclient import TestClient
+from openpyxl import load_workbook
 
 SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
 HEADER = [
@@ -183,9 +182,7 @@ def test_csv_quotes_commas_and_keeps_crlf(client, data_dir: Path) -> None:
     assert quoted[2] == "Oat milk, large"
 
 
-def test_csv_prefixes_formula_text_and_keeps_negative_amount(
-    client, data_dir: Path
-) -> None:
+def test_csv_prefixes_formula_text_and_keeps_negative_amount(client, data_dir: Path) -> None:
     name = "2026-04-01_guard-shop_cccc3333.json"
     _write_live(
         data_dir,
@@ -222,9 +219,7 @@ def test_csv_prefixes_formula_text_and_keeps_negative_amount(
 def test_xlsx_sheet_matches_seed_receipts(client) -> None:
     response = client.get("/export/receipts.xlsx")
     assert response.status_code == 200
-    assert (
-        response.headers["content-disposition"] == 'attachment; filename="receipts.xlsx"'
-    )
+    assert response.headers["content-disposition"] == 'attachment; filename="receipts.xlsx"'
     sheet = load_workbook(io.BytesIO(response.content))["Line items"]
     assert [cell.value for cell in sheet[1]] == HEADER
     assert all(cell.font.bold for cell in sheet[1])
@@ -311,9 +306,7 @@ def test_xlsx_cells_are_never_formulas(client, data_dir: Path) -> None:
     )
 
 
-def test_export_skips_another_sessions_live_import(
-    client, fake_n8n, data_dir: Path
-) -> None:
+def test_export_skips_another_sessions_live_import(client, fake_n8n, data_dir: Path) -> None:
     stranger = "2026-09-04_stranger-mart_00112233.json"
     _write_live(
         data_dir,

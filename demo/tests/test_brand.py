@@ -15,7 +15,7 @@ def _exit_tag(html: str) -> str:
     start = html.find('id="demo-exit"')
     assert start != -1
     open_at = html.rfind("<a", 0, start)
-    return html[open_at:html.find(">", start) + 1]
+    return html[open_at : html.find(">", start) + 1]
 
 
 def test_page_links_the_three_icons_and_no_google_fonts(client) -> None:

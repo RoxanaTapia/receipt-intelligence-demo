@@ -6,11 +6,10 @@ import json
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app import main
 from app.sample import SAMPLE_ID
-from app.sample_receipt import MERCHANT, receipt_payload
+from app.sample_receipt import receipt_payload
+from fastapi.testclient import TestClient
 
 SEED_DIR = Path(__file__).resolve().parents[1] / "seed"
 
