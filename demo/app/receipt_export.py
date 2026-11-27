@@ -192,9 +192,7 @@ def _receipt_total(receipt: dict[str, Any], lines: list[dict[str, Any]]) -> floa
 
 def _category_label(value: str) -> str:
     """Capitalize each word, matching the chip's CSS ``text-transform: capitalize``."""
-    return " ".join(
-        part[:1].upper() + part[1:] if part else part for part in value.split(" ")
-    )
+    return " ".join(part[:1].upper() + part[1:] if part else part for part in value.split(" "))
 
 
 def _unit_price(line_total: float, quantity: int | float) -> float:

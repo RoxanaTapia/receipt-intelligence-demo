@@ -31,9 +31,7 @@ class N8nIngestClient:
                 timeout=self.timeout,
             )
         except httpx.HTTPError as exc:
-            raise N8nIngestError(
-                f"n8n webhook unreachable at {self.webhook_url}: {exc}"
-            ) from exc
+            raise N8nIngestError(f"n8n webhook unreachable at {self.webhook_url}: {exc}") from exc
         return self._parse(response)
 
     @staticmethod
@@ -54,9 +52,7 @@ class N8nIngestClient:
             )
 
         if response.status_code >= 400 or payload.get("ok") is False:
-            message = (
-                str(payload.get("message") or payload.get("error") or response.reason_phrase)
-            )
+            message = str(payload.get("message") or payload.get("error") or response.reason_phrase)
             errors = payload.get("errors")
             if isinstance(errors, list) and errors:
                 message = f"{message}: {'; '.join(str(e) for e in errors)}"

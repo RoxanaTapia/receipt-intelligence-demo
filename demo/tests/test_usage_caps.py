@@ -7,8 +7,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app import main, usage
 from app.n8n_client import N8nIngestError
 from app.usage import (
@@ -20,6 +18,7 @@ from app.usage import (
     configured_limit,
     forwarded_client_ip,
 )
+from fastapi.testclient import TestClient
 
 _WINDOW = {"start": "2026-07-01", "end": "2026-08-31"}
 _REACHED = "This demo has reached its limit for now."
@@ -86,9 +85,7 @@ def test_unmatched_question_does_not_call_the_model(
     assert not (data_dir / ".demo-usage.sqlite").exists()
 
 
-def test_visitor_hourly_cap_on_model_questions(
-    client, fake_api, data_dir, monkeypatch
-) -> None:
+def test_visitor_hourly_cap_on_model_questions(client, fake_api, data_dir, monkeypatch) -> None:
     _hide_seeds(monkeypatch, data_dir)
     _limits(
         monkeypatch,
@@ -138,9 +135,7 @@ def test_daily_cap_on_model_questions(client, fake_api, data_dir, monkeypatch) -
     assert _REACHED in blocked.text
 
 
-def test_model_question_cap_lifts_after_an_hour(
-    client, fake_api, data_dir, monkeypatch
-) -> None:
+def test_model_question_cap_lifts_after_an_hour(client, fake_api, data_dir, monkeypatch) -> None:
     _hide_seeds(monkeypatch, data_dir)
     _limits(
         monkeypatch,
@@ -159,9 +154,7 @@ def test_model_question_cap_lifts_after_an_hour(
     assert len(fake_api.questions) == 2
 
 
-def test_model_question_cap_lifts_the_next_day(
-    client, fake_api, data_dir, monkeypatch
-) -> None:
+def test_model_question_cap_lifts_the_next_day(client, fake_api, data_dir, monkeypatch) -> None:
     _hide_seeds(monkeypatch, data_dir)
     _limits(
         monkeypatch,
@@ -180,9 +173,7 @@ def test_model_question_cap_lifts_the_next_day(
     assert len(fake_api.questions) == 2
 
 
-def test_missing_address_uses_the_session(
-    client, fake_api, data_dir, monkeypatch
-) -> None:
+def test_missing_address_uses_the_session(client, fake_api, data_dir, monkeypatch) -> None:
     _hide_seeds(monkeypatch, data_dir)
     _limits(
         monkeypatch,
@@ -263,9 +254,7 @@ def test_daily_cap_on_sample_reads(client, fake_n8n, monkeypatch, sample_id) -> 
     assert fake_n8n.calls == [sample_id, sample_id]
 
 
-def test_saved_sample_does_not_read_again(
-    client, fake_n8n, monkeypatch, sample_id
-) -> None:
+def test_saved_sample_does_not_read_again(client, fake_n8n, monkeypatch, sample_id) -> None:
     _limits(
         monkeypatch,
         questions_per_hour=8,
@@ -337,17 +326,13 @@ def test_usage_counts_are_stored_beside_the_receipts(
     _ask(client, "How much did I spend per category?", headers)
     db = data_dir / ".demo-usage.sqlite"
     assert db.is_file()
-    rows = sqlite3.connect(db).execute(
-        "SELECT kind, visitor FROM usage_events"
-    ).fetchall()
+    rows = sqlite3.connect(db).execute("SELECT kind, visitor FROM usage_events").fetchall()
     assert ("ai_question", "ip:203.0.113.80") in rows
     assert _REACHED in _ask(client, "How much did I spend per category?", headers).text
     assert len(fake_api.questions) == 1
 
 
-def test_storage_trouble_blocks_the_model_call(
-    client, fake_api, data_dir, monkeypatch
-) -> None:
+def test_storage_trouble_blocks_the_model_call(client, fake_api, data_dir, monkeypatch) -> None:
     _hide_seeds(monkeypatch, data_dir)
     monkeypatch.setattr(usage, "usage_db_path", lambda: Path("/dev/null/usage.sqlite"))
     html = _ask(client, "How much did I spend per category?").text

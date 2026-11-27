@@ -30,9 +30,7 @@ def test_undated_question_gets_visible_window() -> None:
         "2026-07-01",
         "2026-08-31",
     )
-    assert out == (
-        "How much did I spend per category from 2026-07-01 to 2026-08-31?"
-    )
+    assert out == ("How much did I spend per category from 2026-07-01 to 2026-08-31?")
 
 
 def test_dated_question_does_not_get_a_second_window() -> None:

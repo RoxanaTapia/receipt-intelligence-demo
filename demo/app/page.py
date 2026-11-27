@@ -111,9 +111,7 @@ def _page(
     selected = get_example(examples, example, live_imports=live_imports)
     summary, api_error = _safe_summary(start, end)
     api_ok = summary is not None and api_error is None
-    panel_receipt, panel_example = _resolve_live_panel(
-        live_receipt, selected, live_imports
-    )
+    panel_receipt, panel_example = _resolve_live_panel(live_receipt, selected, live_imports)
     contrast = _spending_contrast(
         summary=summary,
         summary_before=summary_before,
@@ -214,11 +212,7 @@ def _august_cards(
     """
     seeded = [_seed_card(item) for item in examples]
     fresh = next(
-        (
-            item
-            for item in live_imports
-            if merchant_name(item.receipt) == SAMPLE_MERCHANT
-        ),
+        (item for item in live_imports if merchant_name(item.receipt) == SAMPLE_MERCHANT),
         None,
     )
     if fresh is not None:
@@ -240,9 +234,7 @@ def _august_cards(
     return [new_card, *seeded, *others]
 
 
-def _seed_card(
-    item: ExampleReceipt, *, is_new: bool = False, read: bool = False
-) -> dict[str, Any]:
+def _seed_card(item: ExampleReceipt, *, is_new: bool = False, read: bool = False) -> dict[str, Any]:
     receipt = item.receipt
     total = receipt.get("total")
     try:

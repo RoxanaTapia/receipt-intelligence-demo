@@ -183,17 +183,13 @@ def test_ingest_sample_one_click(client, fake_n8n, sample_id) -> None:
 
 
 def test_extracted_view_hides_spending_footer(client, fake_api, fake_n8n) -> None:
-    html = client.post(
-        "/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"}
-    ).text
+    html = client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"}).text
     assert "already in the corpus" not in html
     assert "Examples and spending window" not in html
     assert "totals did not change" not in html
 
 
-def test_live_selection_does_not_duplicate_main_receipt(
-    client, fake_n8n
-) -> None:
+def test_live_selection_does_not_duplicate_main_receipt(client, fake_n8n) -> None:
     client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
     stem = fake_n8n.filename.removesuffix(".json")
     html = client.get(f"/?example=live-{stem}").text
@@ -228,9 +224,7 @@ def test_demo_css_includes_new_rules() -> None:
     assert ".receipts-total" in DEMO_CSS
 
 
-def test_ask_after_extract_matches_visible_list(
-    client, fake_api, fake_n8n
-) -> None:
+def test_ask_after_extract_matches_visible_list(client, fake_api, fake_n8n) -> None:
     client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
     fake_api.questions.clear()
     html = client.post(
@@ -395,9 +389,7 @@ def test_second_sample_extract_keeps_question_and_step(client, fake_n8n) -> None
     assert 'data-scroll="live-ingest"' not in html
 
 
-def test_second_extract_keeps_a_typed_question_on_the_review_step(
-    client, fake_n8n
-) -> None:
+def test_second_extract_keeps_a_typed_question_on_the_review_step(client, fake_n8n) -> None:
     client.post("/ingest-sample", data={"start": "2026-07-01", "end": "2026-08-31"})
     html = client.post(
         "/ingest-sample",

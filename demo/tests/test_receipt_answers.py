@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from app.live_panel import format_read_summary
 from app.receipt_answers import (
     answer_visible_question,
@@ -89,8 +88,7 @@ def test_august_snacks_names_the_receipts_in_the_list() -> None:
         current=receipt_payload(),
     )
     assert text == (
-        "You spent 6.70 DC on snacks in August "
-        "(Corner Bakery and Green Basket Market)."
+        "You spent 6.70 DC on snacks in August (Corner Bakery and Green Basket Market)."
     )
     assert source == "Across your 4 receipts"
     assert "16.70" not in text
@@ -103,9 +101,7 @@ def test_this_receipt_snacks_uses_the_review_card() -> None:
         receipts,
         current=receipt_payload(),
     )
-    assert text == (
-        "You spent 3.20 DC on snacks on this receipt (1 item: Butter croissants)."
-    )
+    assert text == ("You spent 3.20 DC on snacks on this receipt (1 item: Butter croissants).")
     assert source == "From Green Basket Market, Aug 15"
 
 
