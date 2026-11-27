@@ -34,6 +34,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
+      - name: Check Python style
+        id: style
+        working-directory: ${{ github.workspace }}
+        run: |
+          ruff check
+          ruff format --check
+
       - name: Run tests
         id: tests
         run: pytest
@@ -42,14 +49,15 @@ jobs:
         if: success() || failure()
         env:
           TEST_RESULT: ${{ steps.tests.outcome }}
+          STYLE_RESULT: ${{ steps.style.outcome }}
         run: |
-          if [ "$TEST_RESULT" = "success" ]; then
-            result="These tests passed."
+          if [ "$TEST_RESULT" = "success" ] && [ "$STYLE_RESULT" = "success" ]; then
+            result="These checks passed."
           else
-            result="These tests did not pass."
+            result="These checks did not pass."
           fi
           cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## Automatic tests
 
-          ${result} They check the visitor demo: the page loads, a sample receipt opens, spending questions match the receipts on screen, spreadsheet downloads match that list, and one visitor cannot see another visitor's upload.
+          ${result} The tests check the visitor demo: the page loads, a sample receipt opens, spending questions match the receipts on screen, spreadsheet downloads match that list, and one visitor cannot see another visitor's upload. Ruff checks Python style and formatting.
           EOF

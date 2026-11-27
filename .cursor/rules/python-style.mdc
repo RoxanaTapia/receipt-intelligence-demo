@@ -1,0 +1,15 @@
+---
+description: Short, readable Python
+globs: "**/*.py"
+alwaysApply: true
+---
+
+# Python style
+
+- Prefer the simplest change that solves the issue. One function, one job. Clear names.
+- Use `pathlib.Path`, f-strings, and type hints on public functions.
+- Use `with` for files and other resources.
+- A docstring says why, in one or two lines, and only on a public function that needs it.
+- Comment only where the code is not obvious.
+- A refactor keeps the behaviour unless the issue asks for a change.
+- Ruff is the style check: line length 100, rules E, F, and I, configured in `pyproject.toml`.

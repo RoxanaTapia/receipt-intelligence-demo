@@ -1,101 +1,65 @@
-# AGENTS.md — Receipt Intelligence Demo
+# Project guide
 
-Public notes for working in this repository.
+## What we're building
 
-This repo is the visitor UX and Compose packaging for a receipt-to-answers demo. Companion n8n workflows and API source live outside this repo; a walkthrough is available on request. This demo uses a hosted model.
+This repo is the visitor page and the Compose packaging for a receipt demo. A visitor opens a sample receipt, sees a category on each line, and asks a spending question. Totals come from the receipts on the page. The page is FastAPI and Jinja templates. Companion workflows and the API live outside this repo. The demo uses a hosted model.
 
-## Layout
+## How a change happens
 
-| Path | Role |
-|------|------|
-| [`README.md`](README.md) | Product overview and live demo |
-| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Operator deploy guide |
-| [`demo/`](demo/) | Visitor UX (FastAPI + Jinja templates) |
-| [`deploy/`](deploy/) | Docker Compose, Caddy overlays, seed script |
-| [`docs/`](docs/) | Architecture and screenshot map |
-| [`vendor/demo-kit/`](vendor/demo-kit/) | Shared header, tokens, fonts, and icons |
-| [`.env.example`](.env.example) | Env template (secrets stay out of git) |
+1. **One issue.** The issue is the written request. Each request stays one piece of work. Use `.github/ISSUE_TEMPLATE.md`. The title starts with one emoji code, such as 🛠️ or 📄, then a short name.
+2. **One branch.** The branch is a separate copy of the project, so this work does not mix with anything else. Its name is plain and descriptive, such as `agent-docs`.
+3. **One pull request.** The pull request is the proposal to add that copy. The title is a plain sentence, with no type prefix and no emoji. The description uses `.github/pull_request_template.md`.
+4. **Automated tests.** The tests run on every pull request and on every push to main.
+5. **Roxana reviews and merges.** Roxana reviews every change, and she merges it.
 
-Reference deploy pattern: [ai-doc-to-chat `deploy/`](https://github.com/RoxanaTapia/ai-doc-to-chat-pipeline/tree/main/deploy).
+## Where things are
+
+| Path | What it is |
+|------|------------|
+| [README.md](README.md) | Product overview and the live demo |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Operator deploy guide |
+| [demo/](demo/) | Visitor page, FastAPI and Jinja templates |
+| [demo/tests/](demo/tests/) | Automated tests for that page |
+| [demo/seed/](demo/seed/) | Fictional receipts already on the page |
+| [deploy/](deploy/) | Docker Compose, Caddy overlays, and the seed script |
+| [docs/](docs/) | Architecture notes and the screenshot map |
+| [vendor/demo-kit/](vendor/demo-kit/) | Shared header, tokens, fonts, and icons. CI checks the checksum. |
+| [.env.example](.env.example) | Env template. Secrets stay out of git. |
+| [AGENTS.md](AGENTS.md) | This guide |
+| [.cursor/rules/](.cursor/rules/) | Short rules for the agents |
+| [.github/workflows/tests.yml](.github/workflows/tests.yml) | Runs the automated tests |
+| [.github/ISSUE_TEMPLATE.md](.github/ISSUE_TEMPLATE.md) | The short form for a new issue |
+| [.github/pull_request_template.md](.github/pull_request_template.md) | The short form for a pull request |
+| [pyproject.toml](pyproject.toml) | Ruff settings for Python style |
 
 ## Tests
 
-From `demo/`:
+From the repo root:
 
 ```bash
-pip install -r requirements-dev.txt
-pytest
+pip install -r demo/requirements-dev.txt
+python3 -m pytest demo/tests
+ruff check
+ruff format --check
 ```
 
-GitHub Actions runs pytest in `demo/` on every pull request and on pushes to main. Run the tests locally before opening a pull request.
+GitHub Actions runs `ruff check`, `ruff format --check`, and pytest from `demo/` on every pull request and on every push to main. The workflow also checks the vendored demo kit hash.
 
-## PR description standard
+## For the agents
 
-PR titles and descriptions are concise, consistent and easy to scan, so the PR history tells a story. The same standard is in `.github/pull_request_template.md`.
+Do:
 
-### PR title
+- Read this guide and stay inside the current issue.
+- Keep the visitor page behaviour the same unless the issue asks for a behaviour change.
+- Prefer a small, clear change. Use `pathlib`, f-strings, and short docstrings.
+- Run the tests above before the pull request is ready.
+- Write public text in plain words, with real paths and real commands.
 
-- Format: `type(scope): what changes for the user`, lowercase, imperative, at most about 60 characters, with no issue number in the title.
-- Types: `feat`, `fix`, `docs`, `chore`, `test`, `refactor`. Scope is the area, for example `ui`, `api`, `deploy`.
-- Example: `fix(ui): keep header fixed on mobile`
-- PRs are squash-merged, so the PR title becomes the single commit on main and the main history reads as one line per change.
+Don't:
 
-### PR body
-
-```markdown
-## 🎯 What
-One or two lines on the user-visible change. Closes #184
-
-## 🧱 Commit story
-- fix(ui): pin header height before fonts load
-- test(ui): add header position test at 390px and 1440px
-
-## 🧪 Test
-- [ ] CI green
-- [ ] up to 3 checks that prove the fix
-
-## 🚀 Deploy
-`docker compose -f deploy/docker-compose.yml up --build -d` · rebuilds `app` · no env or config changes · rollback: revert plus redeploy
-
-<details><summary>Details</summary>screenshots, numbers, longer notes</details>
-```
-
-- **Commit story:** each commit in the PR is one logical step with the same `type(scope): ...` style. No "wip" or "address review" commits; clean them up before review.
-- **Deploy:** always the four items (exact script, services rebuilt, env or config changes, rollback). This repo has no named deploy script — write **No deploy** for docs-only PRs, or name real compose files under `deploy/` when the change needs a rebuild.
-- **Double-check every command:** each command in a PR or review (deploy script, path, flag, test command) must be checked against the repo or the installed script before posting. Use only real names; never invent flags or paths. If a command could not be run or verified, say so in the PR.
-- **Verified commands in this repo:**
-  - Seed: `./deploy/seed-demo-data.sh`
-  - Auth helper: `./deploy/generate-caddy-auth.sh <user> '<password>'` (needs Docker)
-  - IP TLS helper: `./deploy/generate-ip-tls.sh <ipv4>` (needs `openssl`)
-  - Demo tests: `pip install -r demo/requirements-dev.txt` then `python3 -m pytest demo/tests`
-  - Compose (needs Docker): `docker compose --env-file .env -f deploy/docker-compose.yml config`
-  - Issue read: `gh issue view NN` (no `#` in the shell argument)
-
-### Review comment format
-
-Every review comment is short, easy to scan, and uses emojis. The header states the result, the kind of review, and the short commit. At most five one-line bullets follow, then a collapsed details block. This applies to code, deploy, live-test, and copy reviews, and to the check after deploy.
-
-The bullets state what works, any blocking issue, minor notes, and deploy notes.
-
-```markdown
-**✅ Pass · Deploy review · `abc1234`**  (or ❌ Fail)
-- ✅ what works
-- ❌ blocking issue
-- ⚠️ minor, non-blocking
-- 🚀 deploy notes
-<details><summary>Details</summary>numbers, logs, screenshots</details>
-```
-
-### Public repos
-
-Client-facing: no prices, hostnames, hosting provider, server sizes, `/root` paths, non-public repo links, internal notes, or Cursor agent badges and links in PR bodies.
-
-## Commit & PR Policy
-
-- Granular, reviewable commits (ideally 1–4 per issue), each `type(scope): ...`
-- Follow the **PR description standard** and **Review comment format** above
-- Human must approve before push or merge
-
-## Review
-
-Changes are reviewed and tested before merge.
+- Don't merge. Roxana reviews and merges.
+- Don't deploy. Roxana deploys.
+- Don't weaken a test to make it pass.
+- Don't reformat `vendor/demo-kit/`.
+- Don't put secrets, prices, hostnames, or private repo links in public writing.
+- Don't invent paths, flags, or numbers.

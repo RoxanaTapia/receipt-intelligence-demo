@@ -1,0 +1,13 @@
+---
+description: How a change is made in this repo
+alwaysApply: true
+---
+
+# Working in this repo
+
+- Read [AGENTS.md](../../AGENTS.md) before you edit, and follow [How a change happens](../../AGENTS.md#how-a-change-happens).
+- One issue, one branch, one pull request. Stay inside the current issue.
+- Roxana reviews and merges. Do not deploy.
+- Leave visitor behaviour as it is unless the issue asks for a behaviour change.
+- Leave `vendor/demo-kit/` as it is. CI checks its checksum.
+- Public writing uses plain words and real paths. No secrets, prices, or hostnames.

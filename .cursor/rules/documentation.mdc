@@ -1,44 +1,14 @@
 ---
-description: Markdown documentation style for docs/, README, DEPLOYMENT, and contributor notes
+description: Markdown style for the guide, docs, and deploy notes
 globs: docs/**/*.md, README.md, AGENTS.md, DEPLOYMENT.md, deploy/**/*.md
 alwaysApply: false
 ---
 
-# Documentation Style
+# Documentation
 
-Apply when writing or editing markdown documentation in this repository.
-
-## Structure
-
-- Clear sections and headings; bullets, lists, and tables when they help
-- Concise but complete; easy for humans and future agents to read
-
-## Tone
-
-- Professional, warm, approachable
-- **Meaningful emojis** in moderation (✅ 🚀 📌 ⚠️) — support scanning, not decoration
-
-## Diagrams
-
-- Use **Mermaid** for processes, architecture, or deploy flows when it genuinely helps
-- Skip diagrams for simple content
-
-## Public README
-
-The root README is the client-facing first paint, written to "you". Call the live version the demo.
-
-- Product name, tagline, and a **Takeaway**
-- **What works now**
-- **How it fits together**
-- **What's planned**
-- **Try it** (the live demo, not clone or compose steps)
-- **Where things are**
-
-Operator steps stay in `DEPLOYMENT.md`. Contributor notes stay in `AGENTS.md`. Do not link private companion repos (n8n, API) — they 404 for visitors.
-
-## Links and paths
-
-- Use relative links within the repo
-- Do not duplicate long setup steps that live in dedicated docs — link instead
-- Document **real paths** that exist today; do not list placeholder directories or aspirational structure unless clearly marked as future work with an owning issue
-- Distinguish **visitor path** (demo UX) vs **operator path** (n8n / self-host) when both appear
+- Short sections. Use a list or a table when it is easier to scan.
+- Plain words. An emoji only when it helps someone scan, such as an issue title.
+- Relative links, and only paths that exist. Link to a longer page instead of copying it.
+- The root README is for visitors. Operator steps stay in `DEPLOYMENT.md`. This guide stays in `AGENTS.md`.
+- Do not link companion repos that sit outside this public demo.
+- Add a diagram only when a flow is hard to follow in a short list.
