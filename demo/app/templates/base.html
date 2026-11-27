@@ -52,9 +52,9 @@
               </button>
             </div>
           </div>
-          {# Host-absolute: invite and ops live on the edge, not under ROOT_PATH. #}
-          <a class="btn btn-primary dk-exit" id="demo-exit" href="{% if operator %}/ops/logout{% else %}/invite/exit{% endif %}">
-            <span class="dk-exit-visitor">Exit demo</span>
+          {# Host-absolute: ops logout lives on the edge, not under ROOT_PATH. #}
+          <a class="dk-exit" id="demo-exit" href="{% if operator %}/ops/logout{% else %}https://roxanatapia.dev/{% endif %}">
+            <span class="dk-exit-visitor">Back to portfolio</span>
             <span class="dk-exit-ops">Log out</span>
           </a>
         </div>

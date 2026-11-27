@@ -21,7 +21,7 @@ Font URLs in the CSS are relative to `demo-kit.css`, so they keep working wherev
 
 ## Header
 
-The bar is 56px, sticky, translucent, with a blur. On the left: the framed R, the RoxanaTapia.dev wordmark, a divider, and the product-name slot (`.dk-product`). On the right: the theme menu and one pill. The pill reads Exit demo. Set `data-operator="true"` on `<html>` and it reads Log out, and `theme.js` points it at `/ops/logout`.
+The bar is 56px, sticky, translucent, with a blur. On the left: the framed R, the RoxanaTapia.dev wordmark, a divider, and the product-name slot (`.dk-product`). On the right: the theme menu and one quiet link. The link reads Back to portfolio and opens https://roxanatapia.dev in the same tab. Set `data-operator="true"` on `<html>` and it reads Log out, and `theme.js` points it at `/ops/logout`.
 
 Leave `.dk-product` empty (no spaces) when a page has no product name. The divider hides with it.
 
@@ -79,8 +79,8 @@ Paths below are for a page that is not inside this folder. `preview.html` uses b
               </button>
             </div>
           </div>
-          <a class="btn btn-primary dk-exit" id="demo-exit" href="https://roxanatapia.dev/">
-            <span class="dk-exit-visitor">Exit demo</span>
+          <a class="dk-exit" id="demo-exit" href="https://roxanatapia.dev/">
+            <span class="dk-exit-visitor">Back to portfolio</span>
             <span class="dk-exit-ops">Log out</span>
           </a>
         </div>
