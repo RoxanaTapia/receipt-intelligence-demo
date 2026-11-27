@@ -95,7 +95,7 @@ n8n · FastAPI · Claude · Docker Compose
 
 Reading the receipt happens in n8n workflows that live in their own repository. Totals and answers come from a FastAPI service that lives in its own repository.
 
-Repo map: [docs/README.md](docs/README.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md). Operator steps: [DEPLOYMENT.md](DEPLOYMENT.md).
+Repo map: [docs/README.md](docs/README.md). Board: [docs/board.md](docs/board.md). Goal: [docs/goal.md](docs/goal.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md). Operator steps: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Automated tests
 
