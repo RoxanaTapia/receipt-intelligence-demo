@@ -32,9 +32,18 @@ def test_header_uses_the_wordmark_product_and_footer(client) -> None:
     assert "Exit demo" in html
     assert "Log out" in html
     assert "Built by Roxana Tapia" in html
-    assert "How it's built" in html
-    assert "Book a call" in html
-    assert html.count('href="https://roxanatapia.dev/"') >= 4
+    assert 'href="https://roxanatapia.dev/cases/receipts">How it\'s built</a>' in html
+    booking = (
+        "https://calendar.google.com/calendar/appointments/schedules/"
+        "AcZssZ3r5LJ7bPLsMMNRH2fcH9DkzDNTf8oA8XIg0NX9aNpoKezPGMN2Z2OTD-baqG9XoB5vfehzJnzt"
+        "?gv=true"
+    )
+    assert (
+        f'href="{booking}" target="_blank" rel="noopener noreferrer">Book a call</a>'
+        in html
+    )
+    assert 'href="https://roxanatapia.dev/cases/receipts" target=' not in html
+    assert html.count('href="https://roxanatapia.dev/"') == 2
     assert "demo-kit/theme-init.js" in html
     assert "demo-kit/theme.js" in html
     assert "demo-kit/motion.js" in html
