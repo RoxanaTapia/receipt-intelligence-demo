@@ -71,5 +71,8 @@ def test_suggested_questions_use_a_stocked_category_and_an_item() -> None:
     assert "How much did I spend on snacks in August?" in questions
     assert "Most expensive item" in labels
     assert "What was the most expensive item?" in questions
+    assert "Spend at Pine Market" in labels
+    assert "How much did I spend at Pine Market?" in questions
+    assert len(SUGGESTED_QUESTIONS) == 4
     blob = " ".join([*labels, *questions]).lower()
     assert "drink" not in blob

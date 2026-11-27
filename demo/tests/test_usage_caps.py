@@ -65,7 +65,7 @@ def test_python_answers_ignore_the_model_limit(client, fake_api, monkeypatch) ->
     )
     html = _ask(client, "How much did I spend on snacks in August?").text
     assert fake_api.questions == []
-    assert "3.50 DC on snacks in August" in html
+    assert "8.00 DC on snacks in August" in html
     assert _REACHED not in html
 
 

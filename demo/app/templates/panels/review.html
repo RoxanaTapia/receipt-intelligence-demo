@@ -1,5 +1,5 @@
 <section class="step-card" id="review"{% if not live_panel %} hidden{% endif %}>
-  <h2>Read this receipt</h2>
+  <h2>{% if live_panel %}Receipt read{% else %}Read this receipt{% endif %}</h2>
   <div id="reading-state" class="reading-state" hidden>
     <p class="reading-label" role="status">
       <span class="spinner" aria-hidden="true"></span>

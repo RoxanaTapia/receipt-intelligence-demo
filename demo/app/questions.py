@@ -19,6 +19,10 @@ SUGGESTED_QUESTIONS = (
         "label": "Most expensive item",
         "question": "What was the most expensive item?",
     },
+    {
+        "label": "Spend at Pine Market",
+        "question": "How much did I spend at Pine Market?",
+    },
 )
 
 _MONTH_NAME = re.compile(

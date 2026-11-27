@@ -1,6 +1,6 @@
 <section class="step-card" id="ask-panel">
   <h2>Ask about August</h2>
-  <p class="meta">Tap a question. The total is computed in Python from the lines on these receipts.</p>
+  <p class="meta">Tap a question. Answers use the lines on these receipts.</p>
   <form class="ask-form" id="ask-form" method="post" action="{{ public_url('/ask') }}">
     {% if selected %}
     <input type="hidden" name="example" value="{{ selected.id }}" />
@@ -36,7 +36,7 @@
       <p class="answer-q">{{ question }}</p>
       {% if case_answer and case_answer.amount is not none %}
       <p class="answer-amount">
-        <span class="num" data-count-money="{{ '%.2f'|format(case_answer.amount) }}">{{ money(case_answer.amount) }}</span>
+        <span class="num">{{ money(case_answer.amount) }}</span>
         <span class="sample-tag">Sample data</span>
       </p>
       {% endif %}
@@ -55,6 +55,9 @@
       </div>
       {% endif %}
       {% if case_answer and case_answer.cited %}
+      {% if case_answer.cited_note %}
+      <p class="cited-note">{{ case_answer.cited_note }}</p>
+      {% endif %}
       <ul class="cited-lines">
         {% for name in case_answer.cited %}
         <li class="dk-source">{{ name }}</li>

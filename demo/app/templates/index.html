@@ -47,10 +47,13 @@
         btn.disabled = busy;
         const idleEl = btn.querySelector(".btn-idle");
         const busyEl = btn.querySelector(".btn-busy");
-        if (idleEl) idleEl.hidden = busy;
-        if (busyEl) busyEl.hidden = !busy;
+        const busyText = busyEl ? busyEl.textContent.trim() : "";
+        if (idleEl && busyEl && busyText) {
+          idleEl.hidden = busy;
+          busyEl.hidden = !busy;
+        }
       }
-      if (wait) wait.hidden = !busy;
+      if (wait && wait.textContent.trim()) wait.hidden = !busy;
     }
 
     function setReading(busy) {
@@ -60,6 +63,9 @@
       if (review && busy) review.hidden = false;
       if (reading) reading.hidden = !busy;
       if (reviewBody) reviewBody.hidden = busy;
+      if (review && busy) {
+        review.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" });
+      }
     }
 
     function currentFlowStep() {
@@ -106,29 +112,6 @@
       });
     }
 
-    function countMoney(root) {
-      const scope = root || document;
-      scope.querySelectorAll("[data-count-money]").forEach(function (el) {
-        const target = Number(el.getAttribute("data-count-money"));
-        if (!isFinite(target)) return;
-        const finalText = target.toFixed(2) + " DC";
-        if (reduced()) {
-          el.textContent = finalText;
-          return;
-        }
-        const start = performance.now();
-        const ms = 800;
-        function frame(now) {
-          const t = Math.min(1, (now - start) / ms);
-          const eased = 1 - Math.pow(1 - t, 3);
-          el.textContent = (target * eased).toFixed(2) + " DC";
-          if (t < 1) window.requestAnimationFrame(frame);
-          else el.textContent = finalText;
-        }
-        window.requestAnimationFrame(frame);
-      });
-    }
-
     function highlightCited(root) {
       if (!window.DemoKit || reduced()) return;
       const scope = root || document;
@@ -168,7 +151,6 @@
         chip.classList.toggle("is-active", Boolean(active));
       });
       paintLiveTime(document, "answer", seconds);
-      countMoney(document.getElementById("ask-answer"));
       highlightCited(document.getElementById("ask-answer"));
       markAskStep();
     }
@@ -225,7 +207,6 @@
             currentMain.replaceWith(nextMain);
             paintLiveTime(document, "read", seconds);
             window.initDemo();
-            countMoney(document);
             highlightCited(document);
             scrollToTarget(nextMain);
           };
@@ -264,7 +245,6 @@
     };
 
     window.initDemo();
-    countMoney(document);
   })();
 </script>
 {% endblock %}
