@@ -35,14 +35,23 @@ def test_header_uses_the_wordmark_product_and_footer(client) -> None:
     assert 'class="dk-wordmark-dev">.dev' in html
     assert 'class="dk-product">Receipt Intelligence' in html
     assert "Portfolio demo · fictional shops · demo currency (DC)" in html
-    assert 'id="demo-exit" href="/invite/exit"' in html
-    assert "Exit demo" in html
-    assert "Log out" in html
-    assert "Built by Roxana Tapia" in html
-    assert 'href="https://roxanatapia.dev/cases/receipts">How it\'s built</a>' in html
-    assert f"{BOOKING_LINK}>Book a call</a>" in html
+    assert (
+        '<a class="back-portfolio" href="https://roxanatapia.dev/">Back to portfolio</a>'
+        in html
+    )
+    assert "Exit demo" not in html
+    assert "Log out" not in html
+    assert "/invite/exit" not in html
+    assert "/ops/logout" not in html
+    footer = html.split('class="dk-footer-slot"', 1)[1].split("</div>", 1)[0]
+    assert footer.count("<a ") == 3
+    assert footer.index("Built by Roxana Tapia") < footer.index("How it's built")
+    assert footer.index("How it's built") < footer.index("Book a call")
+    assert 'href="https://roxanatapia.dev/">Built by Roxana Tapia</a>' in footer
+    assert 'href="https://roxanatapia.dev/cases/receipts">How it\'s built</a>' in footer
+    assert f"{BOOKING_LINK}>Book a call</a>" in footer
     assert 'href="https://roxanatapia.dev/cases/receipts" target=' not in html
-    assert html.count('href="https://roxanatapia.dev/"') == 2
+    assert html.count('href="https://roxanatapia.dev/"') == 3
     assert "demo-kit/theme-init.js" in html
     assert "demo-kit/theme.js" in html
     assert "demo-kit/motion.js" in html
@@ -65,21 +74,33 @@ def test_end_card_book_a_call_opens_the_booking_page(client) -> None:
     assert f'<a class="btn-secondary" {BOOKING_LINK}>Book a call</a>' in html
     assert html.count(BOOKING_LINK) == 2
     assert 'href="https://roxanatapia.dev/">Book a call</a>' not in html
+    assert "Exit demo" not in html
+    assert "/invite/exit" not in html
+    assert "or leave the demo" not in html
 
 
 def test_operator_header_sets_the_flag_and_loads_the_heartbeat(client) -> None:
     html = client.get("/", headers={"X-Ops-Ok": "1"}).text
     assert 'data-operator="true"' in html
-    assert 'id="demo-exit" href="/ops/logout"' in html
+    assert (
+        '<a class="back-portfolio" href="https://roxanatapia.dev/">Back to portfolio</a>'
+        in html
+    )
     assert "demo-kit/ops-heartbeat.js" in html
-    assert "Log out" in html
+    assert "Exit demo" not in html
+    assert "Log out" not in html
+    assert "/ops/logout" not in html
 
 
 def test_operator_header_ignores_an_explicit_no(client) -> None:
     html = client.get("/", headers={"X-Ops-Ok": "false"}).text
     assert "data-operator" not in html
     assert "ops-heartbeat.js" not in html
-    assert 'href="/invite/exit"' in html
+    assert 'href="/invite/exit"' not in html
+    assert (
+        '<a class="back-portfolio" href="https://roxanatapia.dev/">Back to portfolio</a>'
+        in html
+    )
 
 
 def test_kit_fonts_are_same_origin(client) -> None:
