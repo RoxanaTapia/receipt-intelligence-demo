@@ -1,34 +1,33 @@
 # Receipt Intelligence
 
-> Use the sample receipt, see a category on every line, and ask spend questions in plain language.
+> See a category on every line, then ask spending questions in plain language.
 
-> **Takeaway:** This is a receipt-to-answers pipeline, not a chatbot that guesses a budget. If the receipts do not contain the spend, it says so.
+[![Automated tests](https://github.com/RoxanaTapia/receipt-intelligence-demo/actions/workflows/tests.yml/badge.svg)](https://github.com/RoxanaTapia/receipt-intelligence-demo/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/github/license/RoxanaTapia/receipt-intelligence-demo)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://receipt-intelligence.roxanatapia.dev/)
 
-## What it is
+🟢 **Live demo:** [receipt-intelligence.roxanatapia.dev](https://receipt-intelligence.roxanatapia.dev/)
+▶ **Watch the demo:** [YouTube](https://youtu.be/m2YzXVfSf6c)
+📄 **The case:** [Where did August go?](https://roxanatapia.dev/cases/receipts/)
 
-You read a sample receipt on the page. Each line gets a category. You ask a spending question in plain language, and the totals are calculated from the receipts on the page. If those receipts do not contain the spend, the demo says so.
+[![The August case on the demo: a sample receipt, categories on each line, and a spending question](docs/screenshots/case-light-1280x800.png)](https://receipt-intelligence.roxanatapia.dev/)
+
+## The case
+
+Corner Studio, a fictional studio, asks one question: where did the August snack money go? You open the sample receipt, each line gets a category, and the app adds the totals from the receipts on the page. If those receipts do not contain the spend, the demo says so.
+
+This is a receipt-to-answers tool, not a chatbot that guesses a budget.
 
 The merchants are fictional. Amounts on the page are demo figures. This is not for your real receipts.
 
-## What works now
+## What it does
 
-| What you can do | In practice |
-|-----------------|-------------|
-| **Sample receipt** | Read Green Basket Market on the page. The seeded receipts are already there |
-| **Line-item categories** | You get a category on every line, not a single merchant guess |
-| **Spending answers** | Totals are calculated from the receipts on the page |
-| **Plain-language Q&A** | Ask "How much did I spend per category?" |
-| **Self-serve** | You do not open an n8n editor. The browser never talks to n8n |
+- 🧾 [Green Basket Market](demo/samples/sample-supermarket-receipt.pdf) is already on the page, dated 15 August 2026 and labelled SAMPLE RECEIPT
+- 🏷️ You get a category on every line, not a single merchant guess
+- 📊 Totals are added in Python from the receipts you can see
+- 💬 Ask in plain language, for example "How much did I spend per category?"
 
-### Where did August go?
-
-Corner Studio, a fictional studio, asks one question. Where did the August snack money go?
-
-Every amount in this section is sample data from the sample receipt only. That receipt is Green Basket Market, dated 15 August 2026, and the PDF labels it SAMPLE RECEIPT ([`demo/samples/sample-supermarket-receipt.pdf`](demo/samples/sample-supermarket-receipt.pdf)). The other fictional examples on the page are not part of these figures.
-
-The sample prints butter croissants at 3.20 DC. The demo files that line as snacks. The same receipt prints a total of 25.00 DC. The categories are the ones stored with the sample in [`demo/app/sample_receipt.py`](demo/app/sample_receipt.py).
-
-Sample data from the sample receipt only:
+Sample data from that receipt only (DC is demo currency, not real money):
 
 | Category | Lines printed on the sample | Sample data |
 |----------|-----------------------------|-------------|
@@ -37,74 +36,78 @@ Sample data from the sample receipt only:
 | Snacks | Butter croissants 3.20 | 3.20 DC |
 | Household | Dish soap 2.50, paper towels 3.10 | 5.60 DC |
 
-DC is demo currency, not real money. The amounts are the figures printed on each line. On this sample, August snacks are the croissants.
+The categories are the ones stored with the sample in [`demo/app/sample_receipt.py`](demo/app/sample_receipt.py). On this sample, August snacks are the croissants.
 
-#### One-minute steps
+This is not accounting software. Tax export, bank sync, and multi-user accounts come later. Reading the receipt, saving it, and adding the totals stay the same.
 
-1. You tap a sample receipt.
-2. Claude extracts the merchant, the date, and each line. n8n reads the PDF.
-3. Each line gets a category. The record is checked, then saved as JSON.
-4. FastAPI adds the totals in Python.
-5. Claude explains those totals.
+## How it works
 
-The automated tests that check these sample totals are linked from [Automated tests](#automated-tests).
+```mermaid
+flowchart LR
+    A[Sample receipt] --> B[n8n reads the PDF]
+    B --> C[Each line gets a category]
+    C --> D[A structured record is saved]
+    D --> E[The API adds the totals in Python]
+    E --> F[The answer uses those totals]
+```
 
-### What's planned
+Hosted AI reads the merchant, the date, and each line, and later explains the totals. The totals themselves are calculated in Python, not guessed.
 
-This is not accounting software yet. Tax export, bank sync, and multi-user accounts come later. Reading the receipt, saving it, and calculating the totals stay the same.
+Reading the receipt happens in n8n workflows that live in their own repository. Totals and answers come from a FastAPI service that lives in its own repository.
 
-## How to try it
+## For engineers
 
-🟢 **Live** · <a href="https://receipt-intelligence.roxanatapia.dev/try/website" target="_blank" rel="noopener noreferrer"><strong>receipt-intelligence.roxanatapia.dev</strong></a>
+### Stack
 
-▶ **[Watch the demo](https://youtu.be/q03q0kfvTfQ)**
+n8n, FastAPI, Claude, Docker Compose, and a Jinja visitor UI in this repo.
 
-- Open the live demo. Corner Studio, a fictional studio, asks where the snack money went
-- Read Green Basket Market on the page and watch a category appear on each line
-- Ask where the snacks went. The total is calculated from the receipts on the page
-- A walkthrough is available on request. [Ask on Upwork](https://www.upwork.com/freelancers/roxanadev) or [contact me](https://roxanatapia.dev/#contact)
+You do not open an n8n editor from the visitor demo. The browser never talks to n8n. n8n writes a JSON record for each receipt; the API reads that record and adds the totals.
 
-## Where things live
+### Quickstart
 
-This repository holds the visitor UI and the deployment setup.
+Clone this repo and a sibling clone of [`receipt-intelligence-api`](https://github.com/RoxanaTapia/receipt-intelligence-api). Copy `.env.example` to `.env` and fill in the values it asks for. Then, from this repo:
+
+```bash
+docker compose --env-file .env -f deploy/docker-compose.yml up --build -d
+curl -s http://localhost:8000/health
+```
+
+The visitor UI is published on port 8080 in the base Compose file. Full operator steps, including how to point Compose at the API clone: [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Automated tests
+
+```bash
+python3 -m pytest demo/tests
+ruff check
+ruff format --check
+```
+
+GitHub Actions runs the automated tests and Ruff on every pull request and every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)). The workflow also confirms that the vendored demo kit still matches its checksum. The tests cover the visitor demo only. Commands: [AGENTS.md](AGENTS.md).
+
+### Project structure
 
 | Path | What it holds |
 |------|----------------|
 | [`demo/`](demo/) | Visitor UI (FastAPI and Jinja templates) |
 | [`demo/seed/`](demo/seed/) | Fictional receipts already on the page |
+| [`demo/tests/`](demo/tests/) | Automated tests for the visitor demo |
 | [`deploy/`](deploy/) | Deployment files |
-| [`docs/`](docs/) | Architecture notes and the screenshot map |
+| [`docs/`](docs/README.md) | Architecture notes and the screenshot map |
 
-### How it fits together
+Repo map: [docs/README.md](docs/README.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md).
 
-Each step exists to keep your answer inside receipts that were actually ingested.
+### Related repositories
 
-![1 Sample receipt. 2 Claude extracts. 3 Categorized and checked. 4 Saved as JSON. 5 FastAPI totals. 6 Claude explains.](docs/assets/receipt_architecture.png)
+| Repo | Role |
+|------|------|
+| **This repo** | Visitor UI and the Compose demo |
+| [`receipt-intelligence-n8n`](https://github.com/RoxanaTapia/receipt-intelligence-n8n) | PDF ingest, categorization, JSON on disk |
+| [`receipt-intelligence-api`](https://github.com/RoxanaTapia/receipt-intelligence-api) | Totals, REST API, and spending answers |
 
-| Step | Technique | Why? |
-|------|-----------|------|
-| **Read** | n8n extracts text from the PDF | Receipts are layouts, not spreadsheets. |
-| **Extract** | Claude fills a receipt schema (merchant, date, line items) | Downstream steps need structured fields, not prose. |
-| **Categorize** | Each line gets a category from a fixed taxonomy | You can ask "How much did I spend per category?" Totals cross merchants. |
-| **Validate** | Schema and taxonomy checks, with a short retry | Invalid JSON never becomes the answer. |
-| **Persist** | Canonical JSON on a shared volume | One store: n8n writes, the API reads. |
-| **Analytics** | FastAPI aggregates by date and category | Totals are calculated, not guessed. |
-| **Answer** | This page totals the receipts you can see | The sentence uses those numbers. It says when the receipts do not contain the spend. |
-
-n8n · FastAPI · Claude · Docker Compose
-
-Reading the receipt happens in n8n workflows that live in their own repository. Totals and answers come from a FastAPI service that lives in its own repository.
-
-Repo map: [docs/README.md](docs/README.md). Board: [docs/board.md](docs/board.md). Goal: [docs/goal.md](docs/goal.md). Deploy picture: [docs/product/architecture.md](docs/product/architecture.md). Operator steps: [DEPLOYMENT.md](DEPLOYMENT.md).
-
-## Automated tests
-
-The visitor demo has 118 automated tests. The [Automatic tests pass](https://github.com/RoxanaTapia/receipt-intelligence-demo/actions/runs/46001884904) run on main, commit `ab8117d`, reported 118 passed. GitHub Actions runs that workflow on every pull request and on every push to main ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)), and checks that the vendored demo kit still matches its checksum. The tests cover the visitor demo only.
-
-## How I work with AI
+### How I build
 
 I build with AI coding agents. Every change goes through a pull request I review and merge, with automated tests you can see on every change.
 
 ---
 
-[Roxana Tapia](https://github.com/RoxanaTapia) · [How I work with AI](docs/how-we-work.md) · [MIT License](LICENSE)
+[MIT License](LICENSE) · [Roxana Tapia](https://github.com/RoxanaTapia) · [roxanatapia.dev](https://roxanatapia.dev) · [How I work with AI](docs/how-we-work.md)
